@@ -1,5 +1,8 @@
 ---
+import { starCount } from '../../lib/stars'
 import Icon from '../Icon.astro'
+
+const stars = await starCount()
 ---
 
 <section id="hero" aria-labelledby="hero-title" class="cd-section bg-cd-bg">
@@ -8,14 +11,14 @@ import Icon from '../Icon.astro'
 
     <div class="mt-5 grid grid-cols-12 gap-x-6 gap-y-10">
 
-      <h1 id="hero-title" class="col-span-12 text-5xl font-extrabold leading-[0.95] tracking-[-0.035em] text-balance text-cd-text sm:text-7xl lg:col-span-7 lg:text-8xl">One photograph across <span class="text-cd-accent">every</span> monitor</h1>
+      <h1 id="hero-title" class="col-span-12 text-5xl font-extrabold leading-[0.95] tracking-[-0.035em] text-balance text-cd-text sm:text-7xl lg:col-span-7 lg:text-8xl">One wallpaper across <span class="text-cd-accent">every</span> monitor</h1>
 
       <div class="col-span-12 flex flex-col gap-6 lg:col-span-5 lg:col-start-8">
-        <p class="max-w-[46ch] text-lg leading-relaxed text-pretty text-cd-text-secondary sm:text-xl">The picture carries on over the frames instead of starting again on each screen. Keep it still, pair a light one with a dark one, or run a whole day on a schedule, across three displays or one.</p>
+        <p class="max-w-[46ch] text-lg leading-relaxed text-pretty text-cd-text-secondary sm:text-xl">macOS gives every monitor its own wallpaper. SpreadPaper gives them one picture, carried on over the frames instead of starting again on each screen. Keep it still, pair a light one with a dark one, or run a whole day on a schedule, on every display you have, or on just the one.</p>
 
         <div class="flex max-w-[46ch] flex-col items-stretch gap-3">
           <a class="cd-button cd-button-primary px-7 py-3.5 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cd-accent" href="https://github.com/spreadpaper/SpreadPaper/releases/latest"><Icon name="download-simple" width="18" height="18" />Download for macOS</a>
-          <a class="cd-button cd-button-secondary px-7 py-3.5 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cd-accent" href="https://github.com/spreadpaper/SpreadPaper"><Icon name="github-logo" width="18" height="18" />View on GitHub</a>
+          <a class="cd-star justify-center py-3.5 pl-7 pr-1 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cd-accent" href="https://github.com/spreadpaper/SpreadPaper"><Icon name="star" width="18" height="18" />Star on GitHub<span class="cd-star-count px-5" data-stars>{stars}</span><span class="sr-only">people have starred it</span></a>
         </div>
 
         <p class="max-w-[46ch] text-sm leading-relaxed text-pretty text-cd-text-secondary">Free and open source under the MIT licence. Requires macOS 15 Sequoia or later on an Apple Silicon Mac.</p>
