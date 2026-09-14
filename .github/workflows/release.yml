@@ -1,19 +1,37 @@
-name: Deploy
+name: Release
 
 on:
   push:
     branches:
       - main
-  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
 
 # Never cancel a deploy in flight: a half-uploaded asset manifest beats a queued run.
 concurrency:
-  group: deploy
+  group: release
   cancel-in-progress: false
 
 jobs:
+  release-please:
+    name: Create Release PR
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          config-file: 'release-please-config.json'
+          manifest-file: '.release-please-manifest.json'
+
   deploy:
-    name: Build and deploy to Cloudflare Workers
+    name: Deploy to Cloudflare Workers
+    if: ${{ needs.release-please.outputs.release_created }}
+    needs: [release-please]
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -24,7 +42,6 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          # 24: the rig scripts and page test are TypeScript run by Node directly.
           node-version: '24'
           cache: 'npm'
 
