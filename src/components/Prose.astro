@@ -1,0 +1,133 @@
+---
+/**
+ * Typographic defaults for the text pages, applied to a wrapper rather than to
+ * every element, so a guide can be written as plain markup.
+ *
+ * The scale is the one in DESIGN.md: h2 takes the h3 size, because these pages
+ * open at the h2 size and nothing below a page heading should compete with it.
+ */
+---
+
+<div class="prose-cd">
+  <slot />
+</div>
+
+<style is:global>
+  .prose-cd > * + * {
+    margin-top: 1rem;
+  }
+
+  .prose-cd h2 {
+    margin-top: 3rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--color-cd-text);
+    text-wrap: balance;
+  }
+
+  .prose-cd h2:first-child {
+    margin-top: 0;
+  }
+
+  .prose-cd h3 {
+    margin-top: 2rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-cd-text);
+  }
+
+  .prose-cd p,
+  .prose-cd li {
+    font-size: 1rem;
+    line-height: 1.75;
+    color: var(--color-cd-text-secondary);
+    text-wrap: pretty;
+  }
+
+  .prose-cd ol,
+  .prose-cd ul {
+    margin-top: 1rem;
+    padding-left: 1.25rem;
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .prose-cd ol {
+    list-style: decimal;
+  }
+
+  .prose-cd ul {
+    list-style: disc;
+  }
+
+  .prose-cd li::marker {
+    color: var(--color-cd-text-tertiary);
+  }
+
+  .prose-cd strong {
+    color: var(--color-cd-text);
+    font-weight: 600;
+  }
+
+  .prose-cd a {
+    color: var(--color-cd-text);
+    text-decoration: underline;
+    text-decoration-color: var(--color-cd-border-strong);
+    text-underline-offset: 3px;
+  }
+
+  .prose-cd a:hover {
+    text-decoration-color: var(--color-cd-accent);
+  }
+
+  .prose-cd a:focus-visible {
+    outline: 2px solid var(--color-cd-accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  /* A ruled block, used where a page needs to set something apart without
+     reaching for a card. The stripe is the only colour these pages spend. */
+  .prose-cd .note {
+    margin-top: 2rem;
+    border-left: 2px solid var(--color-cd-border-strong);
+    padding-left: 1.25rem;
+  }
+
+  .prose-cd .note-accent {
+    border-left-color: var(--color-cd-accent);
+  }
+
+  /* Definition rows, matching the requirements list on the front page. */
+  .prose-cd .dl {
+    margin-top: 1.5rem;
+    border-bottom: 1px solid var(--color-cd-border);
+  }
+
+  .prose-cd .dl > div {
+    display: grid;
+    grid-template-columns: 9rem 1fr;
+    gap: 0.25rem 1.5rem;
+    border-top: 1px solid var(--color-cd-border);
+    padding-block: 0.875rem;
+  }
+
+  @media (max-width: 30rem) {
+    .prose-cd .dl > div {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .prose-cd .dl dt {
+    font-size: 0.875rem;
+    color: var(--color-cd-text-secondary);
+  }
+
+  .prose-cd .dl dd {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--color-cd-text);
+  }
+</style>

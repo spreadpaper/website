@@ -3,6 +3,13 @@ import { starCount } from '../../lib/stars'
 import Icon from '../Icon.astro'
 
 const stars = await starCount()
+
+// The product sections exist on the homepage and nowhere else, so a bare
+// fragment is a dead link on every text page. Off the homepage each anchor
+// goes home first; on it they stay fragments, which is what the scroll spy
+// reads and what keeps the jump smooth.
+const isHome = Astro.url.pathname.replace(/\/+$/, '') === ''
+const anchor = (id: string) => (isHome ? `#${id}` : `/#${id}`)
 ---
 
 <style>
@@ -89,16 +96,16 @@ const stars = await starCount()
 
 <nav id="site-nav" aria-label="Main" class="sticky top-0 z-50 border-b border-cd-border bg-cd-bg supports-backdrop-filter:bg-cd-bg/80 supports-backdrop-filter:backdrop-blur-md">
   <div class="mx-auto flex h-14 max-w-[76rem] items-center gap-2 px-5">
-    <a href="#main" class="mr-auto flex items-center gap-2.5 rounded-full py-1 pr-2 text-cd-text focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 ">
+    <a href={isHome ? '#main' : '/'} class="mr-auto flex items-center gap-2.5 rounded-full py-1 pr-2 text-cd-text focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 ">
       <img src="/app-icon-256.png" alt="" width="256" height="256" class="h-7 w-7 rounded-[7px]">
       <span class="text-[0.9375rem] font-semibold tracking-[-0.01em]">SpreadPaper</span>
     </a>
 
     <ul id="nav-sections" class="hidden items-center gap-1 md:flex">
-      <li><a class="nav-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="#types">Types</a></li>
-      <li><a class="nav-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="#editor">Editor</a></li>
-      <li><a class="nav-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="#bezels">Bezels</a></li>
-      <li><a class="nav-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="#gallery">Gallery</a></li>
+      <li><a class="nav-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href={anchor("types")}>Types</a></li>
+      <li><a class="nav-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href={anchor("editor")}>Editor</a></li>
+      <li><a class="nav-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href={anchor("bezels")}>Bezels</a></li>
+      <li><a class="nav-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href={anchor("gallery")}>Gallery</a></li>
     </ul>
 
     <a href="https://github.com/spreadpaper/SpreadPaper" class="cd-star ml-1 hidden h-9 pl-3.5 pr-1 text-sm focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2  md:inline-flex">
@@ -108,7 +115,7 @@ const stars = await starCount()
       <span class="sr-only">people have starred SpreadPaper on GitHub</span>
     </a>
 
-    <a href="#download" class="cd-button cd-button-primary hidden h-9 px-4 text-sm focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2  md:inline-flex"><Icon name="download-simple" class="h-4 w-4" />Download</a>
+    <a href={anchor("download")} class="cd-button cd-button-primary hidden h-9 px-4 text-sm focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2  md:inline-flex"><Icon name="download-simple" class="h-4 w-4" />Download</a>
 
     <button type="button" id="nav-toggle" aria-expanded="false" aria-controls="nav-menu" class="-mr-2 inline-flex h-11 w-11 items-center justify-center rounded-full text-cd-text transition-colors duration-150 ease-out hover:bg-cd-bg-secondary focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2  md:hidden">
       <Icon name="list" data-nav-icon="open" class="h-5 w-5" />
@@ -119,12 +126,12 @@ const stars = await starCount()
 
   <div id="nav-menu" hidden class="border-t border-cd-border bg-cd-bg md:hidden">
     <ul class="mx-auto flex max-w-[76rem] flex-col gap-1 px-5 pb-4 pt-3">
-      <li><a class="nav-link-mobile focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="#types">Types</a></li>
-      <li><a class="nav-link-mobile focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="#editor">Editor</a></li>
-      <li><a class="nav-link-mobile focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="#bezels">Bezels</a></li>
-      <li><a class="nav-link-mobile focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="#gallery">Gallery</a></li>
+      <li><a class="nav-link-mobile focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href={anchor("types")}>Types</a></li>
+      <li><a class="nav-link-mobile focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href={anchor("editor")}>Editor</a></li>
+      <li><a class="nav-link-mobile focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href={anchor("bezels")}>Bezels</a></li>
+      <li><a class="nav-link-mobile focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href={anchor("gallery")}>Gallery</a></li>
       <li><a class="nav-link-mobile justify-between focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="https://github.com/spreadpaper/SpreadPaper"><span class="inline-flex items-center gap-2"><Icon name="star" width="16" height="16" />Star on GitHub</span><span class="tabular-nums text-cd-text" data-stars>{stars}</span></a></li>
-      <li class="pt-2"><a href="#download" class="cd-button cd-button-primary flex h-11 w-full px-4 text-[0.9375rem] focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 ">Download</a></li>
+      <li class="pt-2"><a href={anchor("download")} class="cd-button cd-button-primary flex h-11 w-full px-4 text-[0.9375rem] focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 ">Download</a></li>
     </ul>
   </div>
 </nav>

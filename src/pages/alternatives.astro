@@ -1,0 +1,171 @@
+---
+import Prose from '../components/Prose.astro'
+import TextPage from '../layouts/TextPage.astro'
+---
+
+<TextPage
+  title="Other apps that span a Mac wallpaper across displays | SpreadPaper"
+  description="A fair comparison of the Mac apps that spread one wallpaper across several displays, what each one suits, where SpreadPaper differs, and where it is plainly behind."
+  socialDescription="Several apps span a wallpaper across Mac displays. Here is what each is good at, and where SpreadPaper differs."
+  eyebrow="Alternatives"
+  heading="Other apps that do this, and when to pick one"
+  lead="Several apps spread a wallpaper across Mac displays, and for some people one of them is the better answer. Here is what each is good at, stated as plainly as possible, and where SpreadPaper differs."
+>
+  <Prose>
+    <h2 id="what-you-want">Start with what you actually want</h2>
+    <p>
+      Three quite different wishes get filed under the same search. Some people want one photograph
+      spread across every screen as a single picture. Some want a steady supply of good wallpapers
+      and do not mind which screen gets which. Some want motion, video or something that reacts.
+    </p>
+    <p>
+      SpreadPaper only answers the first of those, and only for a still image. If what you want is
+      the second or the third, one of the apps below will serve you better, and that is worth saying
+      before the comparison rather than after it.
+    </p>
+
+    <h2 id="paid">Paid Mac apps</h2>
+
+    <h3>Multi Monitor Wallpaper</h3>
+    <p>
+      Sold on the Mac App Store by Hobbyist Software. Because it comes from the App Store it is
+      signed and notarised, so it installs and opens with no warning at all, and it updates
+      alongside everything else you have from there.
+    </p>
+    <dl class="dl">
+      <div>
+        <dt>Suits</dt>
+        <dd>
+          Anyone who would rather pay for an app than think about signatures, and who wants App
+          Store updates and the App Store's refund route
+        </dd>
+      </div>
+      <div>
+        <dt>Difference</dt>
+        <dd>
+          SpreadPaper is free and open source, and asks you to clear a macOS warning on first launch
+        </dd>
+      </div>
+    </dl>
+
+    <h3>MultiScape</h3>
+    <p>
+      Another paid Mac app in the same territory. If it does what you need, paying for it is a
+      sensible thing to do: a commercial app has someone whose job is to answer your email and keep
+      it working on the next version of macOS.
+    </p>
+    <dl class="dl">
+      <div>
+        <dt>Suits</dt>
+        <dd>Anyone who wants a supported commercial app and is happy to pay for support</dd>
+      </div>
+      <div>
+        <dt>Difference</dt>
+        <dd>
+          SpreadPaper has no company behind it. Support is an issue queue on GitHub and one person's
+          evenings, which <a href="/project">the project page</a> says in more detail
+        </dd>
+      </div>
+    </dl>
+
+    <h3>Hologram</h3>
+    <p>
+      A paid Mac app sold direct from gethologram.com rather than through the App Store. It has not
+      been tested here, so rather than describe features nobody on this side has verified, the fair
+      thing is to point you at its own site and let it speak for itself.
+    </p>
+    <dl class="dl">
+      <div>
+        <dt>Suits</dt>
+        <dd>Anyone comparing properly. Check its site for the current feature list and price</dd>
+      </div>
+      <div>
+        <dt>Difference</dt>
+        <dd>
+          SpreadPaper's scope is deliberately narrow: one still image across every display, with
+          bezel compensation, presets, a Light and Dark pair and time of day schedules
+        </dd>
+      </div>
+    </dl>
+
+    <h2 id="free">Free Mac apps that are about the picture, not the spread</h2>
+
+    <h3>iWallpaper static</h3>
+    <p>
+      Free on the Mac App Store. It sets wallpapers per display rather than spreading one image
+      across them, which is a different job and a useful one: if what you want is a different
+      picture on each screen, managed in one place, this is closer to it than SpreadPaper is.
+    </p>
+    <dl class="dl">
+      <div>
+        <dt>Suits</dt>
+        <dd>A different wallpaper per display, free, and signed because it comes from the App Store</dd>
+      </div>
+      <div>
+        <dt>Difference</dt>
+        <dd>SpreadPaper does the opposite: one photograph treated as one continuous picture</dd>
+      </div>
+    </dl>
+
+    <h3>Wallpaperer</h3>
+    <p>
+      Also on the Mac App Store, and built around finding images from Reddit wallpaper sources. It
+      answers "I need a good picture" rather than "I need one picture across three screens", so the
+      two are not really competing. Finding something wide there and spreading it here is a
+      reasonable way to work.
+    </p>
+    <dl class="dl">
+      <div>
+        <dt>Suits</dt>
+        <dd>Anyone whose actual problem is running out of wallpapers</dd>
+      </div>
+      <div>
+        <dt>Difference</dt>
+        <dd>SpreadPaper brings no images of its own. You supply the photograph</dd>
+      </div>
+    </dl>
+
+    <h2 id="windows">If you are coming from Windows</h2>
+    <p>
+      DisplayFusion and Wallpaper Engine both span wallpapers on Windows, and people arriving from a
+      Windows desk often go looking for them first. Neither has a macOS version, so whatever you had
+      set up there does not follow you across.
+    </p>
+    <p>
+      Superpaper is the nearest thing to a bridge: cross platform, open source, and it does bezel
+      correction, so it will run on a Mac and do the central job. It is not a native Mac app,
+      though, which shows in how it installs and how it looks next to everything else on the screen.
+      If that does not bother you, it is a genuine option and it costs nothing.
+    </p>
+
+    <h2 id="behind">Where SpreadPaper is behind</h2>
+    <p>
+      The App Store apps are signed and notarised. They open the first time with no warning, they
+      update through a system Apple runs, and there is a refund route if you dislike them. That is a
+      real advantage and it would be dishonest to bury it.
+    </p>
+    <p>
+      SpreadPaper is not signed with a paid Apple Developer ID, so macOS warns you on first launch
+      and you clear it yourself in Privacy and Security. It takes a minute, once, and
+      <a href="/help">the help page</a> walks through it. What is offered instead of a signature is that
+      the source is public and every release is built from it by GitHub Actions, so you can check rather
+      than trust. That is not the same thing as notarisation, and anyone who would rather have the signature
+      should buy one of the apps above.
+    </p>
+
+    <h2 id="fit">Where SpreadPaper fits</h2>
+    <p>
+      Free, MIT licensed, native Swift and SwiftUI, sandboxed, no account and no telemetry, on macOS
+      15 Sequoia or later with Apple silicon. It does one thing: spreads a single still image across
+      every connected display as one continuous picture, with bezel compensation for the physical
+      gaps, a live preview you can drag, saved presets, a separate Light and Dark wallpaper, and
+      time of day schedules.
+    </p>
+    <p>
+      That narrowness is the position. Nothing to buy, nothing to sign up to, and if it ever stops
+      being maintained the source is still there. If one of the other apps fits your desk better,
+      use it. <a href="/guides">The guides</a> are worth reading either way, because the tricky part
+      is the same whichever app does it.
+    </p>
+  </Prose>
+</TextPage>

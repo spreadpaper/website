@@ -16,15 +16,20 @@
  * jsdom also has no layout, so every measurement is zero. A rule about which
  * of two stylesheet declarations wins has to be checked in a browser.
  */
-import { readFileSync, readdirSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { JSDOM } from 'jsdom'
 
 const site = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist')
 const html = readFileSync(join(site, 'index.html'), 'utf8')
-const bundleName = readdirSync(join(site, '_astro')).find((f) => f.endsWith('.js'))!
-const bundle = readFileSync(join(site, '_astro', bundleName), 'utf8')
+// Astro emits the script as a file, or inlines it into the page once it drops
+// under 4KB, and it has crossed that line in both directions. Take it from
+// wherever this build put it rather than assuming there is a file.
+const bundleName = readdirSync(join(site, '_astro')).find((f) => f.endsWith('.js'))
+const bundle = bundleName
+  ? readFileSync(join(site, '_astro', bundleName), 'utf8')
+  : html.match(/<script type="module">([\s\S]*?)<\/script>/)![1]
 
 let failures = 0
 const check = (name: string, condition: unknown, detail = '') => {
@@ -68,15 +73,12 @@ const slider = doc.querySelector<HTMLInputElement>('[data-bezel-slider]')!
 const control = doc.querySelector('[data-bezel-control]')!
 const readout = doc.querySelector('[data-bezel-readout]')!
 const rig = slider && doc.getElementById(slider.dataset.bezelTarget!)!
-const copyButton = doc.querySelector('[data-copy-target]')!
 const tabRoot = doc.querySelector('[data-tabs]')!
 const tabList = tabRoot && tabRoot.querySelector('[data-tabs-list]')!
 
 console.log('with no script, the page is still complete')
 check('bezel control ships hidden', control?.hasAttribute('hidden'))
 check('tab list ships hidden', tabList?.hasAttribute('hidden'))
-check('copy button ships hidden', copyButton?.hasAttribute('hidden'))
-check('the command itself is readable', doc.getElementById('quarantine-command')?.textContent!.includes('xattr'))
 const tabsBefore = tabList ? [...tabList.querySelectorAll<HTMLElement>('[role="tab"]')] : []
 const panelsBefore = tabsBefore.map((tab) => doc.getElementById(tab.getAttribute('aria-controls')!)!)
 check('every tab panel is readable', panelsBefore.length > 0 && panelsBefore.every((p) => p && !p.hasAttribute('inert')))
@@ -179,11 +181,6 @@ check('and restores the glyphs',
   !doc.querySelector('[data-nav-icon="open"]')!.hasAttribute('hidden') &&
     doc.querySelector('[data-nav-icon="close"]')!.hasAttribute('hidden'))
 
-console.log('\ncopy button')
-check('stays hidden where there is no clipboard',
-  window.navigator.clipboard ? !copyButton.hasAttribute('hidden') : copyButton.hasAttribute('hidden'),
-  `clipboard present: ${Boolean(window.navigator.clipboard)}`)
-
 console.log('\nscroll spy')
 const spy = observers.find((o) => o.options?.rootMargin === '-20% 0px -70% 0px')!
 check('the spy is watching something', Boolean(spy?.targets.length))
@@ -203,6 +200,86 @@ for (const id of ['types', 'editor', 'gallery']) {
     `marked ${marked.join(' + ') || 'nothing'}`)
 }
 check('the wordmark is never marked', !doc.querySelector('#site-nav a[href="#main"][aria-current]'))
+
+console.log('\nthe nav away from the homepage')
+// Those sections exist on the homepage and nowhere else, so a bare fragment on a
+// text page scrolls nowhere. Read whichever built page is not the homepage
+// rather than naming one, so adding or renaming a page cannot rot this.
+const awayFile = readdirSync(site, { withFileTypes: true })
+  .filter((entry) => entry.isDirectory())
+  .map((entry) => join(site, entry.name, 'index.html'))
+  .find((file) => existsSync(file) && readFileSync(file, 'utf8').includes('id="site-nav"'))
+check('a page other than the homepage was built to check', Boolean(awayFile), site)
+if (awayFile) {
+  const away = new JSDOM(readFileSync(awayFile, 'utf8')).window.document
+  const anchors = [...away.querySelectorAll('#nav-sections a, #nav-menu a')]
+    .map((link) => link.getAttribute('href')!)
+    .filter((href) => href.includes('#'))
+  check('every product anchor goes home first', anchors.length > 0 && anchors.every((href) => href.startsWith('/#')),
+    anchors.join(', ') || 'no anchors found')
+  check('the wordmark goes home rather than to the top of this page',
+    away.querySelector('#site-nav a')?.getAttribute('href') === '/',
+    `got "${away.querySelector('#site-nav a')?.getAttribute('href')}"`)
+  check('the homepage keeps its bare fragments, so the spy still reads them',
+    [...doc.querySelectorAll('#nav-sections a')].every((link) => link.getAttribute('href')!.startsWith('#')))
+}
+
+console.log('\ncopy button, which lives on the help page now')
+// The command moved off the homepage, so this reads the page it moved to. Its own
+// document, because the assertions that matter are about the state a reader gets
+// before the script runs and this one has to be read twice.
+const helpDom = new JSDOM(readFileSync(join(site, 'help', 'index.html'), 'utf8'),
+  { pretendToBeVisual: true, runScripts: 'outside-only' })
+const helpDoc = helpDom.window.document
+const copyButton = helpDoc.querySelector('[data-copy-target]')!
+check('copy button ships hidden', copyButton?.hasAttribute('hidden'))
+check('the command itself is readable', helpDoc.getElementById('quarantine-command')?.textContent!.includes('xattr'))
+check('the button names a command that is actually there',
+  copyButton && helpDoc.getElementById(copyButton.getAttribute('data-copy-target')!),
+  `names "${copyButton?.getAttribute('data-copy-target')}"`)
+
+helpDom.window.matchMedia = (() => ({ matches: false, addEventListener() {}, removeEventListener() {} })) as unknown as typeof window.matchMedia
+helpDom.window.IntersectionObserver = class {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+} as unknown as typeof window.IntersectionObserver
+helpDom.window.eval(bundle)
+
+check('stays hidden where there is no clipboard',
+  helpDom.window.navigator.clipboard ? !copyButton.hasAttribute('hidden') : copyButton.hasAttribute('hidden'),
+  `clipboard present: ${Boolean(helpDom.window.navigator.clipboard)}`)
+
+// jsdom ships no clipboard, so the check above only ever exercises the refusal.
+// Stub one and run the page again, which is the only way to see the affordance
+// itself work: the button has to appear, copy the command, and say it did.
+const clipDom = new JSDOM(readFileSync(join(site, 'help', 'index.html'), 'utf8'),
+  { pretendToBeVisual: true, runScripts: 'outside-only' })
+let written = ''
+Object.defineProperty(clipDom.window.navigator, 'clipboard', {
+  value: { writeText: async (text: string) => { written = text } },
+})
+clipDom.window.matchMedia = (() => ({ matches: false, addEventListener() {}, removeEventListener() {} })) as unknown as typeof window.matchMedia
+clipDom.window.IntersectionObserver = class {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+} as unknown as typeof window.IntersectionObserver
+clipDom.window.eval(bundle)
+
+const clipButton = clipDom.window.document.querySelector<HTMLElement>('[data-copy-target]')!
+check('the button appears once it can do something', !clipButton.hasAttribute('hidden'))
+
+clipButton.dispatchEvent(new clipDom.window.MouseEvent('click', { bubbles: true }))
+await new Promise((resolve) => setTimeout(resolve, 0))
+check('clicking copies the command itself, trimmed',
+  written === 'xattr -dr com.apple.quarantine /Applications/SpreadPaper.app', `wrote "${written}"`)
+check('and the label confirms it',
+  clipButton.querySelector('[data-copy-text]')!.textContent === clipButton.dataset.copiedLabel,
+  `got "${clipButton.querySelector('[data-copy-text]')!.textContent}"`)
+check('and the glyphs swap with it',
+  clipButton.querySelector('[data-copy-icon="idle"]')!.hasAttribute('hidden') &&
+    !clipButton.querySelector('[data-copy-icon="done"]')!.hasAttribute('hidden'))
 
 console.log('\nclock phase')
 const clock = doc.querySelector<HTMLElement>('[data-clock-stops]')!

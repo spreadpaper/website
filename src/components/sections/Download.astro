@@ -29,14 +29,6 @@ import Icon from '../Icon.astro'
       transparent 72%
     );
   }
-
-  .cd-code {
-    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
-    font-size: 0.8125rem;
-    line-height: 1.6;
-    color: var(--color-cd-text);
-    overflow-x: auto;
-  }
 </style>
 
 <section id="download" aria-labelledby="download-heading" class="cd-section bg-cd-canvas">
@@ -85,31 +77,8 @@ import Icon from '../Icon.astro'
 
       <div class="col-span-12 border-t border-cd-border pt-12" data-reveal>
         <h3 class="text-xl font-semibold tracking-[-0.01em] text-cd-text">Apple could not verify SpreadPaper is free of malware</h3>
-        <p class="mt-3 max-w-[70ch] text-base leading-relaxed text-pretty text-cd-text">That is the wording macOS uses for any app not signed with a paid Apple Developer ID. Nothing has been found in SpreadPaper, and nothing has been scanned: the check is for a signature, not for malware. You do not have to take that on trust, because the <a class="cd-inline-link focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cd-accent" href="https://github.com/spreadpaper/SpreadPaper">source is public</a> and every release is <a class="cd-inline-link focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cd-accent" href="https://github.com/spreadpaper/SpreadPaper/blob/main/.github/workflows/release.yml">built from it by GitHub Actions</a>.</p>
-        <p class="mt-4 max-w-[70ch] text-base leading-relaxed text-pretty text-cd-text">Take either route below. It takes a minute, and only the first time.</p>
-
-        <div class="mt-10 grid gap-x-10 gap-y-10 md:grid-cols-2">
-          <div>
-            <h4 class="text-base font-semibold text-cd-text">Through System Settings</h4>
-            <ol class="mt-4 flex max-w-[52ch] list-decimal flex-col gap-2.5 pl-5 text-base leading-relaxed text-pretty text-cd-text-secondary marker:text-cd-text-secondary">
-              <li>Drag SpreadPaper to your Applications folder.</li>
-              <li>Open it, then click Done on the warning.</li>
-              <li>Open System Settings, then Privacy and Security, and scroll to the bottom.</li>
-              <li>Click Open Anyway, then confirm with Open.</li>
-            </ol>
-          </div>
-
-          <div>
-            <h4 class="text-base font-semibold text-cd-text">Or in Terminal, before you open it</h4>
-            <p class="mt-4 max-w-[52ch] text-base leading-relaxed text-pretty text-cd-text-secondary">Drag SpreadPaper to your Applications folder, then run this. It skips the warning entirely.</p>
-            <div class="mt-4 flex max-w-[52ch] items-start gap-2 rounded-xl border border-cd-border bg-cd-bg p-3">
-              <code id="quarantine-command" class="cd-code min-w-0 flex-1 py-1 pl-1">xattr -dr com.apple.quarantine /Applications/SpreadPaper.app</code>
-              <button type="button" hidden data-copy-target="quarantine-command" data-copy-label="Copy" data-copied-label="Copied" class="cd-button cd-button-secondary h-9 shrink-0 gap-1.5 px-3 text-xs focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 "><Icon name="copy" data-copy-icon="idle" class="h-3.5 w-3.5" /><Icon name="check" data-copy-icon="done" hidden class="h-3.5 w-3.5" /><span data-copy-text aria-live="polite">Copy</span><span class="sr-only"> the quarantine command</span></button>
-            </div>
-          </div>
-        </div>
-
-        <p class="mt-10 max-w-[70ch] text-sm leading-relaxed text-pretty text-cd-text-secondary">The check is called Gatekeeper. Signing an app to satisfy it costs 99 dollars a year, which is not a cost this project carries.</p>
+        <p class="mt-3 max-w-[70ch] text-base leading-relaxed text-pretty text-cd-text">That is the wording macOS uses for any app not signed with a paid Apple Developer ID, and SpreadPaper is not signed with one. Nothing has been found in SpreadPaper, and nothing has been scanned: the check is for a signature, not for malware. You do not have to take that on trust, because the <a class="cd-inline-link focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cd-accent" href="https://github.com/spreadpaper/SpreadPaper">source is public</a> and every release is <a class="cd-inline-link focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cd-accent" href="https://github.com/spreadpaper/SpreadPaper/blob/main/.github/workflows/release.yml">built from it by GitHub Actions</a>.</p>
+        <p class="mt-4 max-w-[70ch] text-base leading-relaxed text-pretty text-cd-text">There are two ways past it, one through System Settings and one in Terminal, both written out on the <a class="cd-inline-link focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cd-accent" href="/help">help page</a>. It takes a minute, and only the first time.</p>
       </div>
     </div>
   </div>

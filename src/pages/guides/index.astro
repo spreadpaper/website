@@ -1,0 +1,65 @@
+---
+import Prose from '../../components/Prose.astro'
+import TextPage from '../../layouts/TextPage.astro'
+---
+
+<TextPage
+  title="Guides | SpreadPaper"
+  description="Guides to running one wallpaper across several displays on a Mac: setting it up across two monitors, and how bezel compensation works underneath."
+  socialDescription="Guides to running one wallpaper across every display on a Mac."
+  eyebrow="Guides"
+  heading="Guides to one picture across every display"
+  lead="Longer pieces than the help page. Some are step by step, some explain how a part of the app works and why it works that way. The list is short because it is new."
+>
+  <Prose>
+    <h2>The guides so far</h2>
+    <ul class="guide-list">
+      <li>
+        <a href="/guides/span-wallpaper-across-two-monitors-mac/">Spread one wallpaper across two monitors on a Mac</a>
+        <p>What to do, in order, from choosing an image wide enough for the desk to applying it across both screens.</p>
+      </li>
+      <li>
+        <a href="/guides/bezel-compensation/">How bezel compensation works</a>
+        <p>Why a picture steps sideways at the seam between two monitors, and what it takes to carry it across the gap.</p>
+      </li>
+    </ul>
+
+    <h2>What gets written next</h2>
+    <p>This page grows as questions come in. Most of what the app does now started as somebody opening an issue, and the same is true of what gets written about it. If something here is unclear, or a setup you have is not covered, say so on <a href="https://github.com/spreadpaper/SpreadPaper/issues">GitHub</a> and it becomes the next guide. The <a href="/help">help page</a> covers installing and troubleshooting in the meantime.</p>
+  </Prose>
+</TextPage>
+
+<style>
+  .guide-list {
+    margin-top: 1.5rem;
+    display: block;
+    list-style: none;
+    padding-left: 0;
+    border-bottom: 1px solid var(--color-cd-border);
+  }
+
+  .guide-list li {
+    border-top: 1px solid var(--color-cd-border);
+    padding-block: 1.125rem;
+  }
+
+  .guide-list a {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-cd-text);
+    text-decoration: none;
+  }
+
+  .guide-list a:hover {
+    text-decoration: underline;
+    text-decoration-color: var(--color-cd-accent);
+    text-underline-offset: 3px;
+  }
+
+  .guide-list p {
+    margin: 0.25rem 0 0;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--color-cd-text-secondary);
+  }
+</style>

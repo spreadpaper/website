@@ -1,0 +1,58 @@
+---
+import Footer from '../components/sections/Footer.astro'
+import Nav from '../components/sections/Nav.astro'
+import Layout from './Layout.astro'
+
+/**
+ * The shell every page that is prose rather than product uses: help, project,
+ * the guides, alternatives, privacy and terms.
+ *
+ * The front page is a composition of photographs and drawn monitors and owns
+ * its own layout. These pages are read top to bottom instead, so they share one
+ * header block and a single measured column, and nothing else.
+ */
+export interface Props {
+  title: string
+  description: string
+  socialDescription: string
+  /** The small uppercase label above the heading. */
+  eyebrow: string
+  /** The page heading, set at the h2 size because no page here is the hero. */
+  heading: string
+  /** One paragraph beside the heading, filling the right of the row. */
+  lead: string
+  /** Shown under the lead where a page is worth dating. */
+  updated?: string
+}
+
+const { title, description, socialDescription, eyebrow, heading, lead, updated } = Astro.props
+---
+
+<Layout title={title} description={description} socialDescription={socialDescription}>
+  <Nav />
+  <main id="main" class="cd-section bg-cd-bg">
+    <div class="cd-shell">
+      <div class="grid grid-cols-12 gap-x-6 gap-y-10">
+        <div class="col-span-12 lg:col-span-6">
+          <p class="cd-eyebrow">{eyebrow}</p>
+          <h1
+            class="mt-3 text-3xl font-bold leading-[1.05] tracking-[-0.025em] text-balance text-cd-text sm:text-4xl lg:text-5xl"
+          >
+            {heading}
+          </h1>
+        </div>
+        <div class="col-span-12 lg:col-span-5 lg:col-start-8">
+          <p class="text-lg leading-relaxed text-pretty text-cd-text-secondary sm:text-xl">
+            {lead}
+          </p>
+          {updated && <p class="mt-5 text-sm text-cd-text-secondary">Last updated {updated}</p>}
+        </div>
+      </div>
+
+      <div class="mt-16 max-w-[62ch]">
+        <slot />
+      </div>
+    </div>
+  </main>
+  <Footer />
+</Layout>

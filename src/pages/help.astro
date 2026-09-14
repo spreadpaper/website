@@ -1,0 +1,75 @@
+---
+import Icon from '../components/Icon.astro'
+import Prose from '../components/Prose.astro'
+import TextPage from '../layouts/TextPage.astro'
+---
+
+<TextPage
+  title="Installing and troubleshooting | SpreadPaper"
+  description="How to get past the macOS warning on first launch, and what to do when a display is missed, a wallpaper does not apply, or a preset goes missing."
+  socialDescription="Getting SpreadPaper open on macOS, and what to do when something does not work."
+  eyebrow="Help"
+  heading="Getting it open, and what to do when it misbehaves"
+  lead="The first launch needs one extra step, because the app is not signed with a paid Apple Developer ID. Everything after that is the short list of things that actually go wrong."
+>
+  <Prose>
+    <h2 id="first-launch">The warning on first launch</h2>
+    <p>macOS shows a warning for any app not signed with a paid Apple Developer ID. It has not scanned SpreadPaper and found something; it has looked for a signature and not found one. The check is for a signature, not for malware. You do not have to take that on trust either, because the source is public and every release is built from it by GitHub Actions.</p>
+    <p>Take either route. It takes a minute, and only the first time.</p>
+
+    <h3>Through System Settings</h3>
+    <ol>
+      <li>Drag SpreadPaper to your Applications folder.</li>
+      <li>Open it, then click Done on the warning.</li>
+      <li>Open System Settings, then Privacy and Security, and scroll to the bottom.</li>
+      <li>Click Open Anyway, then confirm with Open.</li>
+    </ol>
+    <div class="note">
+      <p>On macOS 15 Sequoia and later this is the route. Right clicking the app and choosing Open no longer works: Apple removed that shortcut, so any instructions telling you to do that are out of date.</p>
+    </div>
+
+    <h3>Or in Terminal, before you open it</h3>
+    <p>Drag SpreadPaper to your Applications folder, then run this. It skips the warning entirely.</p>
+    <div class="flex items-start gap-2 rounded-xl border border-cd-border bg-cd-bg-secondary p-3">
+      <code id="quarantine-command" class="cd-code min-w-0 flex-1 py-1 pl-1">xattr -dr com.apple.quarantine /Applications/SpreadPaper.app</code>
+      <button type="button" hidden data-copy-target="quarantine-command" data-copy-label="Copy" data-copied-label="Copied" class="cd-button cd-button-secondary h-9 shrink-0 gap-1.5 px-3 text-xs focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 "><Icon name="copy" data-copy-icon="idle" class="h-3.5 w-3.5" /><Icon name="check" data-copy-icon="done" hidden class="h-3.5 w-3.5" /><span data-copy-text aria-live="polite">Copy</span><span class="sr-only"> the quarantine command</span></button>
+    </div>
+
+    <h2 id="requirements">What it needs</h2>
+    <dl class="dl">
+      <div>
+        <dt>macOS</dt>
+        <dd>15.0 Sequoia or later</dd>
+      </div>
+      <div>
+        <dt>Mac</dt>
+        <dd>Apple silicon</dd>
+      </div>
+      <div>
+        <dt>Displays</dt>
+        <dd>Any number, in any arrangement, at any resolution</dd>
+      </div>
+      <div>
+        <dt>Account</dt>
+        <dd>None. Nothing to sign in to</dd>
+      </div>
+    </dl>
+
+    <h2 id="displays">A display is missing from the preview</h2>
+    <p>SpreadPaper reads your arrangement from macOS rather than asking you to describe it, so the preview matches whatever System Settings believes is connected. If a screen is missing there, it will be missing here too. Open System Settings, then Displays, and check the arrangement is what you expect before looking at the app.</p>
+    <p>If you plug in or unplug a monitor while the app is open, it notices and redraws. If it does not, quitting and reopening rebuilds the arrangement from scratch.</p>
+
+    <h2 id="not-applying">The wallpaper does not change</h2>
+    <p>macOS keeps a wallpaper per desktop space, not one per display, so a wallpaper set on one space does not follow you to another. If a space you rarely visit still shows the old image, switch to it once and apply again.</p>
+    <p>Applying also writes real files to disk and asks macOS to load them, so on a slow disk or with a very large photograph there is a pause between clicking and the screen changing.</p>
+
+    <h2 id="presets">Where presets and rendered wallpapers live</h2>
+    <p>Both live inside the app's own container, which is where a sandboxed Mac app is allowed to keep its files. Nothing is written to your Pictures folder and nothing is uploaded. Deleting the app removes them with it, so export anything you want to keep first.</p>
+
+    <h2 id="quality">The image looks soft</h2>
+    <p>Each display is rendered at its own native resolution rather than from one shared bitmap, so softness almost always means the source photograph does not have enough pixels for the total width of your desk. Three 4K monitors side by side want something close to 11520 pixels across. Anything narrower is being enlarged to fit.</p>
+
+    <h2 id="still-stuck">Still stuck</h2>
+    <p>Open an issue on <a href="https://github.com/spreadpaper/SpreadPaper/issues">GitHub</a> with your macOS version, how many displays you have and what you expected to happen. Most of what the app does now started as somebody doing exactly that. If you would rather not use GitHub, <a href="mailto:hello@spreadpaper.app">hello@spreadpaper.app</a> reaches the same person.</p>
+  </Prose>
+</TextPage>

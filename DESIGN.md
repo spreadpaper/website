@@ -48,6 +48,18 @@ Every section is `<section class="cd-section"><div class="cd-shell">`. Inside th
 
 Section backgrounds alternate `bg-cd-bg` and `bg-cd-canvas` or `bg-cd-bg-secondary`. Never two identical backgrounds adjacent, and the seam between two sections stays a hard edge: no gradient bleeding one section into the next.
 
+## Text pages
+
+The site is no longer one page. `/help`, `/project`, `/guides`, `/alternatives`, `/privacy` and `/terms` are text pages, and they are a different kind of object from the homepage: prose a person came to read, not a composition that has to sell anything. They run on `src/layouts/TextPage.astro` with `src/components/Prose.astro` inside it, and a new one adds a page, never a new layout.
+
+Three things follow from that, and all three are exceptions to what is written above.
+
+They open at the h2 size, not the h1 size. The element is still an `<h1>`, because a page owes its reader one, but it is set at `text-3xl sm:text-4xl lg:text-5xl`. The h1 size is the hero's, and the hero is a claim about the product. None of these pages is the hero, and a privacy policy set at 96px is a joke about itself. Everything under a page heading steps down accordingly: an `h2` in `Prose.astro` takes the h3 size, so nothing on the page competes with the heading it sits under.
+
+The body is one measured column, not twelve. The header still splits across the twelve, heading in the left six and lead in the right five, which is composition law rule 3 and the one part of that law which survives here. Everything below it runs in a single column capped at 62ch, because a measure is the only thing that makes long prose readable, and it sits in the same `.cd-shell` so the nav and the footer still line up with it.
+
+The rest of the composition law does not apply to them. Rule 2, that a visual beside text must reach 70 per cent of that text block's height, presumes a visual; these pages have none, and a screenshot dropped in to satisfy a rule about voids would be decoration, which is banned everywhere. Rule 1 about empty columns goes with it below the header, since the body has no twelve columns to leave empty. The air to the right of a measured column is not a void, it is the measure doing its job. What still holds is the type scale, the colour rules, the focus rules, the ban on em dashes, and every word in Copy.
+
 ## The rig
 
 A rig is one photograph shown across a drawn set of monitors. It replaced the bare `.spread` band everywhere on the page, gallery thumbnails included: there the rig simply loses its stand, its foot and its light, which is `rig-thumb`. `.spread` is gone from `src/style.css` and nothing should reintroduce it.

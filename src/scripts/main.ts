@@ -41,6 +41,9 @@ function setupMobileMenu() {
 /**
  * Marks the nav link for the section the reader is in with `aria-current`.
  * Runs off one observer rather than a scroll handler.
+ *
+ * Only the homepage has those sections, and off it the nav points at `/#id`
+ * rather than `#id`, so nothing matches and this returns having done nothing.
  */
 function setupScrollSpy() {
   const linksById = new Map<string, Element[]>()

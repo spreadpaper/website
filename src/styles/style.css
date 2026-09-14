@@ -157,6 +157,16 @@ body {
 
 /* Secondary, not tertiary: at this size tertiary measures under 4:1 on the page
    background and fails AA, and every eyebrow on the site inherits from here. */
+/* Monospace sample, for a command or a value the reader may copy. Lived scoped
+   inside Download.astro until the text pages needed it too. */
+.cd-code {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: var(--color-cd-text);
+  overflow-x: auto;
+}
+
 .cd-eyebrow {
   text-transform: uppercase;
   letter-spacing: 0.12em;
