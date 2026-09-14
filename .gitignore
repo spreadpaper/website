@@ -29,3 +29,6 @@ Thumbs.db
 
 # Astro
 .astro/
+
+# Agent worktrees
+.claude/

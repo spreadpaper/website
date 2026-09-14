@@ -15,6 +15,8 @@ npm run preview  # Serve the built site
 
 Node 24 or later. The rig scripts and the page test are TypeScript run straight through Node's own type stripping, so there is no build step for them and no `tsx`.
 
+TypeScript is held at 6.x: `astro check` needs the programmatic compiler API, which TypeScript 7's native compiler does not expose yet ([tracking](https://github.com/withastro/roadmap/discussions/1321)).
+
 ## Checks
 
 ```bash
