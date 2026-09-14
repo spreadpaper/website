@@ -1,0 +1,33 @@
+{
+  "name": "spreadpaper-website",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "rigs": "node scripts/rigs-docs.ts && node scripts/rigs-preview.ts",
+    "rigs:check": "node scripts/rigs-check.ts",
+    "test": "npm run build && npm run rigs:check && node test/page.test.ts",
+    "deploy": "npm run build && wrangler deploy"
+  },
+  "dependencies": {
+    "astro": "^7.3.2"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.5",
+    "@astrojs/sitemap": "^3.7.4",
+    "@phosphor-icons/core": "^2.1.1",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/jsdom": "^30.0.0",
+    "jsdom": "^30.0.1",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.9.3",
+    "wrangler": "^4.131.2"
+  }
+}

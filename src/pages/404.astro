@@ -1,0 +1,32 @@
+---
+import Footer from '../components/sections/Footer.astro'
+import Nav from '../components/sections/Nav.astro'
+import Layout from '../layouts/Layout.astro'
+---
+
+<Layout
+  title="Page not found — SpreadPaper"
+  description="That page is not here. SpreadPaper spreads one photograph across every Mac display."
+  socialDescription="One photograph across two, three or more monitors, lined up across the bezels. Free, open source, native macOS."
+>
+  <Nav />
+  <main id="main" class="cd-section bg-cd-bg">
+    <div class="cd-shell">
+      <p class="cd-eyebrow">404</p>
+      <h1
+        class="mt-5 max-w-[18ch] text-5xl font-extrabold leading-[0.95] tracking-[-0.035em] text-balance text-cd-text sm:text-7xl"
+      >
+        That page is not here
+      </h1>
+      <p class="mt-6 max-w-[46ch] text-lg leading-relaxed text-pretty text-cd-text-secondary">
+        The link may be old, or the page may never have existed. The front page has the app, what it
+        does, and where to download it.
+      </p>
+      <a
+        class="cd-button cd-button-primary mt-8 px-7 py-3.5 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cd-accent"
+        href="/">Back to the front page</a
+      >
+    </div>
+  </main>
+  <Footer />
+</Layout>

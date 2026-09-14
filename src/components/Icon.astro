@@ -1,0 +1,39 @@
+---
+import { readFileSync } from 'node:fs'
+import { createRequire } from 'node:module'
+import { resolve } from 'node:path'
+
+/* Phosphor ships as raw SVG here, so only the glyphs the page names are ever
+   written out. The webfont build is 144 KB of woff2 for all 1,512 of them. */
+const ICON_ROOT = resolve(
+  createRequire(import.meta.url).resolve('@phosphor-icons/core/assets/regular/gear.svg'),
+  '../..'
+)
+
+type Weight = 'thin' | 'light' | 'regular' | 'bold' | 'fill' | 'duotone'
+
+export interface Props extends astroHTML.JSX.SVGAttributes {
+  /** Phosphor glyph name, as the file is called in `@phosphor-icons/core`. */
+  name: string
+  /** Phosphor weight. Anything but `regular` reads from that weight's folder. */
+  weight?: Weight
+  /** SVG takes the global `hidden` attribute; Astro's SVG props leave it out. */
+  hidden?: boolean | undefined
+}
+
+const { name, weight = 'regular', ...attrs } = Astro.props
+
+const file = resolve(ICON_ROOT, weight, `${name}${weight === 'regular' ? '' : `-${weight}`}.svg`)
+
+let source: string
+try {
+  source = readFileSync(file, 'utf8')
+} catch {
+  throw new Error(`<Icon name="${name}"> names no Phosphor glyph: there is no ${weight} icon called "${name}".`)
+}
+
+const viewBox = source.match(/viewBox="([^"]*)"/)?.[1] ?? '0 0 256 256'
+const body = source.replace(/^[\s\S]*?<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '')
+---
+
+<svg viewBox={viewBox} fill="currentColor" aria-hidden="true" focusable="false" {...attrs} set:html={body} />

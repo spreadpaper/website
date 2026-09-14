@@ -1,0 +1,23 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "spreadpaper-website",
+  "compatibility_date": "2026-09-14",
+
+  // Off, or the page is also indexable at spreadpaper-website.<subdomain>.workers.dev.
+  "workers_dev": false,
+
+  // No `main`: fully static, so no Worker script and no billed requests.
+  "assets": {
+    "directory": "./dist/",
+    "html_handling": "auto-trailing-slash",
+    // Defaults to "none", which serves no 404 page at all.
+    "not_found_handling": "404-page"
+  },
+
+  // Apex and www are separate hostnames; a Worker on one never sees the other.
+  // Neither can be attached while a CNAME exists on it.
+  "routes": [
+    { "pattern": "spreadpaper.app", "custom_domain": true },
+    { "pattern": "www.spreadpaper.app", "custom_domain": true }
+  ]
+}

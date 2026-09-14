@@ -1,0 +1,26 @@
+---
+import Download from '../components/sections/Download.astro'
+import Editor from '../components/sections/Editor.astro'
+import Footer from '../components/sections/Footer.astro'
+import Gallery from '../components/sections/Gallery.astro'
+import Hero from '../components/sections/Hero.astro'
+import Nav from '../components/sections/Nav.astro'
+import Types from '../components/sections/Types.astro'
+import Layout from '../layouts/Layout.astro'
+---
+
+<Layout
+  title="SpreadPaper: span one wallpaper across every Mac display"
+  description="Free, open source macOS app that spreads one photograph across two, three or more monitors. Bezel compensation, Light and Dark pairs, time-of-day schedules."
+  socialDescription="One photograph across two, three or more monitors, lined up across the bezels. Free, open source, native macOS."
+>
+  <Nav />
+  <main id="main">
+    <Hero />
+    <Types />
+    <Editor />
+    <Gallery />
+    <Download />
+  </main>
+  <Footer />
+</Layout>
