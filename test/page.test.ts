@@ -348,5 +348,37 @@ if (cssFiles.length) {
   }
 }
 
+console.log('\nthe photograph credits')
+// Six bands and six names in two separate grids, so the only thing keeping a
+// photographer under their own photograph is that both lists are built from the
+// same array in the same order. Nothing else would catch a swap: the page still
+// builds, still looks right, and credits the wrong person.
+const bands = [...doc.querySelectorAll('#site-footer .mos-seg')]
+const credits = [...doc.querySelectorAll('#site-footer .mos-name')]
+check('six bands are in the strip', bands.length === 6, `${bands.length} bands`)
+check('and six names under it', credits.length === 6, `${credits.length} names`)
+
+if (bands.length === credits.length) {
+  bands.forEach((band, i) => {
+    const photographer = credits[i].querySelector('b')!.textContent!.trim()
+    const label = band.getAttribute('aria-label') ?? ''
+    check(`band ${i + 1} is credited to the name under it`, label.includes(photographer),
+      `"${label}" does not name ${photographer}`)
+  })
+}
+
+const files = bands.map((band) => band.querySelector('img')!.getAttribute('src')!)
+check('every band is a different photograph', new Set(files).size === files.length, files.join(', '))
+for (const file of files) {
+  check(`${file} was published`, existsSync(join(site, file.replace(/^\//, ''))))
+}
+
+const profiles = credits.map((a) => a.getAttribute('href')!)
+check('every name links to a photographer rather than a photo',
+  profiles.length === 6 && profiles.every((href) => href.startsWith('https://unsplash.com/@')),
+  profiles.join(', '))
+check('and the licence is linked once',
+  doc.querySelectorAll('#site-footer a[href="https://unsplash.com/license"]').length === 1)
+
 console.log(failures ? `\n${failures} FAILED` : '\nall checks passed')
 process.exit(failures ? 1 : 0)
