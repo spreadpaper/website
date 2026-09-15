@@ -46,6 +46,20 @@ const photographs = [
     photo: 'https://unsplash.com/photos/snow-mountain-under-stars-phIFdC6lA4E',
   },
 ]
+
+// The last row keeps only what is reachable nowhere else. Help, Guides and
+// Project moved into the top nav, so repeating them here was three of seven
+// links pointing at a bar the reader can already see. Alternatives stays
+// because this row is still the only link to it on the site.
+const legal = [
+  { href: '/alternatives', label: 'Alternatives' },
+  { href: '/privacy', label: 'Privacy policy' },
+  { href: '/terms', label: 'Terms of service' },
+  { href: 'mailto:hello@spreadpaper.app', label: 'hello@spreadpaper.app' },
+]
+
+// Taken from the build rather than typed, so a year never has to be a commit.
+const year = new Date().getFullYear()
 ---
 
 <style>
@@ -175,6 +189,60 @@ const photographs = [
       transition: none;
     }
   }
+
+  /* --- The last line ---------------------------------------------------
+     One row at the smallest size the footer uses: the sentence on the left,
+     the links that live nowhere else on the right, both on one baseline.
+     The footer has said everything by this point, so this only closes it. */
+  .base-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    column-gap: 2rem;
+    row-gap: 0.75rem;
+  }
+
+  .base-line {
+    margin: 0;
+    font-size: 0.8125rem;
+    color: var(--color-cd-text-tertiary);
+  }
+
+  .base-line a {
+    color: var(--color-cd-text-secondary);
+    transition: color 150ms var(--ease-out);
+  }
+
+  .base-links {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: 1.25rem;
+    row-gap: 0.25rem;
+  }
+
+  .base-links a {
+    font-size: 0.8125rem;
+    color: var(--color-cd-text-tertiary);
+    transition: color 150ms var(--ease-out);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .base-line a:hover,
+    .base-links a:hover {
+      color: var(--color-cd-text);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .base-line a,
+    .base-links a {
+      transition: none;
+    }
+  }
 </style>
 
 <footer id="site-footer" class="bg-cd-bg px-5 py-14">
@@ -232,17 +300,13 @@ const photographs = [
       </ul>
     </div>
 
-    <div class="mt-10 border-t border-cd-border pt-8">
-      <p class="text-sm text-cd-text-secondary">Copyright Robin van Baalen. Released under the <a class="cd-inline-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="https://github.com/spreadpaper/SpreadPaper/blob/main/LICENSE">MIT licence</a>.</p>
-      <nav aria-label="Site" class="mt-3">
-        <ul class="flex flex-wrap gap-x-6 gap-y-1">
-          <li><a class="footer-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="/help">Help</a></li>
-          <li><a class="footer-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="/project">Project</a></li>
-          <li><a class="footer-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="/guides">Guides</a></li>
-          <li><a class="footer-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="/alternatives">Alternatives</a></li>
-          <li><a class="footer-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="/privacy">Privacy policy</a></li>
-          <li><a class="footer-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="/terms">Terms of service</a></li>
-          <li><a class="footer-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="mailto:hello@spreadpaper.app">hello@spreadpaper.app</a></li>
+    <div class="base-row mt-10 border-t border-cd-border pt-6">
+      <p class="base-line">Copyright {year} Robin van Baalen. Released under the <a class="focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="https://github.com/spreadpaper/SpreadPaper/blob/main/LICENSE">MIT licence</a>.</p>
+      <nav aria-label="Site">
+        <ul class="base-links">
+          {legal.map((link) => (
+            <li><a class="focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href={link.href}>{link.label}</a></li>
+          ))}
         </ul>
       </nav>
     </div>

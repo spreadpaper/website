@@ -380,5 +380,22 @@ check('every name links to a photographer rather than a photo',
 check('and the licence is linked once',
   doc.querySelectorAll('#site-footer a[href="https://unsplash.com/license"]').length === 1)
 
+console.log('\nthe last line of the footer')
+// Help, Guides and Project moved into the top nav and came out of this row, so
+// what is left is the only route to these three pages anywhere on the site.
+// Drop one by accident and it is reachable from nothing but the sitemap.
+const lastRow = [...doc.querySelectorAll('#site-footer .base-links a')].map((a) => a.getAttribute('href')!)
+for (const href of ['/alternatives', '/privacy', '/terms', 'mailto:hello@spreadpaper.app']) {
+  check(`${href} is still linked`, lastRow.includes(href), lastRow.join(', '))
+}
+check('and nothing the top nav already carries came back',
+  !lastRow.some((href) => ['/help', '/guides', '/project'].includes(href)),
+  lastRow.join(', '))
+
+const copyright = doc.querySelector('#site-footer .base-line')!.textContent!.trim()
+check('the copyright line carries a four digit year', /Copyright \d{4} /.test(copyright), copyright)
+check('and links the licence',
+  doc.querySelector('#site-footer .base-line a')?.getAttribute('href')?.endsWith('/LICENSE') === true)
+
 console.log(failures ? `\n${failures} FAILED` : '\nall checks passed')
 process.exit(failures ? 1 : 0)
