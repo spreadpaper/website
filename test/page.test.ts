@@ -277,9 +277,15 @@ check('clicking copies the command itself, trimmed',
 check('and the label confirms it',
   clipButton.querySelector('[data-copy-text]')!.textContent === clipButton.dataset.copiedLabel,
   `got "${clipButton.querySelector('[data-copy-text]')!.textContent}"`)
-check('and the glyphs swap with it',
-  clipButton.querySelector('[data-copy-icon="idle"]')!.hasAttribute('hidden') &&
+// The glyphs cross fade rather than swapping `hidden`, since display:none
+// cannot transition. `data-copied` is the state CSS reads, and both glyphs
+// stay in flow once the button is live so neither can teleport.
+check('and the state the glyphs animate from is set', clipButton.hasAttribute('data-copied'))
+check('both glyphs are in flow, so the swap can be a cross fade',
+  !clipButton.querySelector('[data-copy-icon="idle"]')!.hasAttribute('hidden') &&
     !clipButton.querySelector('[data-copy-icon="done"]')!.hasAttribute('hidden'))
+check('and neither is announced twice',
+  clipButton.querySelectorAll('[data-copy-icon][aria-hidden="true"]').length === 2)
 
 console.log('\nclock phase')
 const clock = doc.querySelector<HTMLElement>('[data-clock-stops]')!

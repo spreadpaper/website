@@ -125,10 +125,16 @@ function setupCopyButtons() {
     const idleIcon = button.querySelector('[data-copy-icon="idle"]')
     const doneIcon = button.querySelector('[data-copy-icon="done"]')
 
+    // `hidden` is display:none and cannot cross fade, so once the button is
+    // live the glyphs stay in flow and `data-copied` drives the swap in CSS.
+    // They keep `aria-hidden`, so a screen reader still hears one label.
+    doneIcon?.removeAttribute('hidden')
+
     const setCopied = (copied: boolean) => {
       label.textContent = copied ? button.dataset.copiedLabel! : button.dataset.copyLabel!
-      if (idleIcon) idleIcon.toggleAttribute('hidden', copied)
-      if (doneIcon) doneIcon.toggleAttribute('hidden', !copied)
+      button.toggleAttribute('data-copied', copied)
+      idleIcon?.setAttribute('aria-hidden', 'true')
+      doneIcon?.setAttribute('aria-hidden', 'true')
     }
 
     let reset: ReturnType<typeof setTimeout> | undefined

@@ -59,6 +59,39 @@ body {
   transform: translateY(1px);
 }
 
+/* The copy button's two glyphs share one cell so the confirmation can cross
+   fade rather than teleport. Both ship in the markup with `done` hidden, which
+   is the correct no-script state; `setupCopyButtons` drops that attribute and
+   hands the swap to `data-copied` once it can actually copy. */
+.cd-copy-glyphs {
+  display: grid;
+  place-items: center;
+}
+
+.cd-copy-glyphs > * {
+  grid-area: 1 / 1;
+  transition:
+    opacity 140ms cubic-bezier(0.23, 1, 0.32, 1),
+    transform 140ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.cd-copy-glyphs [data-copy-icon='done'],
+[data-copied] .cd-copy-glyphs [data-copy-icon='idle'] {
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+[data-copied] .cd-copy-glyphs [data-copy-icon='done'] {
+  opacity: 1;
+  transform: scale(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cd-copy-glyphs > * {
+    transition-property: opacity;
+  }
+}
+
 /* The gradient runs downward into a deeper indigo, never up towards the
    periwinkle: white sits at 5.06:1 on the top stop and 6.86:1 on the bottom,
    while #7c7cff would drop it to 3.39:1 and fail at button size. */
