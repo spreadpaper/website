@@ -39,51 +39,6 @@ function setupMobileMenu() {
 }
 
 /**
- * Marks the nav link for the section the reader is in with `aria-current`.
- * Runs off one observer rather than a scroll handler.
- *
- * Only the homepage has those sections, and off it the nav points at `/#id`
- * rather than `#id`, so nothing matches and this returns having done nothing.
- */
-function setupScrollSpy() {
-  const linksById = new Map<string, Element[]>()
-  document.querySelectorAll('#site-nav a[href^="#"]').forEach((link) => {
-    const id = link.getAttribute('href')!.slice(1)
-    if (!id) return
-    if (!linksById.has(id)) linksById.set(id, [])
-    linksById.get(id)!.push(link)
-  })
-
-  // Sections only: the wordmark points at `#main`, which wraps every one of them
-  // and so always intersects, and would take the mark on every scroll position.
-  const sections = [...linksById.keys()]
-    .map((id) => document.getElementById(id))
-    .filter((element): element is HTMLElement => element?.tagName === 'SECTION')
-  if (!sections.length) return
-
-  const visible = new Set<string>()
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) visible.add(entry.target.id)
-        else visible.delete(entry.target.id)
-      })
-
-      const active = sections.find((section) => visible.has(section.id))
-      linksById.forEach((links, id) => {
-        links.forEach((link) => {
-          if (active && active.id === id) link.setAttribute('aria-current', 'true')
-          else link.removeAttribute('aria-current')
-        })
-      })
-    },
-    { rootMargin: '-20% 0px -70% 0px' }
-  )
-
-  sections.forEach((section) => observer.observe(section))
-}
-
-/**
  * Fades a block in once as it reaches the viewport. Opting in per element
  * with `data-reveal` keeps the page readable if the script never runs.
  */
@@ -281,7 +236,6 @@ function setupStarCount(): void {
 }
 
 setupMobileMenu()
-setupScrollSpy()
 setupScrollReveal()
 setupBezelSliders()
 setupTabs()

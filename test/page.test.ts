@@ -181,47 +181,54 @@ check('and restores the glyphs',
   !doc.querySelector('[data-nav-icon="open"]')!.hasAttribute('hidden') &&
     doc.querySelector('[data-nav-icon="close"]')!.hasAttribute('hidden'))
 
-console.log('\nscroll spy')
-const spy = observers.find((o) => o.options?.rootMargin === '-20% 0px -70% 0px')!
-check('the spy is watching something', Boolean(spy?.targets.length))
-check('it watches sections only, never the main wrapper',
-  spy.targets.every((t) => t.tagName === 'SECTION'),
-  spy.targets.map((t) => `${t.tagName}#${t.id}`).join(', '))
+console.log('\nthe nav lists destinations')
+// The bar lists where you can go. It used to list the four homepage sections,
+// which made every link on a text page a trip back to the homepage.
+const DESTINATIONS = ['Features', 'Help', 'Guides', 'Project']
+const navLabels = [...doc.querySelectorAll('#nav-links a')].map((a) => a.textContent!.trim())
+check('the four destinations are there, in order', navLabels.join(' ') === DESTINATIONS.join(' '), navLabels.join(' '))
 
-// `main` wraps every section, so it intersects wherever the reader is. Replaying
-// that is what shows whether the spy marks the section or the page.
-const marksFor = (id: string) => {
-  spy.callback(spy.targets.map((target) => ({ target, isIntersecting: target.id === id })))
-  return [...doc.querySelectorAll('#site-nav [aria-current]')].map((a) => a.getAttribute('href'))
-}
-for (const id of ['types', 'editor', 'gallery']) {
-  const marked = marksFor(id)
-  check(`reading #${id} marks its own link`, marked.length > 0 && marked.every((h) => h === `#${id}`),
-    `marked ${marked.join(' + ') || 'nothing'}`)
-}
+const mobileLabels = [...doc.querySelectorAll('#nav-menu a')]
+  .map((a) => a.textContent!.trim())
+  .filter((label) => DESTINATIONS.includes(label))
+check('the mobile panel carries the same four', mobileLabels.join(' ') === DESTINATIONS.join(' '), mobileLabels.join(' '))
+
+const homeMarked = [...doc.querySelectorAll('#site-nav [aria-current]')].map((a) => a.textContent!.trim())
+check('the homepage marks Features and nothing else',
+  homeMarked.length > 0 && homeMarked.every((label) => label === 'Features'),
+  homeMarked.join(' + ') || 'nothing')
 check('the wordmark is never marked', !doc.querySelector('#site-nav a[href="#main"][aria-current]'))
 
 console.log('\nthe nav away from the homepage')
-// Those sections exist on the homepage and nowhere else, so a bare fragment on a
-// text page scrolls nowhere. Read whichever built page is not the homepage
-// rather than naming one, so adding or renaming a page cannot rot this.
-const awayFile = readdirSync(site, { withFileTypes: true })
+// The product sections exist on the homepage and nowhere else, so a bare
+// fragment on a text page scrolls nowhere.
+const helpDoc = new JSDOM(readFileSync(join(site, 'help', 'index.html'), 'utf8')).window.document
+const helpFragments = [...helpDoc.querySelectorAll('#nav-links a, #nav-menu a')]
+  .map((link) => link.getAttribute('href')!)
+  .filter((href) => href.includes('#'))
+check('every in-page target goes home first', helpFragments.length > 0 && helpFragments.every((href) => href.startsWith('/#')),
+  helpFragments.join(', ') || 'no fragments found')
+check('the wordmark goes home rather than to the top of this page',
+  helpDoc.querySelector('#site-nav a')?.getAttribute('href') === '/',
+  `got "${helpDoc.querySelector('#site-nav a')?.getAttribute('href')}"`)
+
+const helpMarked = [...helpDoc.querySelectorAll('#site-nav [aria-current]')].map((a) => a.textContent!.trim())
+check('the help page marks Help and nothing else',
+  helpMarked.length > 0 && helpMarked.every((label) => label === 'Help'),
+  helpMarked.join(' + ') || 'nothing')
+
+// A guide sits under /guides/, so a prefix match is what keeps Guides marked there.
+const guideFile = readdirSync(join(site, 'guides'), { withFileTypes: true })
   .filter((entry) => entry.isDirectory())
-  .map((entry) => join(site, entry.name, 'index.html'))
-  .find((file) => existsSync(file) && readFileSync(file, 'utf8').includes('id="site-nav"'))
-check('a page other than the homepage was built to check', Boolean(awayFile), site)
-if (awayFile) {
-  const away = new JSDOM(readFileSync(awayFile, 'utf8')).window.document
-  const anchors = [...away.querySelectorAll('#nav-sections a, #nav-menu a')]
-    .map((link) => link.getAttribute('href')!)
-    .filter((href) => href.includes('#'))
-  check('every product anchor goes home first', anchors.length > 0 && anchors.every((href) => href.startsWith('/#')),
-    anchors.join(', ') || 'no anchors found')
-  check('the wordmark goes home rather than to the top of this page',
-    away.querySelector('#site-nav a')?.getAttribute('href') === '/',
-    `got "${away.querySelector('#site-nav a')?.getAttribute('href')}"`)
-  check('the homepage keeps its bare fragments, so the spy still reads them',
-    [...doc.querySelectorAll('#nav-sections a')].every((link) => link.getAttribute('href')!.startsWith('#')))
+  .map((entry) => join(site, 'guides', entry.name, 'index.html'))
+  .find((file) => existsSync(file))
+check('a guide was built to check', Boolean(guideFile), join(site, 'guides'))
+if (guideFile) {
+  const guideDoc = new JSDOM(readFileSync(guideFile, 'utf8')).window.document
+  const guideMarked = [...guideDoc.querySelectorAll('#site-nav [aria-current]')].map((a) => a.textContent!.trim())
+  check('a page nested under /guides still marks Guides',
+    guideMarked.length > 0 && guideMarked.every((label) => label === 'Guides'),
+    guideMarked.join(' + ') || 'nothing')
 }
 
 console.log('\ncopy button')

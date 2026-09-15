@@ -4,12 +4,26 @@ import Icon from '../Icon.astro'
 
 const stars = await starCount()
 
+// The bar lists where you can go, not where you are on the page. Before this it
+// carried the four homepage sections, which meant every link on /help, /guides
+// and /project was a trip back to the homepage, and the pages the site had
+// grown were reachable only from the footer.
+const path = Astro.url.pathname.replace(/\/+$/, '')
+const isHome = path === ''
+
 // The product sections exist on the homepage and nowhere else, so a bare
-// fragment is a dead link on every text page. Off the homepage each anchor
-// goes home first; on it they stay fragments, which is what the scroll spy
-// reads and what keeps the jump smooth.
-const isHome = Astro.url.pathname.replace(/\/+$/, '') === ''
+// fragment is a dead link on every text page. Off the homepage an in-page
+// target goes home first.
 const anchor = (id: string) => (isHome ? `#${id}` : `/#${id}`)
+
+// Marked when you are on the page, or on one nested under it, so
+// /guides/bezel-compensation/ still marks Guides.
+const links = [
+  { href: anchor('types'), label: 'Features', current: isHome },
+  { href: '/help', label: 'Help', current: path.startsWith('/help') },
+  { href: '/guides', label: 'Guides', current: path.startsWith('/guides') },
+  { href: '/project', label: 'Project', current: path.startsWith('/project') },
+]
 ---
 
 <style>
@@ -20,15 +34,38 @@ const anchor = (id: string) => (isHome ? `#${id}` : `/#${id}`)
     scroll-margin-top: 5rem;
   }
 
+  /* Three zones: the wordmark holds the left, the links sit on the centre, the
+     two actions hold the right. The outer columns are equal fractions so the
+     middle one lands on the centre of the band rather than the centre of
+     whatever is left over. */
+  .nav-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 1rem;
+    height: 3.5rem;
+  }
+
+  .nav-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    grid-column: 3;
+  }
+
   .nav-link {
     display: inline-flex;
     align-items: center;
+    height: 2rem;
     border-radius: 9999px;
-    padding: 0.375rem 0.75rem;
+    padding-inline: 0.875rem;
     font-size: 0.875rem;
     font-weight: 500;
     color: var(--color-cd-text-secondary);
-    transition: color 150ms ease-out, background-color 150ms ease-out;
+    transition:
+      color 150ms var(--ease-out),
+      background-color 150ms var(--ease-out);
   }
 
   @media (hover: hover) and (pointer: fine) {
@@ -38,15 +75,13 @@ const anchor = (id: string) => (isHome ? `#${id}` : `/#${id}`)
     }
   }
 
-  /* The section the reader is in. A real underline rather than a box-shadow, so it
-     survives forced-colors mode, and a colour shift alone is too quiet to find. */
+  /* The page you are on, raised out of the bar. A filled pill rather than the
+     underline this carried before: the underline marked a section you were
+     scrolling through, and this marks a destination you have arrived at. */
   .nav-link[aria-current],
   .nav-link-mobile[aria-current] {
     color: var(--color-cd-text);
-    text-decoration: underline;
-    text-decoration-color: var(--color-cd-accent);
-    text-decoration-thickness: 2px;
-    text-underline-offset: 6px;
+    background-color: var(--color-cd-bg-elevated);
   }
 
   .nav-link-mobile {
@@ -58,14 +93,9 @@ const anchor = (id: string) => (isHome ? `#${id}` : `/#${id}`)
     font-size: 1rem;
     font-weight: 500;
     color: var(--color-cd-text-secondary);
-    transition: color 150ms ease-out, background-color 150ms ease-out;
-  }
-
-  /* Split from the hover deliberately: this panel is opened by a thumb, so a
-     gated hover would have taken the current marker down with it. */
-  .nav-link-mobile[aria-current] {
-    color: var(--color-cd-text);
-    background-color: var(--color-cd-bg-secondary);
+    transition:
+      color 150ms var(--ease-out),
+      background-color 150ms var(--ease-out);
   }
 
   @media (hover: hover) and (pointer: fine) {
@@ -105,41 +135,41 @@ const anchor = (id: string) => (isHome ? `#${id}` : `/#${id}`)
 <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-full focus:bg-cd-bg-elevated focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-cd-text focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 ">Skip to content</a>
 
 <nav id="site-nav" aria-label="Main" class="sticky top-0 z-50 border-b border-cd-border bg-cd-bg supports-backdrop-filter:bg-cd-bg/80 supports-backdrop-filter:backdrop-blur-md">
-  <div class="mx-auto flex h-14 max-w-[76rem] items-center gap-2 px-5">
-    <a href={isHome ? '#main' : '/'} class="mr-auto flex items-center gap-2.5 rounded-full py-1 pr-2 text-cd-text focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 ">
+  <div class="nav-row mx-auto max-w-[76rem] px-5">
+    <a href={isHome ? '#main' : '/'} class="flex items-center gap-2.5 justify-self-start rounded-full py-1 pr-2 text-cd-text focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 ">
       <img src="/app-icon-256.png" alt="" width="256" height="256" class="h-7 w-7 rounded-[7px]">
       <span class="text-[0.9375rem] font-semibold tracking-[-0.01em]">SpreadPaper</span>
     </a>
 
-    <ul id="nav-sections" class="hidden items-center gap-1 md:flex">
-      <li><a class="nav-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href={anchor("types")}>Types</a></li>
-      <li><a class="nav-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href={anchor("editor")}>Editor</a></li>
-      <li><a class="nav-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href={anchor("bezels")}>Bezels</a></li>
-      <li><a class="nav-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href={anchor("gallery")}>Gallery</a></li>
+    <ul id="nav-links" class="col-start-2 hidden items-center gap-0.5 md:flex">
+      {links.map((link) => (
+        <li><a class="nav-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href={link.href} aria-current={link.current ? 'page' : undefined}>{link.label}</a></li>
+      ))}
     </ul>
 
-    <a href="https://github.com/spreadpaper/SpreadPaper" class="cd-star ml-1 hidden h-9 pl-3.5 pr-1 text-sm focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2  md:inline-flex">
-      <Icon name="star" width="16" height="16" />
-      Star
-      <span class="cd-star-count px-3" data-stars>{stars}</span>
-      <span class="sr-only">people have starred SpreadPaper on GitHub</span>
-    </a>
+    <div class="nav-actions">
+      <a href="https://github.com/spreadpaper/SpreadPaper" class="cd-star hidden h-9 pl-3.5 pr-1 text-sm focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2  md:inline-flex">
+        <Icon name="star" width="16" height="16" />
+        Star
+        <span class="cd-star-count px-3" data-stars>{stars}</span>
+        <span class="sr-only">people have starred SpreadPaper on GitHub</span>
+      </a>
 
-    <a href={anchor("download")} class="cd-button cd-button-primary hidden h-9 px-4 text-sm focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2  md:inline-flex"><Icon name="download-simple" class="h-4 w-4" />Download</a>
+      <a href={anchor("download")} class="cd-button cd-button-primary hidden h-9 px-4 text-sm focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2  md:inline-flex"><Icon name="download-simple" class="h-4 w-4" />Download</a>
 
-    <button type="button" id="nav-toggle" aria-expanded="false" aria-controls="nav-menu" class="-mr-2 inline-flex h-11 w-11 items-center justify-center rounded-full text-cd-text transition-colors duration-150 ease-out hover:bg-cd-bg-secondary focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2  md:hidden">
-      <Icon name="list" data-nav-icon="open" class="h-5 w-5" />
-      <Icon name="x" data-nav-icon="close" hidden class="h-5 w-5" />
-      <span class="sr-only">Menu</span>
-    </button>
+      <button type="button" id="nav-toggle" aria-expanded="false" aria-controls="nav-menu" class="-mr-2 inline-flex h-11 w-11 items-center justify-center rounded-full text-cd-text transition-colors duration-150 ease-out hover:bg-cd-bg-secondary focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2  md:hidden">
+        <Icon name="list" data-nav-icon="open" class="h-5 w-5" />
+        <Icon name="x" data-nav-icon="close" hidden class="h-5 w-5" />
+        <span class="sr-only">Menu</span>
+      </button>
+    </div>
   </div>
 
   <div id="nav-menu" hidden class="border-t border-cd-border bg-cd-bg md:hidden">
     <ul class="mx-auto flex max-w-[76rem] flex-col gap-1 px-5 pb-4 pt-3">
-      <li><a class="nav-link-mobile focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href={anchor("types")}>Types</a></li>
-      <li><a class="nav-link-mobile focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href={anchor("editor")}>Editor</a></li>
-      <li><a class="nav-link-mobile focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href={anchor("bezels")}>Bezels</a></li>
-      <li><a class="nav-link-mobile focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href={anchor("gallery")}>Gallery</a></li>
+      {links.map((link) => (
+        <li><a class="nav-link-mobile focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href={link.href} aria-current={link.current ? 'page' : undefined}>{link.label}</a></li>
+      ))}
       <li><a class="nav-link-mobile justify-between focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="https://github.com/spreadpaper/SpreadPaper"><span class="inline-flex items-center gap-2"><Icon name="star" width="16" height="16" />Star on GitHub</span><span class="tabular-nums text-cd-text" data-stars>{stars}</span></a></li>
       <li class="pt-2"><a href={anchor("download")} class="cd-button cd-button-primary flex h-11 w-full px-4 text-[0.9375rem] focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 ">Download</a></li>
     </ul>
