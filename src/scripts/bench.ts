@@ -280,7 +280,12 @@ function bench(root: HTMLElement) {
     /* Mirror first, then scale, then move, all about the middle of the
        arrangement, so a flip turns the picture on its own axis and a zoom grows
        out of the point the displays are centred on. */
-    const place = `transform-origin: ${b.cx}px ${b.cy}px; transform: translate(${dx}px, ${dy}px) scale(${zoom}) scaleX(${flip ? -1 : 1})`
+    /* Zoom is read from a custom property on the canvas rather than written
+       into the string. The canvas outlives this group, so the transition lives
+       somewhere stable and a rebuilt group picks up the value mid-flight. Pan
+       stays literal: it changes every frame of a drag and must not lag. */
+    el.canvas.style.setProperty('--bn-zoom', String(zoom))
+    const place = `transform-origin: ${b.cx}px ${b.cy}px; transform: translate(${dx}px, ${dy}px) scale(var(--bn-zoom)) scaleX(${flip ? -1 : 1})`
     const img = (cls: string) =>
       `<g style="${place}"><image class="${cls}" href="${state.photo.src}" x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" preserveAspectRatio="xMidYMid slice"/></g>`
 
@@ -338,6 +343,9 @@ function bench(root: HTMLElement) {
       markSelected()
       return
     }
+    /* A rebuild recreates every row, so remember which keys were already on
+       screen and let only the genuinely new one animate in. */
+    const before = new Set(listKey ? listKey.split(',') : [])
     listKey = key
 
     el.list.innerHTML = state.displays.map((d) => {
@@ -347,6 +355,7 @@ function bench(root: HTMLElement) {
       const k = 18 / Math.max(pn.w, pn.h)
       return `
         <div class="bn-row pc-focus" role="button" tabindex="0" data-row="${d.key}"
+             ${before.has(d.key + ':' + d.kind) ? '' : 'data-entering'}
              aria-current="${d.key === state.selected}"
              aria-label="${pn.name}, ${pn.pixels}. Arrow keys move it.">
           <span class="bn-row-chip" aria-hidden="true"><span style="width:${(pn.w * k).toFixed(1)}px;height:${(pn.h * k).toFixed(1)}px"></span></span>
@@ -358,6 +367,13 @@ function bench(root: HTMLElement) {
                   aria-label="Remove this ${pn.name}"${state.displays.length < 2 ? ' disabled' : ''}>${icon('x')}</button>
         </div>`
     }).join('')
+
+    /* One frame holding the entering state, so the transition has somewhere to
+       run from. */
+    const entering = el.list.querySelectorAll('[data-entering]')
+    if (entering.length) {
+      requestAnimationFrame(() => entering.forEach((row) => row.removeAttribute('data-entering')))
+    }
   }
 
   function drawBar() {
@@ -645,20 +661,33 @@ function bench(root: HTMLElement) {
     el.addButton.focus()
   }
 
+  /* `hidden` is display:none and cannot be transitioned, so it stays the
+     mounted flag and `data-open` carries the animation. The button's own
+     aria-expanded is then the only reliable reading of the state, since the
+     panel is still mounted while it animates out. */
+  const menuOpen = () => el.addButton.getAttribute('aria-expanded') === 'true'
+
   function openMenu() {
     el.menu.hidden = false
     el.addButton.setAttribute('aria-expanded', 'true')
+    requestAnimationFrame(() => el.menu.setAttribute('data-open', ''))
     el.menu.querySelector<HTMLButtonElement>('[data-add]')?.focus()
   }
 
   function closeMenu() {
-    el.menu.hidden = true
+    if (!menuOpen()) return
     el.addButton.setAttribute('aria-expanded', 'false')
+    el.menu.removeAttribute('data-open')
+    el.menu.addEventListener('transitionend', function done(e) {
+      if (e.propertyName !== 'opacity') return
+      el.menu.removeEventListener('transitionend', done)
+      if (!menuOpen()) el.menu.hidden = true
+    })
   }
 
   el.addButton.addEventListener('click', () => {
-    if (el.menu.hidden) openMenu()
-    else closeMenu()
+    if (menuOpen()) closeMenu()
+    else openMenu()
   })
 
   el.menu.addEventListener('click', (e) => {
@@ -667,14 +696,14 @@ function bench(root: HTMLElement) {
   })
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !el.menu.hidden) {
+    if (e.key === 'Escape' && menuOpen()) {
       closeMenu()
       el.addButton.focus()
     }
   })
 
   document.addEventListener('pointerdown', (e) => {
-    if (el.menu.hidden) return
+    if (!menuOpen()) return
     const target = e.target as Node
     if (!el.menu.contains(target) && target !== el.addButton) closeMenu()
   })

@@ -310,8 +310,92 @@ import Icon from '../Icon.astro'
       text-wrap: pretty;
     }
 
+    /* Every pressable thing in the bench answers a press, the way `.cd-button`
+       does everywhere else on the site. Scale takes the glyph down with the
+       button, which is what a finger expects. */
+    #editor .bn-thumb:active,
+    #editor .bn-menu-item:active,
+    #editor .bn-seg-item:active,
+    #editor .bn-tool:not(:disabled):active,
+    #editor .bn-remove:not(:disabled):active {
+      transform: scale(0.97);
+    }
+
+    #editor .bn-thumb,
+    #editor .bn-menu-item,
+    #editor .bn-seg-item,
+    #editor .bn-tool,
+    #editor .bn-remove {
+      transition-property: background-color, border-color, color, transform;
+      transition-duration: 150ms, 150ms, 150ms, 160ms;
+      transition-timing-function: var(--ease-out);
+    }
+
+    /* The menu belongs to the button under it, so it grows from that edge
+       rather than appearing beside it. `hidden` stays the mounted flag, since
+       display:none cannot be transitioned, and `data-open` does the moving. */
+    #editor .bn-menu {
+      transform-origin: top center;
+      transform: scale(0.97) translateY(-4px);
+      opacity: 0;
+      transition:
+        transform 160ms var(--ease-out),
+        opacity 130ms var(--ease-out);
+    }
+
+    #editor .bn-menu[data-open] {
+      transform: none;
+      opacity: 1;
+    }
+
+    /* A display that was not on the list a moment ago arrives; the ones already
+       there are recreated by the same rebuild and must not move. */
+    #editor .bn-row {
+      transform: none;
+      opacity: 1;
+    }
+
+    #editor .bn-row[data-entering] {
+      transform: translateY(-4px);
+      opacity: 0;
+      transition: none;
+    }
+
+    /* The drop target confirms itself before the pointer has moved on. */
+    #editor .bn-canvas-box::after {
+      opacity: 0;
+      transition: opacity 120ms var(--ease-out);
+    }
+
+    #editor .bn-canvas-box[data-dropping]::after {
+      opacity: 1;
+    }
+
+    /* Zoom steps by a quarter at a time, and a jump from 125 to 150 per cent
+       reads as a glitch rather than a zoom. Registered so it interpolates as a
+       number, and set on the canvas, which outlives the group that reads it. */
+    @property --bn-zoom {
+      syntax: '<number>';
+      initial-value: 1;
+      inherits: true;
+    }
+
+    #editor .bn-canvas {
+      --bn-zoom: 1;
+      transition: --bn-zoom 180ms var(--ease-out);
+    }
+
+    /* Pan must never lag the pointer, so a drag drops the easing for its
+       duration and the zoom snaps while a display is being moved. */
+    #editor .bn-canvas[data-dragging] {
+      transition: none;
+    }
+
     @media (prefers-reduced-motion: reduce) {
       #editor .bn-thumb, #editor .bn-row, #editor .bn-remove, #editor .bn-seg-item, #editor .bn-tool { transition: none; }
+      #editor .bn-menu { transition-duration: 100ms; transition-property: opacity; transform: none; }
+      #editor .bn-canvas { transition-duration: 1ms; }
+      #editor .bn-canvas-box::after { transition-duration: 1ms; }
     }
     /* --- Carried across with the rest ---
        The canvas is not a `.rig`, so it declares the two custom properties the

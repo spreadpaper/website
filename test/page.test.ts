@@ -555,5 +555,53 @@ check('and the selection outline is not filled either',
   /#editor \.bn-outline\{[^}]*fill:\s*none/.test(styles),
   styles.match(/#editor \.bn-outline\{[^}]*\}/)?.[0] ?? 'no rule at all')
 
+console.log('\nthe bench answers a press')
+// Scoped component CSS never reaches markup a script builds, so every one of
+// these lives in the global block and is checked against the compiled sheet
+// rather than the source. See DESIGN.md, Overriding the primitives.
+const benchCss = readdirSync(join(site, '_astro'))
+  .filter((f) => f.endsWith('.css'))
+  .map((f) => readFileSync(join(site, '_astro', f), 'utf8'))
+  .join('\n')
+
+for (const selector of [
+  '.bn-thumb:active',
+  '.bn-menu-item:active',
+  '.bn-seg-item:active',
+  '.bn-tool:not(:disabled):active',
+  '.bn-remove:not(:disabled):active',
+]) {
+  check(`${selector} reached the compiled CSS`, benchCss.includes(selector))
+}
+
+console.log('\nthe bench motion survives compilation')
+// A registered property is the only reason zoom can ease: draw() rebuilds the
+// group that reads it, so the transition has to live on the canvas above it.
+// Matched to the brace rather than by substring: `@property --bn-zoom-X` would
+// satisfy an includes() check while registering a property nothing reads.
+check('--bn-zoom is registered, so it interpolates as a number',
+  /@property\s+--bn-zoom\s*\{[^}]*syntax:\s*"?'?<number>/.test(benchCss))
+check('and the canvas is what transitions it', /\.bn-canvas\{[^}]*--bn-zoom/.test(benchCss.replace(/\s+/g, '')),
+  'the transition has to sit on the element that outlives the rebuild')
+check('a drag drops the easing', benchCss.includes('.bn-canvas[data-dragging]'))
+check('the menu has an open state to animate to', benchCss.includes('.bn-menu[data-open]'))
+check('a new row has an entering state', benchCss.includes('.bn-row[data-entering]'))
+
+// The script and the stylesheet have to agree on the property name, and nothing
+// else would catch a rename: the transform silently resolves to nothing.
+const benchScript = readdirSync(join(site, '_astro'))
+  .filter((f) => f.endsWith('.js'))
+  .map((f) => readFileSync(join(site, '_astro', f), 'utf8'))
+  .join('\n')
+check('the drawn transform reads the same property the CSS declares',
+  benchScript.includes('scale(var(--bn-zoom))') && benchScript.includes('--bn-zoom'))
+
+// The panel stays mounted while it animates out, so `hidden` can no longer say
+// whether the menu is open. The button's aria-expanded is the reading the
+// script trusts, and it has to be there for that to work.
+const addButton = doc.querySelector('[data-addbutton]')
+check('the add button carries the state the script reads',
+  addButton?.hasAttribute('aria-expanded') === true)
+
 console.log(failures ? `\n${failures} FAILED` : '\nall checks passed')
 process.exit(failures ? 1 : 0)
