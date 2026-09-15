@@ -198,7 +198,7 @@ check('and restores the glyphs',
 
 console.log('\nthe nav lists destinations')
 // Section anchors here would make every link on a text page a trip home.
-const DESTINATIONS = ['Features', 'Help', 'Guides', 'Project']
+const DESTINATIONS = ['Features', 'Help', 'Guides', 'About']
 const navLabels = [...doc.querySelectorAll('#nav-links a')].map((a) => a.textContent!.trim())
 check('the four destinations are there, in order', navLabels.join(' ') === DESTINATIONS.join(' '), navLabels.join(' '))
 
@@ -396,7 +396,7 @@ console.log('\nthe footer columns')
 // Once the top nav has taken its four, these pages are reachable from nowhere
 // else, so a column that drifts back to all GitHub orphans them.
 const footerHrefs = [...doc.querySelectorAll('#site-footer a')].map((a) => a.getAttribute('href')!)
-for (const href of ['/help', '/guides', '/project', '/alternatives', '/privacy', '/terms']) {
+for (const href of ['/help', '/guides', '/about', '/alternatives', '/privacy', '/terms']) {
   const hits = footerHrefs.filter((candidate) => candidate === href).length
   check(`${href} is linked from the footer exactly once`, hits === 1, `${hits} links`)
 }

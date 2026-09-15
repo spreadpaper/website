@@ -1,0 +1,307 @@
+---
+import Footer from '../components/sections/Footer.astro'
+import Nav from '../components/sections/Nav.astro'
+import Layout from '../layouts/Layout.astro'
+import { contributors } from '../lib/contributors'
+import { starCount } from '../lib/stars'
+
+const stars = await starCount()
+const people = await contributors()
+
+const REPO = 'https://github.com/spreadpaper/SpreadPaper'
+
+const NUMBERS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve']
+
+/**
+ * Spells a small count so a sentence reads as written rather than tallied.
+ * Anything past twelve stays in digits, where words start to slow a reader.
+ *
+ * @param count - How many of the thing there are.
+ * @returns The count as a word, or as digits once it grows.
+ */
+function spell(count: number): string {
+  return NUMBERS[count] ?? String(count)
+}
+
+/* Counted from the repository on 15 September 2026. */
+const facts = [
+  { key: 'Thirteen days', value: 'All 211 commits fall on <b>13</b> calendar days' },
+  { key: 'After dark', value: '<b>108</b> of 187 land between 18:00 and 03:00' },
+  { key: 'One Wednesday', value: '<b>58</b> commits on 8 April 2026' },
+  { key: 'First evening', value: 'Empty repo to a shipped 1.0.0 in <b>3h 49m</b>' },
+  { key: 'Day one', value: '<b>Six</b> releases in the first 24 hours' },
+  {
+    key: 'Today',
+    value: `<b>${stars}</b> stars, <a class="cd-inline-link" href="${REPO}">MIT licensed</a>`,
+  },
+]
+---
+
+<Layout
+  title="About SpreadPaper"
+  description="Who builds SpreadPaper, why it is free, and everyone outside the project who has shaped it."
+  socialDescription={`One wallpaper across every display, built by ${spell(people.length)} people.`}
+  breadcrumb={[
+    { name: 'Home', path: '/' },
+    { name: 'About', path: '/about' },
+  ]}
+>
+  <Nav />
+  <main id="main" class="bg-cd-bg">
+    <div class="wrap page">
+      <p class="eyebrow">About</p>
+      <h1 class="title">One wallpaper across every display, built by {spell(people.length)} people</h1>
+
+      <div class="hv-top">
+        <div>
+          <div class="prose">
+            <p class="lede">
+              macOS gives every display the same wallpaper, so a wide photograph turns into three
+              copies of itself. I wanted the picture.
+            </p>
+            <p>
+              So in November 2025 I wrote something that did that one thing. Twenty four releases
+              later it still does that one thing, with a good deal more care about bezels and
+              schedules.
+            </p>
+            <p>
+              It is free and MIT licensed, and there is nothing being sold today. The work happens
+              on your Mac and GitHub hosts the downloads.
+            </p>
+          </div>
+
+          <div class="sign">
+            <img src="https://github.com/rvanbaalen.png?size=96" alt="" width="38" height="38" />
+            <div>
+              <div class="sign-who">Robin van Baalen</div>
+              <div class="sign-where">Curaçao, Dutch Caribbean</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hv-facts">
+          {
+            facts.map((fact) => (
+              <div>
+                <div class="fk">{fact.key}</div>
+                <p class="fv" set:html={fact.value} />
+              </div>
+            ))
+          }
+        </div>
+      </div>
+
+      <section class="hv-split">
+        <h2 class="sec-h">Contributions</h2>
+        <p class="sec-sub">
+          {spell(people.length - 1)} people besides me have shaped SpreadPaper, all of it starting in
+          the <a class="cd-inline-link" href={`${REPO}/issues`}>issue tracker</a>.
+        </p>
+        <div class="hv-people">
+          {
+            people.map((person) => (
+              <a class="person" href={`https://github.com/${person.user}`}>
+                <img
+                  src={`https://github.com/${person.user}.png?size=96`}
+                  alt=""
+                  width="34"
+                  height="34"
+                  loading="lazy"
+                />
+                <span class="person-name">{person.user}</span>
+              </a>
+            ))
+          }
+        </div>
+      </section>
+    </div>
+  </main>
+  <Footer />
+</Layout>
+
+<style>
+  .wrap {
+    max-width: 72rem;
+    margin: 0 auto;
+    padding-inline: 1.5rem;
+  }
+
+  .page {
+    padding-block: 4.5rem 3.5rem;
+  }
+
+  .eyebrow {
+    margin: 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-cd-text-tertiary);
+  }
+
+  .title {
+    margin: 0.875rem 0 0;
+    max-width: 22ch;
+    font-size: clamp(1.75rem, 4vw, 2.375rem);
+    font-weight: 600;
+    letter-spacing: -0.028em;
+    line-height: 1.18;
+    text-wrap: balance;
+    color: var(--color-cd-text);
+  }
+
+  .prose {
+    display: grid;
+    gap: 1.25rem;
+    max-width: 34rem;
+  }
+
+  .prose p {
+    margin: 0;
+    font-size: 1.0625rem;
+    line-height: 1.7;
+    color: var(--color-cd-text-secondary);
+  }
+
+  .prose p.lede {
+    font-size: 1.125rem;
+    color: var(--color-cd-text);
+  }
+
+  .sign {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 2.25rem;
+  }
+
+  .sign img {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+  }
+
+  .sign-who {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--color-cd-text);
+  }
+
+  .sign-where {
+    margin-top: 2px;
+    font-size: 0.8125rem;
+    color: var(--color-cd-text-tertiary);
+  }
+
+  .hv-top {
+    display: grid;
+    grid-template-columns: minmax(0, 34rem) auto;
+    gap: 3.5rem;
+    align-items: start;
+    margin-top: 2.25rem;
+  }
+
+  .hv-facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 11rem));
+    gap: 1.375rem 1.75rem;
+    padding-top: 0.375rem;
+  }
+
+  .fk {
+    font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+    font-size: 0.625rem;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--color-cd-accent);
+  }
+
+  .fv {
+    margin: 0.375rem 0 0;
+    font-size: 0.8125rem;
+    line-height: 1.55;
+    color: var(--color-cd-text-secondary);
+  }
+
+  .fv :global(b) {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-cd-text);
+  }
+
+  .hv-split {
+    margin-top: 4rem;
+    padding-top: 2.75rem;
+    border-top: 1px solid var(--color-cd-border);
+  }
+
+  .sec-h {
+    margin: 0;
+    font-size: 1.0625rem;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    color: var(--color-cd-text);
+  }
+
+  .sec-sub {
+    margin: 0.3125rem 0 0;
+    max-width: 46ch;
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: var(--color-cd-text-secondary);
+  }
+
+  .hv-people {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.625rem;
+    margin-top: 1.375rem;
+  }
+
+  .person {
+    display: flex;
+    flex: 1 1 11rem;
+    align-items: center;
+    gap: 0.75rem;
+    padding-block: 0.75rem;
+    padding-inline: 0.875rem;
+    background: var(--color-cd-bg-secondary);
+    border: 1px solid var(--color-cd-border);
+    border-radius: 12px;
+    text-decoration: none;
+    transition:
+      background-color 150ms var(--ease-out),
+      border-color 150ms var(--ease-out);
+  }
+
+  .person:hover {
+    background: var(--color-cd-bg-elevated);
+    border-color: var(--color-cd-border-strong);
+  }
+
+  .person img {
+    flex: none;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+  }
+
+  .person-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-cd-text);
+    overflow-wrap: anywhere;
+  }
+
+
+  @media (max-width: 53.75rem) {
+    .hv-top {
+      grid-template-columns: 1fr;
+      gap: 2.25rem;
+    }
+
+    .hv-facts {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+</style>
