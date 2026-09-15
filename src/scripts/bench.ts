@@ -182,26 +182,28 @@ function benchMarkup() {
       <div class="bn-canvas-box" data-box>
         <svg class="bn-canvas" data-canvas data-mode="arrange" preserveAspectRatio="xMidYMid meet"
              role="img" aria-label="The editor canvas, with your displays drawn on it and one wallpaper across them." focusable="false"></svg>
-      </div>
-
-      <div class="bn-bar">
-        <div class="bn-mode">
-        <span class="bn-mode-label" aria-hidden="true">Drag</span>
-        <div class="bn-seg" role="radiogroup" aria-label="What you drag on the canvas" data-seg>
-          <span class="bn-seg-thumb" data-seg-thumb aria-hidden="true"></span>
-          <button class="bn-seg-item pc-focus" type="button" role="radio" data-mode-set="arrange" aria-checked="true" tabindex="0" aria-label="Drag the displays">${icon('monitor')}Displays</button>
-          <button class="bn-seg-item pc-focus" type="button" role="radio" data-mode-set="place" aria-checked="false" tabindex="-1" aria-label="Drag the wallpaper">${icon('image')}Wallpaper</button>
-        </div>
-        </div>
-
-        <div class="bn-tools" role="group" aria-label="Picture controls">${tools}</div>
-
-        <p class="bn-readout" data-readout>
+        <p class="bn-readout" data-readout aria-live="polite">
           <span class="bn-readout-dot" aria-hidden="true"></span>
           <span data-readout-text>Zoom 100%</span>
         </p>
+      </div>
 
-        <button class="cd-button cd-button-secondary bn-reset pc-focus" type="button" data-reset>Start again</button>
+      <div class="bn-bar">
+        <div class="bn-track" role="toolbar" aria-label="Canvas controls">
+          <span class="bn-track-label" aria-hidden="true">Drag</span>
+
+          <div class="bn-seg" role="radiogroup" aria-label="What you drag on the canvas" data-seg>
+            <span class="bn-seg-thumb" data-seg-thumb aria-hidden="true"></span>
+            <button class="bn-seg-item pc-focus" type="button" role="radio" data-mode-set="arrange" aria-checked="true" tabindex="0" aria-label="Drag the displays">${icon('monitor')}Displays</button>
+            <button class="bn-seg-item pc-focus" type="button" role="radio" data-mode-set="place" aria-checked="false" tabindex="-1" aria-label="Drag the wallpaper">${icon('image')}Wallpaper</button>
+          </div>
+
+          <span class="bn-track-rule" aria-hidden="true"></span>
+
+          <div class="bn-tools" role="group" aria-label="Wallpaper controls">${tools}</div>
+        </div>
+
+        <button class="bn-reset pc-focus" type="button" data-reset>Start again</button>
       </div>
 
       <p class="bn-hint" data-hint></p>
@@ -411,7 +413,7 @@ function bench(root: HTMLElement) {
       btn.tabIndex = on ? 0 : -1
       if (on && seg) {
         seg.style.width = btn.offsetWidth + 'px'
-        seg.style.transform = `translateX(${btn.offsetLeft - 3}px)`
+        seg.style.transform = `translateX(${btn.offsetLeft}px)`
       }
     })
 
@@ -943,5 +945,8 @@ export function setupEditorBench() {
     bench(root)
     mount.closest('figure')?.querySelector('[data-bench-still]')?.setAttribute('hidden', '')
     mount.hidden = false
+    /* Armed a frame late, or the thumb grows out of nothing on load instead of
+       sitting where it belongs. */
+    requestAnimationFrame(() => root.querySelector('[data-seg]')?.setAttribute('data-ready', ''))
   })
 }

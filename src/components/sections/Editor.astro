@@ -225,40 +225,62 @@ import Icon from '../Icon.astro'
       margin-top: 0.75rem;
     }
 
-    /* The word in front of the track is the whole point of the control: on its
-       own it names two things without saying what choosing one does. */
-    #editor .bn-mode { display: flex; align-items: center; gap: 0.625rem; }
+    /* One track for everything used while working. Start again is not one of
+       those, so it stays outside. Scrolls sideways when it runs out of room,
+       since wrapping would break the object in half. */
+    #editor .bn-track {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      padding: 3px;
+      max-width: 100%;
+      overflow-x: auto;
+      scrollbar-width: none;
+      border-radius: 9999px;
+      border: 1px solid var(--color-cd-border-strong);
+      background-color: var(--color-cd-bg-elevated);
+    }
 
-    #editor .bn-mode-label {
+    #editor .bn-track::-webkit-scrollbar { display: none; }
+
+    /* The verb, said once. Each option names the thing it acts on. */
+    #editor .bn-track-label {
+      flex: none;
+      padding: 0 0.25rem 0 0.625rem;
       font-size: 0.8125rem;
       font-weight: 600;
+      white-space: nowrap;
       color: var(--color-cd-text-tertiary);
     }
 
-    /* An inset track with the selection raised out of it, which is how a Mac
-       draws one of these. Two greys against each other read as neither. */
-    #editor .bn-seg {
-      position: relative;
-      display: flex;
-      gap: 2px;
-      padding: 3px;
-      border-radius: 9999px;
-      border: 1px solid var(--color-cd-border);
-      background-color: var(--color-cd-canvas);
-      box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.35);
+    #editor .bn-track-rule {
+      flex: none;
+      width: 1px;
+      align-self: stretch;
+      margin-inline: 0.375rem;
+      background-color: var(--color-cd-border-strong);
     }
 
-    /* Measured in the render, since the two labels are different widths. */
+    #editor .bn-seg {
+      position: relative;
+      display: inline-flex;
+      gap: 2px;
+      flex: none;
+    }
+
+    /* Measured in the render, since the two labels are different widths. One
+       step lighter than the track it rides in, which is the only way a raised
+       pill reads on a surface it shares a colour with. */
     #editor .bn-seg-thumb {
       position: absolute;
-      top: 3px;
-      left: 3px;
-      height: calc(100% - 6px);
+      top: 0;
+      left: 0;
+      height: 100%;
       border-radius: 9999px;
-      background-color: var(--color-cd-bg-elevated);
-      box-shadow:
-        0 1px 2px rgb(0 0 0 / 0.45),
-        inset 0 1px 0 rgb(255 255 255 / 0.05);
+      background-color: var(--color-cd-bg-hover);
+    }
+
+    #editor .bn-seg[data-ready] .bn-seg-thumb {
       transition:
         transform 200ms var(--ease-out),
         width 200ms var(--ease-out);
@@ -271,13 +293,14 @@ import Icon from '../Icon.astro'
       align-items: center;
       gap: 0.4375rem;
       min-height: 2rem;
-      padding: 0 0.875rem;
+      padding: 0 0.75rem;
       border: 0; border-radius: 9999px;
       background: transparent;
-      font: inherit; font-size: 0.8125rem; font-weight: 600;
+      font: inherit; font-size: 0.8125rem; font-weight: 500;
+      white-space: nowrap;
       color: var(--color-cd-text-secondary);
       cursor: pointer;
-      transition: background-color 150ms ease-out, color 150ms ease-out;
+      transition: color 150ms var(--ease-out);
     }
 
     #editor .bn-seg-item svg { width: 0.875rem; height: 0.875rem; }
@@ -292,13 +315,11 @@ import Icon from '../Icon.astro'
     }
 
     /* The four glyphs the editor's HUD really draws, as real buttons. */
+    /* A bare run inside the track rather than a track of its own. */
     #editor .bn-tools {
-      display: flex;
+      display: inline-flex;
       gap: 2px;
-      padding: 3px;
-      border-radius: 9999px;
-      border: 1px solid var(--color-cd-border-strong);
-      background-color: var(--color-cd-bg-elevated);
+      flex: none;
     }
 
     #editor .bn-tool {
@@ -314,6 +335,11 @@ import Icon from '../Icon.astro'
     }
 
     #editor .bn-tool svg { width: 1rem; height: 1rem; }
+
+    /* Plus and minus fill 184 of Phosphor's 256 unit box where the arrows
+       reach 176 and 172. Same nominal size, bigger mark. */
+    #editor .bn-tool[data-act="in"] svg,
+    #editor .bn-tool[data-act="out"] svg { transform: scale(0.92); }
     #editor .bn-tool:disabled { color: var(--color-cd-text-tertiary); cursor: default; }
     #editor .bn-tool[aria-pressed="true"] { background-color: var(--color-cd-accent); color: #fff; }
 
@@ -321,16 +347,24 @@ import Icon from '../Icon.astro'
       #editor .bn-tool:not(:disabled):not([aria-pressed="true"]):hover { background-color: var(--color-cd-bg-hover); }
     }
 
+    /* On the canvas, because it reports what the canvas is doing. Unpressable,
+       so nothing in the strip's language claims it is a control. */
     #editor .bn-readout {
+      position: absolute;
+      left: 0.75rem;
+      bottom: 0.75rem;
+      z-index: 2;
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
-      min-height: 2.125rem;
-      padding: 0 0.875rem;
+      min-height: 1.875rem;
+      padding: 0 0.75rem;
       border-radius: 9999px;
-      border: 1px solid var(--color-cd-border-strong);
-      background-color: var(--color-cd-bg-elevated);
-      font-size: 0.8125rem;
+      background-color: rgb(17 17 20 / 0.72);
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+      pointer-events: none;
+      font-size: 0.75rem;
       font-weight: 600;
       color: var(--color-cd-text);
       font-variant-numeric: tabular-nums;
@@ -461,7 +495,37 @@ import Icon from '../Icon.astro'
     #editor .cd-button svg { width: 1rem; height: 1rem; flex: none; }
     #editor .bn-choose,
     #editor .bn-add { width: 100%; margin-top: 0.625rem; padding: 0.5rem 0.875rem; font-size: 0.8125rem; }
-    #editor .bn-reset { min-height: 2.125rem; padding: 0 0.875rem; font-size: 0.8125rem; }
+    /* Outside the track and at the far end: it resets the whole thing, which is
+       not something anyone does while working. */
+    #editor .bn-reset {
+      margin-left: auto;
+      min-height: 2.125rem;
+      padding: 0 0.875rem;
+      border: 0;
+      border-radius: 9999px;
+      background: transparent;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--color-cd-text-tertiary);
+      cursor: pointer;
+      transition:
+        color 150ms var(--ease-out),
+        background-color 150ms var(--ease-out),
+        transform 160ms var(--ease-out);
+    }
+
+    #editor .bn-reset:active { transform: scale(0.97); }
+
+    @media (hover: hover) and (pointer: fine) {
+      #editor .bn-reset:hover {
+        color: var(--color-cd-text);
+        background-color: var(--color-cd-bg-secondary);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #editor .bn-seg[data-ready] .bn-seg-thumb { transition-duration: 80ms; }
+    }
     #editor .pc-focus:focus-visible { outline: 2px solid var(--color-cd-accent); outline-offset: 3px; }
   </style>
 
