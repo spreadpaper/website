@@ -570,6 +570,30 @@ check('an arrow key moves a display', frameX() !== restX, `${restX} to ${frameX(
 nudge('ArrowLeft')
 check('and it snaps back to its neighbour', frameX() === restX, `${frameX()} want ${restX}`)
 
+// Two displays cannot occupy the same space, so one walked into another has to
+// shove it clear rather than sit on top of it. Nothing else catches this: the
+// canvas draws a plausible desk either way.
+const boxes = () =>
+  [...benchCanvas.querySelectorAll('rect.rig-frame')].map((r) => ({
+    x: Number(r.getAttribute('x')),
+    y: Number(r.getAttribute('y')),
+    w: Number(r.getAttribute('width')),
+    h: Number(r.getAttribute('height')),
+  }))
+const overlapping = () => {
+  const all = boxes()
+  return all.some((a, i) =>
+    all.some((b, j) => j > i && a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h))
+}
+
+check('the desk opens with nothing overlapping', !overlapping())
+// Far enough to bury it inside its neighbour several times over.
+for (let i = 0; i < 40; i++) nudge('ArrowLeft')
+check('walking one display into another leaves them clear', !overlapping(),
+  boxes().map((b) => `${b.x},${b.y}`).join(' '))
+check('and the desk still holds every display it had', boxes().length === benchRows().length,
+  `${boxes().length} drawn, ${benchRows().length} listed`)
+
 // Every clip rect is traced by a frame rect of the same geometry, which is the
 // rule scripts/rigs.ts holds the static rigs to.
 const clipBoxes = [...benchCanvas.querySelectorAll('clipPath rect')].map((r) =>

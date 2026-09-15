@@ -424,7 +424,7 @@ function bench(root: HTMLElement) {
 
     el.hint.textContent =
       state.mode === 'arrange'
-        ? 'Drag a display to move it. It snaps to the edges and the middles of the others, and butts up against them. On a Mac the app reads this arrangement from the system.'
+        ? 'Drag a display to move it. It snaps to the edges and the middles of the others, and pushes them aside when it arrives. On a Mac the app reads this arrangement from the system.'
         : 'Drag the wallpaper to move it across every display at once. It snaps to the middle of the arrangement and to its edges as it passes them.'
   }
 
@@ -526,6 +526,49 @@ function bench(root: HTMLElement) {
     return { x, y, guides: kept }
   }
 
+  /**
+   * Shoves every other display clear of `moving`, which holds its ground.
+   * A push can start another, so it runs until the desk settles.
+   *
+   * Real displays cannot overlap, so a desk that lets them is describing an
+   * arrangement macOS would not accept. The one under the pointer wins because
+   * it is the one being asked for; the rest give way along whichever axis they
+   * are least deep into it, which is the direction they were pushed from.
+   *
+   * @param moving - The display the reader is placing.
+   */
+  function clearOverlaps(moving: Placed) {
+    /* Six displays can chain at most five pushes each; the cap is for safety
+       rather than for a case anyone can reach. */
+    for (let pass = 0; pass < 40; pass++) {
+      let moved = false
+
+      for (const other of state.displays) {
+        if (other.key === moving.key) continue
+
+        const a = panelOf(moving.kind)
+        const b = panelOf(other.kind)
+
+        /* How far `other` must travel each way to leave a seam. All four are
+           positive only while the two actually overlap. */
+        const right = moving.x + a.w + DISPLAY_GAP - other.x
+        const left = other.x + b.w + DISPLAY_GAP - moving.x
+        const down = moving.y + a.h + DISPLAY_GAP - other.y
+        const up = other.y + b.h + DISPLAY_GAP - moving.y
+        if (right <= 0 || left <= 0 || down <= 0 || up <= 0) continue
+
+        const least = Math.min(right, left, down, up)
+        if (least === right) other.x += right
+        else if (least === left) other.x -= left
+        else if (least === down) other.y += down
+        else other.y -= up
+        moved = true
+      }
+
+      if (!moved) return
+    }
+  }
+
   /* --- Dragging --- */
 
   type Drag = { kind: 'display' | 'photo'; key?: string; ox: number; oy: number; sx: number; sy: number; k: number; pointerId: number }
@@ -562,6 +605,7 @@ function bench(root: HTMLElement) {
       const snap = snapDisplay(d, drag.sx + mx, drag.sy + my)
       d.x = snap.x
       d.y = snap.y
+      clearOverlaps(d)
       state.guides = snap.guides
     } else {
       state.place.dx = drag.sx + mx
@@ -797,6 +841,7 @@ function bench(root: HTMLElement) {
     const snap = snapDisplay(d, d.x + move[0], d.y + move[1])
     d.x = snap.x
     d.y = snap.y
+    clearOverlaps(d)
     render()
   })
 
