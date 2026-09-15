@@ -128,6 +128,14 @@
     border-radius: 2px;
   }
 
+  /* A link wearing a button is not running prose, so it keeps none of the
+     above. Without this the underline meant for inline links runs through the
+     label and the button reads as broken. */
+  .prose-cd a.cd-button {
+    color: inherit;
+    text-decoration: none;
+  }
+
   /* A callout: the sentence a reader loses an app by missing. The wash is mixed
      against `transparent` so one rule works on the page, on a panel and inside a
      route, and the copy holds 5.9:1 on the lightest of those. */
@@ -137,6 +145,22 @@
     border-left: 2px solid var(--color-cd-border-strong);
     border-radius: 0 12px 12px 0;
     padding: 1.25rem 1.5rem;
+  }
+
+  /* A caution, not an aside. Amber is the site's warning colour and it is
+     carrying a real warning here: the highlighted button deletes the app. */
+  .prose-cd .note-warn {
+    border-left-color: var(--color-cd-dynamic);
+    background-color: color-mix(in srgb, var(--color-cd-dynamic) 9%, transparent);
+  }
+
+  .prose-cd .note-warn strong {
+    color: var(--color-cd-dynamic);
+  }
+
+  /* The outcome of a step, so the reader knows they are finished with it. */
+  .prose-cd .done {
+    color: var(--color-cd-success);
   }
 
   .prose-cd .note-accent {
@@ -402,6 +426,127 @@
 
   /* The closing invitation: what to do on the left, what to bring with you on
      the right, rather than four paragraphs and a button in a narrow stack. */
+  /* Steps: words on the left, the picture that proves them on the right,
+     holding position while you read past it. Each step is exactly two grid
+     children, a text wrapper and a figure, so the grid has one row. A rule
+     under each gives the page its rhythm, and the numbered chip sits beside
+     a label rather than floating above the text it belongs to.
+
+     A step with no picture takes `.step-full` and runs the whole width, which
+     beats leaving half a row empty. */
+  .prose-cd .steps {
+    max-width: none;
+    counter-reset: step;
+  }
+
+  .prose-cd .step {
+    max-width: none;
+    padding-block: 3rem;
+    border-bottom: 1px solid var(--color-cd-border);
+    counter-increment: step;
+    display: grid;
+    gap: 2rem;
+  }
+
+  .prose-cd .step:last-child {
+    border-bottom: 0;
+  }
+
+  /* A numbered chip and the step's own label, on one line. */
+  .prose-cd .step-kicker {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-cd-text-tertiary);
+  }
+
+  .prose-cd .step-kicker::before {
+    content: counter(step);
+    display: grid;
+    place-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 999px;
+    background-color: color-mix(in srgb, var(--color-cd-accent) 18%, transparent);
+    color: var(--color-cd-accent);
+    font-size: 0.75rem;
+    letter-spacing: 0;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .prose-cd .step-text > * {
+    max-width: var(--textpage-measure, 42rem);
+  }
+
+  .prose-cd .step-text > * + * {
+    margin-top: 1rem;
+  }
+
+  .prose-cd .step-text h2,
+  .prose-cd .step-text h3 {
+    margin-top: 1rem;
+  }
+
+  .prose-cd .step figure {
+    margin-top: 0;
+    max-width: 26rem;
+  }
+
+  .prose-cd .step figure img {
+    width: 100%;
+  }
+
+  @media (min-width: 64rem) {
+    .prose-cd .step {
+      grid-template-columns: minmax(0, 1fr) 26rem;
+      column-gap: 5rem;
+      align-items: start;
+      padding-block: 4rem;
+    }
+
+    .prose-cd .step-full {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .prose-cd .step figure {
+      position: sticky;
+      top: 6.5rem;
+    }
+  }
+
+  /* A section that stands apart from the flow, on its own surface. The page's
+     main thread is the steps; these are the blocks either side of it, and
+     without a surface they read as more of the same thread rather than as
+     separate sections. Same recipe as `.route` and `.cd-card`, one radius. */
+  .prose-cd .panel {
+    max-width: none;
+    margin-top: 2rem;
+    padding: 2rem;
+    background-color: var(--color-cd-bg-secondary);
+    border: 1px solid var(--color-cd-border);
+    border-radius: 14px;
+  }
+
+  @media (min-width: 48rem) {
+    .prose-cd .panel {
+      padding: 2.5rem;
+    }
+  }
+
+  /* A panel opens with its own heading, so the 4rem that separates sections in
+     the flow would only push it off its own top edge. */
+  .prose-cd .panel > h2 {
+    margin-top: 0;
+  }
+
+  .prose-cd .panel > h2 + * {
+    margin-top: 1.5rem;
+  }
+
   .prose-cd .closing {
     margin-top: 1.5rem;
     max-width: none;
