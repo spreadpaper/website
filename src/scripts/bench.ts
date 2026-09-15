@@ -605,7 +605,6 @@ function bench(root: HTMLElement) {
       const snap = snapDisplay(d, drag.sx + mx, drag.sy + my)
       d.x = snap.x
       d.y = snap.y
-      clearOverlaps(d)
       state.guides = snap.guides
     } else {
       state.place.dx = drag.sx + mx
@@ -624,6 +623,13 @@ function bench(root: HTMLElement) {
 
   const release = (e: PointerEvent) => {
     if (!drag || e.pointerId !== drag.pointerId) return
+    /* The desk is made valid here rather than during the drag. Shoving
+       neighbours around under a moving pointer makes the whole arrangement
+       squirm, and the reader is aiming at a target that is still moving. */
+    if (drag.kind === 'display') {
+      const d = state.displays.find((item) => item.key === drag!.key)
+      if (d) clearOverlaps(d)
+    }
     drag = null
     state.guides = []
     el.canvas.removeAttribute('data-dragging')

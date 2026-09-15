@@ -594,6 +594,30 @@ check('walking one display into another leaves them clear', !overlapping(),
 check('and the desk still holds every display it had', boxes().length === benchRows().length,
   `${boxes().length} drawn, ${benchRows().length} listed`)
 
+// A drag is allowed to pass one display through another; it is letting go that
+// makes the desk valid. Pushing mid drag moves the target the reader is aiming
+// at, so the two halves are asserted separately.
+// jsdom has PointerEvent but no pointer capture, and `unitsPerPixel` already
+// falls back to 1 on an unlaid-out element, so one client pixel is one unit.
+;(benchCanvas as unknown as { setPointerCapture: () => void }).setPointerCapture = () => {}
+const hit = benchCanvas.querySelector('[data-display]')
+const pointer = (type: string, x: number, target: Element) =>
+  target.dispatchEvent(new window.PointerEvent(type, { pointerId: 1, clientX: x, clientY: 0, bubbles: true }))
+
+check('a display carries a drag handle', Boolean(hit))
+if (hit) {
+  // Straight onto its neighbour's left edge, which is a snap candidate, so the
+  // two land exactly on top of each other rather than near each other.
+  const onto = boxes()[1].x - boxes()[0].x
+  pointer('pointerdown', 0, hit)
+  pointer('pointermove', onto, benchCanvas)
+  check('a drag may take one display over another', overlapping(),
+    boxes().map((b) => `${b.x},${b.y}`).join(' '))
+  pointer('pointerup', onto, benchCanvas)
+  check('and letting go pushes them apart', !overlapping(),
+    boxes().map((b) => `${b.x},${b.y}`).join(' '))
+}
+
 // Every clip rect is traced by a frame rect of the same geometry, which is the
 // rule scripts/rigs.ts holds the static rigs to.
 const clipBoxes = [...benchCanvas.querySelectorAll('clipPath rect')].map((r) =>
