@@ -448,7 +448,7 @@ One size per photograph, for the whole page, whatever rig is showing it.
 | Beach at sunset | `/photos/hero-beach.jpg` |
 | Beach at night | `/photos/1200/hero-beach-night.jpg` |
 | Sunrise on the ridge | `/photos/1200/hero-day-1.jpg` |
-| Midday over the peak | `/photos/1200/hero-day-2.jpg` |
+| Midday over the peak | `/photos/hero-day-2.jpg` |
 | Evening light | `/photos/1200/hero-day-3.jpg` |
 | The Milky Way | `/photos/1200/hero-day-4.jpg` |
 

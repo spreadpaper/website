@@ -62,7 +62,10 @@ export const PHOTOS = {
   'hero-beach': { url: '/photos/hero-beach.jpg', caption: 'Beach at sunset' },
   'hero-beach-night': { url: '/photos/1200/hero-beach-night.jpg', caption: 'Beach at night' },
   'hero-day-1': { url: '/photos/1200/hero-day-1.jpg', caption: 'Sunrise on the ridge' },
-  'hero-day-2': { url: '/photos/1200/hero-day-2.jpg', caption: 'Midday over the peak' },
+  /* The one the editor canvas draws, which is the largest photograph on the
+     page after the hero, so it is pinned to the original rather than the half
+     size copy. Costs the Types day cycle 44KB it does not need. */
+  'hero-day-2': { url: '/photos/hero-day-2.jpg', caption: 'Midday over the peak' },
   'hero-day-3': { url: '/photos/1200/hero-day-3.jpg', caption: 'Evening light' },
   'hero-day-4': { url: '/photos/1200/hero-day-4.jpg', caption: 'The Milky Way' },
 } satisfies Record<string, Photo>

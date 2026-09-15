@@ -35,9 +35,10 @@ type Photo = { src: string; w: number; h: number; name?: string; bundled: number
 
    URLs and sizes are the ones scripts/rigs.ts sanctions: one URL per
    photograph for the whole page, so a thumbnail is the same file the canvas
-   draws rather than a second download. The beach is the one 2400px original. */
+   draws rather than a second download. The two the canvas opens on are the
+   originals; the other two are half size, which is all a thumbnail needs. */
 const BUNDLED: Photo[] = [
-  { src: '/photos/1200/hero-day-2.jpg', w: 1200, h: 279, name: 'Midday over the peak', bundled: 0 },
+  { src: '/photos/hero-day-2.jpg', w: 2400, h: 559, name: 'Midday over the peak', bundled: 0 },
   { src: '/photos/1200/hero-day-4.jpg', w: 1200, h: 279, name: 'The Milky Way', bundled: 1 },
   { src: '/photos/hero-beach.jpg', w: 2400, h: 559, name: 'Beach at sunset', bundled: 2 },
   { src: '/photos/1200/hero-day-3.jpg', w: 1200, h: 279, name: 'Evening light', bundled: 3 },
