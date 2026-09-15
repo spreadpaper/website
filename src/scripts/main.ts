@@ -108,49 +108,6 @@ function setupScrollReveal() {
   targets.forEach((target) => observer.observe(target))
 }
 
-/**
- * Copies the text of the element a button names in `data-copy-target`, then
- * swaps its label and glyph for a confirmation that clears itself. The
- * button ships hidden, so it appears only once it can do something.
- */
-function setupCopyButtons() {
-  document.querySelectorAll<HTMLElement>('[data-copy-target]').forEach((button) => {
-    const label = button.querySelector('[data-copy-text]')
-    const source = document.getElementById(button.dataset.copyTarget!)
-
-    if (!label || !source || !navigator.clipboard) return
-
-    button.toggleAttribute('hidden', false)
-
-    const idleIcon = button.querySelector('[data-copy-icon="idle"]')
-    const doneIcon = button.querySelector('[data-copy-icon="done"]')
-
-    // `hidden` is display:none and cannot cross fade, so once the button is
-    // live the glyphs stay in flow and `data-copied` drives the swap in CSS.
-    // They keep `aria-hidden`, so a screen reader still hears one label.
-    doneIcon?.removeAttribute('hidden')
-
-    const setCopied = (copied: boolean) => {
-      label.textContent = copied ? button.dataset.copiedLabel! : button.dataset.copyLabel!
-      button.toggleAttribute('data-copied', copied)
-      idleIcon?.setAttribute('aria-hidden', 'true')
-      doneIcon?.setAttribute('aria-hidden', 'true')
-    }
-
-    let reset: ReturnType<typeof setTimeout> | undefined
-    button.addEventListener('click', async () => {
-      try {
-        await navigator.clipboard.writeText(source.textContent!.trim())
-      } catch {
-        return
-      }
-
-      setCopied(true)
-      clearTimeout(reset)
-      reset = setTimeout(() => setCopied(false), 2000)
-    })
-  })
-}
 
 /**
  * Binds each range input that names a CSS custom property to the element it
@@ -321,7 +278,6 @@ function setupStarCount(): void {
 setupMobileMenu()
 setupScrollSpy()
 setupScrollReveal()
-setupCopyButtons()
 setupBezelSliders()
 setupTabs()
 setupClockPhase()

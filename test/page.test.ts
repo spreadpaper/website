@@ -224,68 +224,62 @@ if (awayFile) {
     [...doc.querySelectorAll('#nav-sections a')].every((link) => link.getAttribute('href')!.startsWith('#')))
 }
 
-console.log('\ncopy button, which lives on the help page now')
-// The command moved off the homepage, so this reads the page it moved to. Its own
-// document, because the assertions that matter are about the state a reader gets
-// before the script runs and this one has to be read twice.
-const helpDom = new JSDOM(readFileSync(join(site, 'help', 'index.html'), 'utf8'),
-  { pretendToBeVisual: true, runScripts: 'outside-only' })
-const helpDoc = helpDom.window.document
-const copyButton = helpDoc.querySelector('[data-copy-target]')!
-check('copy button ships hidden', copyButton?.hasAttribute('hidden'))
-check('the command itself is readable', helpDoc.getElementById('quarantine-command')?.textContent!.includes('xattr'))
-check('the button names a command that is actually there',
-  copyButton && helpDoc.getElementById(copyButton.getAttribute('data-copy-target')!),
-  `names "${copyButton?.getAttribute('data-copy-target')}"`)
+console.log('\ncopy button')
+// It lives in CopyButton.astro with its own script, which Astro emits as a
+// second inline module, so run every module the page carries rather than the
+// one belonging to main.ts.
+const helpHtml = readFileSync(join(site, 'help', 'index.html'), 'utf8')
+const helpModules = [...helpHtml.matchAll(/<script type="module">([\s\S]*?)<\/script>/g)].map((m) => m[1])
+check('the help page carries its scripts inline', helpModules.length >= 1, `${helpModules.length} modules`)
 
-helpDom.window.matchMedia = (() => ({ matches: false, addEventListener() {}, removeEventListener() {} })) as unknown as typeof window.matchMedia
-helpDom.window.IntersectionObserver = class {
-  observe() {}
-  unobserve() {}
-  disconnect() {}
-} as unknown as typeof window.IntersectionObserver
-helpDom.window.eval(bundle)
+const COMMAND = 'xattr -dr com.apple.quarantine /Applications/SpreadPaper.app'
 
-check('stays hidden where there is no clipboard',
-  helpDom.window.navigator.clipboard ? !copyButton.hasAttribute('hidden') : copyButton.hasAttribute('hidden'),
-  `clipboard present: ${Boolean(helpDom.window.navigator.clipboard)}`)
+/** A fresh DOM of the help page, optionally with a clipboard, scripts run. */
+const runHelp = (clipboard?: { writeText: (t: string) => Promise<void> }) => {
+  const dom = new JSDOM(helpHtml, { pretendToBeVisual: true, runScripts: 'outside-only' })
+  if (clipboard) Object.defineProperty(dom.window.navigator, 'clipboard', { value: clipboard })
+  dom.window.matchMedia = (() => ({ matches: false, addEventListener() {}, removeEventListener() {} })) as unknown as typeof window.matchMedia
+  dom.window.IntersectionObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  } as unknown as typeof window.IntersectionObserver
+  helpModules.forEach((module) => dom.window.eval(module))
+  return dom
+}
 
-// jsdom ships no clipboard, so the check above only ever exercises the refusal.
-// Stub one and run the page again, which is the only way to see the affordance
-// itself work: the button has to appear, copy the command, and say it did.
-const clipDom = new JSDOM(readFileSync(join(site, 'help', 'index.html'), 'utf8'),
-  { pretendToBeVisual: true, runScripts: 'outside-only' })
+// Without a clipboard the button is a lie, so it must stay hidden.
+const dry = runHelp()
+const dryButton = dry.window.document.querySelector('.copy')!
+check('the copy button ships hidden', dryButton.hasAttribute('hidden'))
+check('and stays hidden where there is no clipboard',
+  dry.window.navigator.clipboard ? !dryButton.hasAttribute('hidden') : dryButton.hasAttribute('hidden'))
+check('the command is readable without it',
+  dry.window.document.querySelector('.cd-code')!.textContent!.includes('xattr'))
+check('the button carries the exact string it will write',
+  dryButton.getAttribute('data-copy') === COMMAND, `carries "${dryButton.getAttribute('data-copy')}"`)
+
+// jsdom ships no clipboard, so stub one: the refusal path above is otherwise
+// the only thing ever exercised, and the affordance itself never runs.
 let written = ''
-Object.defineProperty(clipDom.window.navigator, 'clipboard', {
-  value: { writeText: async (text: string) => { written = text } },
-})
-clipDom.window.matchMedia = (() => ({ matches: false, addEventListener() {}, removeEventListener() {} })) as unknown as typeof window.matchMedia
-clipDom.window.IntersectionObserver = class {
-  observe() {}
-  unobserve() {}
-  disconnect() {}
-} as unknown as typeof window.IntersectionObserver
-clipDom.window.eval(bundle)
+const wet = runHelp({ writeText: async (text: string) => { written = text } })
+const button = wet.window.document.querySelector<HTMLElement>('.copy')!
+check('it appears once it can do something', !button.hasAttribute('hidden'))
 
-const clipButton = clipDom.window.document.querySelector<HTMLElement>('[data-copy-target]')!
-check('the button appears once it can do something', !clipButton.hasAttribute('hidden'))
+const faces = [...button.querySelectorAll('[data-face]')]
+check('both faces are in the markup, so the swap can be a cross fade', faces.length === 2)
+check('only the idle face is announced at rest',
+  button.querySelectorAll('[data-face][aria-hidden="true"]').length === 1 &&
+    button.querySelector('[data-face="done"]')!.hasAttribute('aria-hidden'))
 
-clipButton.dispatchEvent(new clipDom.window.MouseEvent('click', { bubbles: true }))
+button.dispatchEvent(new wet.window.MouseEvent('click', { bubbles: true }))
 await new Promise((resolve) => setTimeout(resolve, 0))
-check('clicking copies the command itself, trimmed',
-  written === 'xattr -dr com.apple.quarantine /Applications/SpreadPaper.app', `wrote "${written}"`)
-check('and the label confirms it',
-  clipButton.querySelector('[data-copy-text]')!.textContent === clipButton.dataset.copiedLabel,
-  `got "${clipButton.querySelector('[data-copy-text]')!.textContent}"`)
-// The glyphs cross fade rather than swapping `hidden`, since display:none
-// cannot transition. `data-copied` is the state CSS reads, and both glyphs
-// stay in flow once the button is live so neither can teleport.
-check('and the state the glyphs animate from is set', clipButton.hasAttribute('data-copied'))
-check('both glyphs are in flow, so the swap can be a cross fade',
-  !clipButton.querySelector('[data-copy-icon="idle"]')!.hasAttribute('hidden') &&
-    !clipButton.querySelector('[data-copy-icon="done"]')!.hasAttribute('hidden'))
-check('and neither is announced twice',
-  clipButton.querySelectorAll('[data-copy-icon][aria-hidden="true"]').length === 2)
+check('clicking writes the command verbatim', written === COMMAND, `wrote "${written}"`)
+check('and the copied state is set, which is what the CSS animates',
+  button.hasAttribute('data-copied'))
+check('and the announcement follows the face that is showing',
+  button.querySelector('[data-face="idle"]')!.hasAttribute('aria-hidden') &&
+    !button.querySelector('[data-face="done"]')!.hasAttribute('aria-hidden'))
 
 console.log('\nclock phase')
 const clock = doc.querySelector<HTMLElement>('[data-clock-stops]')!
