@@ -35,15 +35,16 @@
     max-width: var(--textpage-measure, 44rem);
   }
 
-  /* A section opening. The rule stays on the measure with the reading column it
-     belongs to. Running it across the band was tried and dropped: on the four
-     pages that are nothing but prose it would have been the only element
-     reaching that far, and a hairline extending 270px past everything on the
-     page reads as a bug rather than as a frame. */
+  /* A section opening is space and a 28px heading, and no rule. There was a
+     rule, on the measure, and it was wrong in both directions at once: on the
+     four pages that are nothing but prose, running it to the band would have
+     made it the only element reaching that far, and on `/help`, keeping it on
+     the measure put a 704px hairline directly above a 1216px row of values
+     whose own hairlines ran past both its ends. Two hairline widths stacked
+     100px apart is the incoherence this layout exists to remove. Space divides
+     sections perfectly well, and it cannot be the wrong width. */
   .prose-cd > h2 {
-    margin-top: 5rem;
-    border-top: 1px solid var(--color-cd-border);
-    padding-top: 2.5rem;
+    margin-top: 4rem;
   }
 
   .prose-cd h2 {
@@ -57,8 +58,6 @@
 
   .prose-cd > h2:first-child {
     margin-top: 0;
-    border-top: 0;
-    padding-top: 0;
   }
 
   .prose-cd h3 {
@@ -259,9 +258,34 @@
     }
   }
 
+  /* A strip of facts that qualify the page rather than advance it: what you
+     need before any of this applies. It opens the page, so it has to be
+     answerable in a glance and cost almost no height. Its heading drops to the
+     meta size, because "System requirements" earning a 28px heading and 64px of
+     air above four short values is what put 350px of near empty page between
+     the reader and the thing they came for. */
+  .prose-cd .facts {
+    max-width: none;
+    margin-top: 2rem;
+  }
+
+  .prose-cd .facts h2 {
+    margin-top: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0;
+    color: var(--color-cd-text-secondary);
+  }
+
+  .prose-cd .facts .dl {
+    margin-top: 0.75rem;
+  }
+
   /* The anchor list at the head of a page: a panel running the shell with the
      destinations side by side, so it reads as a way in rather than as the
-     page's first bulleted list. */
+     page's first bulleted list. Unused since the help page's was removed, and
+     kept because a longer page may want one, but do not reach for it on a page
+     whose headings all fit on one screen. */
   .prose-cd .toc {
     max-width: none;
     background-color: var(--color-cd-bg-secondary);

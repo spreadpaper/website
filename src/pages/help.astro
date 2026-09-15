@@ -15,17 +15,20 @@ import TextPage from '../layouts/TextPage.astro'
  * The dialog strings are quoted verbatim, ".app" included, because people paste
  * them into a search box. Do not tidy them.
  */
-const sections = [
-  { id: 'requirements', title: 'System requirements' },
-  { id: 'first-launch', title: 'Apple could not verify SpreadPaper.app is free of malware' },
-  { id: 'still-stuck', title: 'Questions, problems and ideas' },
-]
+// There was an "On this page" card here, listing the page's three sections. It
+// was removed: on a page this short all three headings are on screen at once, so
+// it indexed what the reader could already see, and it did that immediately
+// under the heading, ahead of the thing every visitor came for. The ids stay,
+// because a deep link into a section is still worth having.
 
 const warningAlt =
   'The macOS warning dialog, titled "SpreadPaper.app" Not Opened, reading: Apple could not verify "SpreadPaper.app" is free of malware that may harm your Mac or compromise your privacy. Move to Trash is the highlighted default button, with Done below it.'
 
 const dmgAlt =
   'The SpreadPaper disk image open in Finder, with the SpreadPaper app icon beside a shortcut to the Applications folder, which is what you drag it onto.'
+
+const openAnywayAlt =
+  'The Security section of System Settings, Privacy and Security, reading: "SpreadPaper.app" was blocked to protect your Mac, with an Open Anyway button beside it.'
 
 const breadcrumb = [
   { name: 'Home', path: '/' },
@@ -43,32 +46,27 @@ const breadcrumb = [
   breadcrumb={breadcrumb}
 >
   <Prose>
-    <nav class="toc" aria-labelledby="on-this-page">
-      <p id="on-this-page"><strong>On this page</strong></p>
-      <ul>
-        {sections.map((section) => <li><a href={`#${section.id}`}>{section.title}</a></li>)}
-      </ul>
-    </nav>
-
-    <h2 id="requirements">System requirements</h2>
-    <dl class="dl split">
-      <div>
-        <dt>macOS</dt>
-        <dd>15.0 Sequoia or later</dd>
-      </div>
-      <div>
-        <dt>Mac</dt>
-        <dd>Apple silicon</dd>
-      </div>
-      <div>
-        <dt>Displays</dt>
-        <dd>Any number, any arrangement</dd>
-      </div>
-      <div>
-        <dt>Account</dt>
-        <dd>None</dd>
-      </div>
-    </dl>
+    <section class="facts">
+      <h2 id="requirements">System requirements</h2>
+      <dl class="dl split">
+        <div>
+          <dt>macOS</dt>
+          <dd>15.0 Sequoia or later</dd>
+        </div>
+        <div>
+          <dt>Mac</dt>
+          <dd>Apple silicon</dd>
+        </div>
+        <div>
+          <dt>Displays</dt>
+          <dd>Any number, any arrangement</dd>
+        </div>
+        <div>
+          <dt>Account</dt>
+          <dd>None</dd>
+        </div>
+      </dl>
+    </section>
 
     <h2 id="first-launch">Apple could not verify SpreadPaper.app is free of malware</h2>
     <p>Nothing was scanned and nothing was found. macOS looked for a paid developer signature, did not find one, and stopped. Every release is built from public source by GitHub Actions.</p>
@@ -121,6 +119,10 @@ const breadcrumb = [
 
     <h3>No Open Anyway button?</h3>
     <p>It only appears after you try to open the app, and only for about an hour. Open SpreadPaper again, click Done, then go straight back to Privacy and Security. Per <a href="https://support.apple.com/en-om/guide/mac-help/mh40617/mac">Apple</a>.</p>
+
+    <figure class="wide">
+      <img src="/help/settings-open-anyway.png" width="965" height="350" alt={openAnywayAlt} />
+    </figure>
 
     <h2 id="still-stuck">Questions, problems and ideas</h2>
     <div class="closing">
