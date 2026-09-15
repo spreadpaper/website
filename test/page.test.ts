@@ -687,5 +687,64 @@ const addButton = doc.querySelector('[data-addbutton]')
 check('the add button carries the state the script reads',
   addButton?.hasAttribute('aria-expanded') === true)
 
+console.log('\nthe bench control strip')
+// Everything used while working shares one track; the reset is not one of those.
+const track = doc.querySelector('.bn-track')!
+check('there is one track', doc.querySelectorAll('.bn-track').length === 1)
+check('the mode group is inside it', Boolean(doc.querySelector('[data-seg]')?.closest('.bn-track')))
+check('and so are the tools', Boolean(doc.querySelector('[data-act]')?.closest('.bn-track')))
+check('the tools are a bare run, not a track of their own',
+  doc.querySelectorAll('.bn-tools').length === 1 && !doc.querySelector('.bn-tools')!.matches('.bn-track'))
+
+const reset = doc.querySelector('[data-reset]')!
+check('the reset sits outside the track', !reset.closest('.bn-track'))
+const strip = doc.querySelector('.bn-bar')!
+check('and last in the strip', strip.lastElementChild === reset, strip.lastElementChild?.className ?? 'nothing')
+
+// The status reports on the canvas, so it lives there. In the strip it wore the
+// same border and fill as the button beside it.
+const status = doc.querySelector('[data-readout]')!
+check('the status sits on the canvas', Boolean(status.closest('[data-box]')))
+check('and not in the strip', !status.closest('.bn-bar'))
+check('it announces itself when it changes', status.getAttribute('aria-live') === 'polite')
+check('and it survives a redraw of the canvas', Boolean(doc.querySelector('[data-readout-text]')))
+
+// Measured in the render, and armed a frame late so it does not grow out of
+// nothing on load. Neither shows up anywhere but the eye.
+const thumb = doc.querySelector<HTMLElement>('[data-seg-thumb]')!
+check('the thumb is placed by the render', /translateX/.test(thumb.style.transform), thumb.style.transform || 'unset')
+check('and its width is measured, not assumed', /^\d/.test(thumb.style.width), thumb.style.width || 'unset')
+// The attribute itself is set on the next animation frame, which a synchronous
+// read can never see, so the guarantee is checked where it lives: the thumb
+// carries no transition until something arms one.
+const flat = styles.replace(/\s+/g, '')
+check('the slide only exists behind the ready flag',
+  /\.bn-seg\[data-ready\]\.bn-seg-thumb\{[^}]*transition:/.test(flat))
+check('and the thumb has none of its own',
+  !/(^|})\.bn-seg-thumb\{[^}]*transition:/.test(flat))
+
+console.log('\nthe bench drawing')
+const drawnMarkup = benchCanvas.innerHTML
+// A presentation attribute cannot resolve a custom property, and an SVG rect
+// with an invalid fill paints black. `style` is the one place a variable works.
+const leaning = [...drawnMarkup.matchAll(/\s([a-zA-Z-]+)="[^"]*var\(/g)].filter((m) => m[1] !== 'style')
+check('no drawn presentation attribute leans on a CSS variable', leaning.length === 0,
+  leaning.map((m) => m[1]).join(', '))
+
+// The rule scripts/rigs.ts holds every static rig to, applied to the one rig
+// the generator cannot draw.
+const boxOf = (r: Element) => ['x', 'y', 'width', 'height'].map((k) => r.getAttribute(k)).join(',')
+const clipRects = [...benchCanvas.querySelectorAll('clipPath rect')].map(boxOf)
+const frameRects = [...benchCanvas.querySelectorAll('rect.rig-frame')].map(boxOf)
+check('every clip rect is traced by a frame of the same geometry',
+  clipRects.length > 0 && clipRects.join(' | ') === frameRects.join(' | '),
+  `${clipRects.join(' | ')} against ${frameRects.join(' | ')}`)
+
+// Two glyphs are optically larger than their neighbours at the same nominal
+// size. Matched with its selector: a bare scale() search would pass on any
+// unrelated rule that happened to use the same number.
+check('the zoom glyphs keep their optical correction',
+  /\.bn-tool\[data-act=["']?in["']?\]svg[^{]*\{[^}]*scale\(\.?0?\.?92\)/.test(styles.replace(/\s+/g, '')),
+  'plus and minus fill more of the box than the arrows do')
 console.log(failures ? `\n${failures} FAILED` : '\nall checks passed')
 process.exit(failures ? 1 : 0)
