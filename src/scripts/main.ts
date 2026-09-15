@@ -1,3 +1,5 @@
+import { setupEditorBench } from './bench'
+
 /**
  * Wires the small-width nav menu to its toggle, keeping `aria-expanded` and
  * the icon pair in step. Escape closes it and hands focus back.
@@ -241,3 +243,4 @@ setupBezelSliders()
 setupTabs()
 setupClockPhase()
 setupStarCount()
+setupEditorBench()

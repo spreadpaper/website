@@ -4,6 +4,325 @@ import Icon from '../Icon.astro'
 
 <!-- The editor: placing one photograph exactly where the monitors are. -->
 <section id="editor" class="cd-section bg-cd-bg" aria-labelledby="editor-title">
+  <!-- Global, because the markup these rules style is written by
+       src/scripts/bench.ts at runtime: Astro scopes a component's styles with
+       an attribute it stamps on the elements it renders, and none of these are
+       rendered here. The `#editor` prefix is what keeps them contained. -->
+  <style is:global>
+    /* === The bench ===
+       Copied from the prototype. The markup it styles is written by
+       src/scripts/bench.ts at runtime, so these rules are global: Astro scopes a
+       component's styles with an attribute it stamps on the elements it renders,
+       and nothing it renders is in here. The `#editor` prefix is the scope. */
+
+    #editor .bn {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    @media (min-width: 60rem) {
+      #editor .bn { grid-template-columns: 17.5rem minmax(0, 1fr); align-items: start; }
+    }
+
+    #editor .bn-panel {
+      background-color: var(--color-cd-bg-secondary);
+      border: 1px solid var(--color-cd-border);
+      border-radius: 14px;
+      padding: 1rem;
+    }
+
+    #editor .bn-panel + .bn-panel { margin-top: 1rem; }
+
+    #editor .bn-panel-title {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--color-cd-text-tertiary);
+    }
+
+
+    /* --- The picture --- */
+
+    #editor .bn-thumbs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.375rem; margin-top: 0.75rem; }
+
+    #editor .bn-thumb {
+      display: block;
+      padding: 0;
+      border: 1px solid var(--color-cd-border-strong);
+      border-radius: 6px;
+      overflow: hidden;
+      background: var(--color-cd-canvas);
+      cursor: pointer;
+      transition: border-color 150ms ease-out;
+    }
+
+    #editor .bn-thumb img { display: block; width: 100%; height: 2.25rem; object-fit: cover; }
+
+    #editor .bn-thumb[aria-pressed="true"] { border-color: var(--color-cd-accent); box-shadow: 0 0 0 1px var(--color-cd-accent); }
+
+    @media (hover: hover) and (pointer: fine) {
+      #editor .bn-thumb:hover { border-color: var(--color-cd-text-tertiary); }
+      #editor .bn-thumb[aria-pressed="true"]:hover { border-color: var(--color-cd-accent); }
+    }
+
+    #editor .bn-choose { width: 100%; margin-top: 0.625rem; padding: 0.5rem 0.875rem; font-size: 0.8125rem; }
+
+    #editor .bn-filename {
+      margin-top: 0.5rem;
+      font-size: 0.75rem;
+      line-height: 1.45;
+      color: var(--color-cd-text-tertiary);
+      word-break: break-all;
+    }
+
+
+    /* --- The displays --- */
+
+    #editor .bn-list { margin-top: 0.75rem; display: grid; gap: 0.25rem; }
+
+    #editor .bn-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      background: transparent;
+      font: inherit;
+      color: inherit;
+      text-align: left;
+      cursor: pointer;
+      transition: background-color 150ms ease-out, border-color 150ms ease-out;
+    }
+
+    #editor .bn-row[aria-current="true"] { background-color: var(--color-cd-bg-elevated); border-color: var(--color-cd-accent); }
+
+    @media (hover: hover) and (pointer: fine) {
+      #editor .bn-row:hover { background-color: var(--color-cd-bg-elevated); }
+    }
+
+    /* A miniature of this one panel, at its own aspect, so the row is picked by
+       shape as well as by name. */
+    #editor .bn-row-chip { flex: none; width: 1.75rem; display: flex; align-items: center; justify-content: center; }
+    #editor .bn-row-chip span { display: block; border: 1.5px solid currentColor; border-radius: 2px; color: var(--color-cd-text-tertiary); }
+    #editor .bn-row[aria-current="true"] .bn-row-chip span { color: var(--color-cd-accent); }
+
+    #editor .bn-row-text { min-width: 0; flex: 1 1 auto; }
+    #editor .bn-row-name { display: block; font-size: 0.8125rem; font-weight: 600; color: var(--color-cd-text); }
+    #editor .bn-row-spec { display: block; font-size: 0.6875rem; color: var(--color-cd-text-tertiary); font-variant-numeric: tabular-nums; }
+
+    #editor .bn-remove {
+      flex: none;
+      width: 1.75rem; height: 1.75rem;
+      display: flex; align-items: center; justify-content: center;
+      border: 0; border-radius: 9999px;
+      background: transparent;
+      color: var(--color-cd-text-tertiary);
+      cursor: pointer;
+      transition: background-color 150ms ease-out, color 150ms ease-out;
+    }
+
+    #editor .bn-remove svg { width: 0.875rem; height: 0.875rem; }
+    #editor .bn-remove:disabled { opacity: 0.35; cursor: default; }
+
+    @media (hover: hover) and (pointer: fine) {
+      #editor .bn-remove:not(:disabled):hover { background-color: var(--color-cd-bg-hover); color: var(--color-cd-text); }
+    }
+
+    #editor .bn-add-wrap { position: relative; margin-top: 0.625rem; }
+    #editor .bn-add { width: 100%; padding: 0.5rem 0.875rem; font-size: 0.8125rem; }
+
+    #editor .bn-menu {
+      position: absolute;
+      left: 0; right: 0; top: calc(100% + 0.375rem);
+      z-index: 5;
+      padding: 0.25rem;
+      border-radius: 10px;
+      border: 1px solid var(--color-cd-border-strong);
+      background-color: var(--color-cd-bg-elevated);
+      box-shadow: 0 12px 28px rgb(0 0 0 / 0.5);
+    }
+
+    #editor .bn-menu[hidden] { display: none; }
+
+    #editor .bn-menu-item {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.75rem;
+      width: 100%;
+      padding: 0.4375rem 0.5rem;
+      border: 0; border-radius: 6px;
+      background: transparent;
+      font: inherit; font-size: 0.8125rem;
+      color: var(--color-cd-text);
+      text-align: left;
+      cursor: pointer;
+    }
+
+    #editor .bn-menu-item span { font-size: 0.6875rem; color: var(--color-cd-text-tertiary); font-variant-numeric: tabular-nums; }
+
+    @media (hover: hover) and (pointer: fine) {
+      #editor .bn-menu-item:hover { background-color: var(--color-cd-bg-hover); }
+    }
+
+
+    /* --- The stage --- */
+
+    #editor .bn-stage { min-width: 0; }
+
+    /* One fixed box whatever the arrangement, so adding a display resizes the
+       drawing rather than the page. The canvas letterboxes inside it, which is what
+       the app's own canvas does when the window is the wrong shape for the desk. */
+    #editor .bn-canvas-box {
+      position: relative;
+      aspect-ratio: 16 / 9;
+      border-radius: 12px;
+      border: 1px solid var(--color-cd-border);
+      background-color: var(--color-cd-canvas);
+      overflow: hidden;
+    }
+
+    #editor .bn-canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+
+    #editor .bn-canvas[data-mode="place"] { cursor: grab; }
+    #editor .bn-canvas[data-mode="place"][data-dragging] { cursor: grabbing; }
+    #editor .bn-canvas[data-mode="arrange"] .bn-hit { cursor: grab; }
+    #editor .bn-canvas[data-mode="arrange"][data-dragging] .bn-hit { cursor: grabbing; }
+
+    #editor .bn-hit { fill: transparent; }
+
+    #editor .bn-outline { fill: none; stroke: var(--color-cd-accent); stroke-width: 3; opacity: 0; }
+    #editor .bn-outline[data-on] { opacity: 1; }
+
+    /* The alignment guides, drawn only while a drag is actually caught on one. No
+       transition: a guide that fades in is a guide that arrives after the thing it
+       is explaining. */
+    #editor .bn-guide { stroke: var(--color-cd-accent); stroke-width: 1.5; stroke-dasharray: 6 5; }
+
+    /* The drop target. The whole stage takes a file, so the ring is on the box
+       rather than on some smaller well the reader has to aim at. */
+    #editor .bn-canvas-box[data-dropping]::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 12px;
+      border: 2px dashed var(--color-cd-accent);
+      background-color: rgb(94 92 230 / 0.10);
+      pointer-events: none;
+    }
+
+    /* --- The control bar --- */
+
+    #editor .bn-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+
+    #editor .bn-seg {
+      display: flex;
+      gap: 2px;
+      padding: 3px;
+      border-radius: 9999px;
+      border: 1px solid var(--color-cd-border-strong);
+      background-color: var(--color-cd-bg-elevated);
+    }
+
+    #editor .bn-seg-item {
+      display: flex;
+      align-items: center;
+      min-height: 2rem;
+      padding: 0 0.75rem;
+      border: 0; border-radius: 9999px;
+      background: transparent;
+      font: inherit; font-size: 0.8125rem; font-weight: 600;
+      color: var(--color-cd-text-secondary);
+      cursor: pointer;
+      transition: background-color 150ms ease-out, color 150ms ease-out;
+    }
+
+    #editor .bn-seg-item[aria-pressed="true"] { background-color: var(--color-cd-bg-hover); color: var(--color-cd-text); }
+
+    @media (hover: hover) and (pointer: fine) {
+      #editor .bn-seg-item:not([aria-pressed="true"]):hover { color: var(--color-cd-text); }
+    }
+
+    /* The four glyphs the editor's HUD really draws, as real buttons. */
+    #editor .bn-tools {
+      display: flex;
+      gap: 2px;
+      padding: 3px;
+      border-radius: 9999px;
+      border: 1px solid var(--color-cd-border-strong);
+      background-color: var(--color-cd-bg-elevated);
+    }
+
+    #editor .bn-tool {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.375rem; height: 2rem;
+      border: 0; border-radius: 9999px;
+      background: transparent;
+      color: var(--color-cd-text);
+      cursor: pointer;
+      transition: background-color 150ms ease-out;
+    }
+
+    #editor .bn-tool svg { width: 1rem; height: 1rem; }
+    #editor .bn-tool:disabled { color: var(--color-cd-text-tertiary); cursor: default; }
+    #editor .bn-tool[aria-pressed="true"] { background-color: var(--color-cd-accent); color: #fff; }
+
+    @media (hover: hover) and (pointer: fine) {
+      #editor .bn-tool:not(:disabled):not([aria-pressed="true"]):hover { background-color: var(--color-cd-bg-hover); }
+    }
+
+    #editor .bn-readout {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      min-height: 2.125rem;
+      padding: 0 0.875rem;
+      border-radius: 9999px;
+      border: 1px solid var(--color-cd-border-strong);
+      background-color: var(--color-cd-bg-elevated);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--color-cd-text);
+      font-variant-numeric: tabular-nums;
+    }
+
+    #editor .bn-readout-dot { width: 0.375rem; height: 0.375rem; border-radius: 9999px; background-color: var(--color-cd-text-tertiary); }
+    #editor .bn-readout[data-snapped] .bn-readout-dot { background-color: var(--color-cd-success); }
+
+    #editor .bn-hint {
+      margin-top: 0.75rem;
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      color: var(--color-cd-text-tertiary);
+      max-width: 68ch;
+      text-wrap: pretty;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #editor .bn-thumb, #editor .bn-row, #editor .bn-remove, #editor .bn-seg-item, #editor .bn-tool { transition: none; }
+    }
+    /* --- Carried across with the rest ---
+       The canvas is not a `.rig`, so it declares the two custom properties the
+       frame stroke reads; and an svg with no width or height fills its button. */
+    #editor .bn-canvas { --rig-bezel: 10; --rig-frame-color: #1c1c23; }
+    #editor .cd-button svg { width: 1rem; height: 1rem; flex: none; }
+    #editor .bn-choose,
+    #editor .bn-add { width: 100%; margin-top: 0.625rem; padding: 0.5rem 0.875rem; font-size: 0.8125rem; }
+    #editor .bn-reset { min-height: 2.125rem; padding: 0 0.875rem; font-size: 0.8125rem; }
+    #editor .pc-focus:focus-visible { outline: 2px solid var(--color-cd-accent); outline-offset: 3px; }
+  </style>
 
   <div class="cd-shell">
     <div class="grid grid-cols-12 gap-x-6 gap-y-6">
@@ -12,52 +331,53 @@ import Icon from '../Icon.astro'
         <h2 id="editor-title" class="mt-4 text-3xl sm:text-4xl lg:text-5xl font-bold tracking-[-0.025em] leading-[1.05] text-cd-text text-balance">Place the wallpaper exactly where your monitors sit</h2>
       </div>
       <div class="col-span-12 lg:col-span-5 lg:col-start-8 lg:self-end" data-reveal>
-        <p class="text-lg sm:text-xl leading-relaxed text-cd-text-secondary max-w-[46ch] text-pretty">The canvas is your display arrangement, the one macOS already knows about: the same sizes, the same order, the same gaps. Drop a photograph on it and drag, and it snaps to the middle and to the edges as it passes them, so what you line up here is what lands on the glass.</p>
+        <p class="text-lg sm:text-xl leading-relaxed text-cd-text-secondary max-w-[46ch] text-pretty">The canvas is your display arrangement: the same sizes, the same order, the same gaps. Build your desk below, drop a picture on it, and drag until it sits where you want it.</p>
       </div>
     </div>
 
-    <div class="mt-16 grid grid-cols-12 gap-x-6 gap-y-10 lg:items-center">
-      <figure class="col-span-12 lg:col-span-7" data-reveal>
-        <!-- Generated by `markup('mixed')` from scripts/rigs.mjs, hand edits and all now in
-             the generator, including the four glyphs `EditorView.hudIconButton` really draws. -->
-        <svg class="rig rig-mixed" viewBox="0 0 728 403" role="img" aria-label="The editor canvas: a snow covered mountain ridge, with an ultrawide display and one stood on its end outlined over it and the photograph reaching past both." focusable="false">
-          <defs>
-            <clipPath id="rig-editor-canvas">
-              <rect x="24" y="100" width="474" height="203" rx="10"/>
-              <rect x="504" y="24" width="200" height="355" rx="10"/>
-            </clipPath>
-          </defs>
-          <image class="rig-bleed" href="/photos/1200/hero-day-2.jpg" x="0" y="0" width="728" height="403" preserveAspectRatio="xMidYMid slice"/>
-          <rect class="rig-crop" x="14" y="14" width="700" height="375" rx="8"/>
-          <g clip-path="url(#rig-editor-canvas)">
-            <image class="rig-photo" href="/photos/1200/hero-day-2.jpg" x="0" y="0" width="728" height="403" preserveAspectRatio="xMidYMid slice"/>
-            <rect class="rig-frame" x="24" y="100" width="474" height="203" rx="10"/>
-            <rect class="rig-frame" x="504" y="24" width="200" height="355" rx="10"/>
-          </g>
-          <g class="rig-hud">
-            <rect class="rig-hud-bar" x="175" y="253" width="172" height="30" rx="15"/>
-            <Icon name="minus" x="191" y="261" width="14" height="14" />
-            <Icon name="plus" x="233" y="261" width="14" height="14" />
-            <Icon name="arrows-out-simple" x="275" y="261" width="14" height="14" />
-            <Icon name="arrows-left-right" x="317" y="261" width="14" height="14" />
-          </g>
-        </svg>
-        <figcaption class="mt-4 text-sm leading-relaxed text-cd-text-secondary max-w-[62ch] text-pretty">An ultrawide with a display stood on its end beside it, laid out the way the Mac reports them, and the editor's own controls floating over the bottom of the canvas. The hairline rectangle is what the render keeps, and the photograph reaching past it is cropped away.</figcaption>
-      </figure>
+    <figure class="mt-16" data-reveal>
+      <!-- Generated by `markup('mixed')` from scripts/rigs.ts. This is the whole
+           figure without the script; the bench replaces it once wired. -->
+      <svg class="rig rig-mixed max-w-3xl" data-bench-still viewBox="0 0 728 403" role="img" aria-label="The editor canvas: a snow covered mountain ridge, with an ultrawide display and one stood on its end outlined over it and the photograph reaching past both." focusable="false">
+        <defs>
+          <clipPath id="rig-editor-canvas">
+            <rect x="24" y="100" width="474" height="203" rx="10"/>
+            <rect x="504" y="24" width="200" height="355" rx="10"/>
+          </clipPath>
+        </defs>
+        <image class="rig-bleed" href="/photos/1200/hero-day-2.jpg" x="0" y="0" width="728" height="403" preserveAspectRatio="xMidYMid slice"/>
+        <rect class="rig-crop" x="14" y="14" width="700" height="375" rx="8"/>
+        <g clip-path="url(#rig-editor-canvas)">
+          <image class="rig-photo" href="/photos/1200/hero-day-2.jpg" x="0" y="0" width="728" height="403" preserveAspectRatio="xMidYMid slice"/>
+          <rect class="rig-frame" x="24" y="100" width="474" height="203" rx="10"/>
+          <rect class="rig-frame" x="504" y="24" width="200" height="355" rx="10"/>
+        </g>
+        <g class="rig-hud">
+          <rect class="rig-hud-bar" x="175" y="253" width="172" height="30" rx="15"/>
+          <Icon name="minus" x="191" y="261" width="14" height="14" />
+          <Icon name="plus" x="233" y="261" width="14" height="14" />
+          <Icon name="arrows-out-simple" x="275" y="261" width="14" height="14" />
+          <Icon name="arrows-left-right" x="317" y="261" width="14" height="14" />
+        </g>
+      </svg>
 
-      <div class="col-span-12 lg:col-span-4 lg:col-start-9 space-y-8" data-reveal>
-        <div>
-          <h3 class="text-xl font-semibold tracking-[-0.01em] text-cd-text">Zoom, fit and flip</h3>
-          <p class="mt-2 text-base leading-relaxed text-cd-text-secondary max-w-[62ch] text-pretty">A small set of controls floats over the bottom of the canvas: zoom between 10 and 300 per cent, fit the image to the canvas in one click, and mirror it horizontally when the composition reads better the other way round.</p>
-        </div>
-        <div>
-          <h3 class="text-xl font-semibold tracking-[-0.01em] text-cd-text">One file for every screen</h3>
-          <p class="mt-2 text-base leading-relaxed text-cd-text-secondary max-w-[62ch] text-pretty">Each display gets its own rendered file, keyed on the display ID rather than the name, so two identical monitors never end up sharing one picture. Wallpapers go up one at a time, so a second click cannot overtake the first.</p>
-        </div>
-        <div>
-          <h3 class="text-xl font-semibold tracking-[-0.01em] text-cd-text">Look before you save</h3>
-          <p class="mt-2 text-base leading-relaxed text-cd-text-secondary max-w-[62ch] text-pretty">Preview puts the wallpaper on your screens with the editor still open, so you can judge it where it will live. Save keeps it as a preset, and Save &amp; Apply does both at once.</p>
-        </div>
+      <div data-bench-mount hidden></div>
+
+      <figcaption class="mt-4 text-sm leading-relaxed text-cd-text-secondary max-w-[62ch] text-pretty">On a Mac the app takes the arrangement from the system. A web page cannot see your displays, so this one is described by hand. Nothing you drop leaves your Mac.</figcaption>
+    </figure>
+
+    <div class="mt-14 grid grid-cols-12 gap-x-6 gap-y-8">
+      <div class="col-span-12 lg:col-span-4" data-reveal>
+        <h3 class="text-xl font-semibold tracking-[-0.01em] text-cd-text">Zoom, fit and flip</h3>
+        <p class="mt-2 text-base leading-relaxed text-cd-text-secondary max-w-[62ch] text-pretty">A small set of controls floats over the bottom of the canvas: zoom between 10 and 300 per cent, fit the image to the canvas in one click, and mirror it horizontally when the composition reads better the other way round.</p>
+      </div>
+      <div class="col-span-12 lg:col-span-4" data-reveal>
+        <h3 class="text-xl font-semibold tracking-[-0.01em] text-cd-text">One file for every screen</h3>
+        <p class="mt-2 text-base leading-relaxed text-cd-text-secondary max-w-[62ch] text-pretty">Each display gets its own rendered file, keyed on the display ID rather than the name, so two identical monitors never end up sharing one picture. Wallpapers go up one at a time, so a second click cannot overtake the first.</p>
+      </div>
+      <div class="col-span-12 lg:col-span-4" data-reveal>
+        <h3 class="text-xl font-semibold tracking-[-0.01em] text-cd-text">Look before you save</h3>
+        <p class="mt-2 text-base leading-relaxed text-cd-text-secondary max-w-[62ch] text-pretty">Preview puts the wallpaper on your screens with the editor still open, so you can judge it where it will live. Save keeps it as a preset, and Save &amp; Apply does both at once.</p>
       </div>
     </div>
   </div>

@@ -33,6 +33,13 @@ const bundles = [
   ...[...html.matchAll(/<script type="module">([\s\S]*?)<\/script>/g)].map((m) => m[1]),
 ]
 
+// The compiled stylesheets, for the rules that have to survive the build in a
+// particular shape rather than merely exist in a source file.
+const styles = readdirSync(join(site, '_astro'))
+  .filter((f) => f.endsWith('.css'))
+  .map((f) => readFileSync(join(site, '_astro', f), 'utf8'))
+  .join('\n')
+
 let failures = 0
 const check = (name: string, condition: unknown, detail = '') => {
   if (condition) console.log(`  pass  ${name}`)
@@ -76,6 +83,8 @@ const control = doc.querySelector('[data-bezel-control]')!
 const readout = doc.querySelector('[data-bezel-readout]')!
 const rig = slider && doc.getElementById(slider.dataset.bezelTarget!)!
 const tabRoot = doc.querySelector('[data-tabs]')!
+const benchMount = doc.querySelector('[data-bench-mount]')!
+const benchStill = doc.querySelector('[data-bench-still]')!
 const tabList = tabRoot && tabRoot.querySelector('[data-tabs-list]')!
 
 console.log('with no script, the page is still complete')
@@ -87,6 +96,8 @@ check('every tab panel is readable', panelsBefore.length > 0 && panelsBefore.eve
 check('no panel sits in the tab order yet', panelsBefore.every((p) => !p.hasAttribute('tabindex')))
 check('nav menu links exist in the markup', doc.querySelectorAll('#nav-menu a').length > 0)
 check('no tabs-ready flag before the script', !tabRoot?.hasAttribute('data-tabs-ready'))
+check('the editor bench ships empty and hidden', benchMount?.hasAttribute('hidden') && !benchMount.innerHTML.trim())
+check('and the still canvas it replaces is showing', !benchStill?.hasAttribute('hidden'))
 
 // Each in its own scope: two modules declaring the same name is ordinary in the
 // browser and should not become an error only in here.
@@ -452,6 +463,97 @@ check('the version is a version, read from the release at build time', /^\d+\.\d
 check('the size is megabytes, not bytes', /^\d+ MB$/.test(fact('Download')), fact('Download'))
 check('it names the macOS it needs', fact('Requires').includes('macOS'), fact('Requires'))
 check('and the licence', fact('Licence') === 'MIT', fact('Licence'))
+
+console.log('\nthe editor bench')
+const benchCanvas = doc.querySelector('[data-canvas]')!
+const benchRows = () => [...doc.querySelectorAll('[data-list] [data-row]')]
+const benchSay = () => doc.querySelector('[data-readout-text]')!.textContent!.trim()
+const benchWide = () => Number(benchCanvas?.getAttribute('viewBox')?.split(' ')[2])
+const act = (name: string) => doc.querySelector<HTMLButtonElement>(`[data-act="${name}"]`)!
+
+check('the script writes it in', !benchMount.hasAttribute('hidden') && !!doc.querySelector('[data-bench]'))
+check('and takes the still canvas down, so only one of the two shows', benchStill.hasAttribute('hidden'))
+// The svg ships empty; a viewBox means the desk was drawn from state.
+check('the canvas is drawn', /^-?\d/.test(benchCanvas?.getAttribute('viewBox') ?? ''), benchCanvas?.getAttribute('viewBox') ?? 'none')
+check('it opens on two displays', benchRows().length === 2, `${benchRows().length} rows`)
+
+const benchStart = benchWide()
+doc.querySelector<HTMLButtonElement>('[data-addbutton]')!.click()
+check('the add menu opens', !doc.querySelector('[data-menu]')!.hasAttribute('hidden'))
+check('and offers the shared panel catalogue', doc.querySelectorAll('[data-add]').length === 6,
+  `${doc.querySelectorAll('[data-add]').length} panels`)
+doc.querySelector<HTMLButtonElement>('[data-add="ultrawide34"]')!.click()
+check('a third display is listed', benchRows().length === 3, `${benchRows().length} rows`)
+check('the canvas widens to hold it', benchWide() > benchStart, `${benchWide()} vs ${benchStart}`)
+check('and the new one is selected', benchRows()[2].getAttribute('aria-current') === 'true')
+
+doc.querySelectorAll<HTMLButtonElement>('[data-remove]')[2].click()
+check('removing it takes it off the list', benchRows().length === 2, `${benchRows().length} rows`)
+check('and the selection lands on one that still exists',
+  benchRows().some((row) => row.getAttribute('aria-current') === 'true'))
+
+// A desk with no displays has nothing to draw, so the last one stays.
+doc.querySelectorAll<HTMLButtonElement>('[data-remove]')[1].click()
+check('the last display keeps a disabled remove', benchRows()[0].querySelector<HTMLButtonElement>('[data-remove]')!.disabled)
+doc.querySelectorAll<HTMLButtonElement>('[data-remove]')[0].click()
+check('clicking it anyway leaves the display alone', benchRows().length === 1, `${benchRows().length} rows`)
+doc.querySelector<HTMLButtonElement>('[data-reset]')!.click()
+check('start again restores the opening desk', benchRows().length === 2, `${benchRows().length} rows`)
+
+check('zoom opens at 100%', benchSay().startsWith('Zoom 100%'), benchSay())
+check('and cannot go below it, since a smaller picture uncovers a screen', act('out').disabled)
+act('in').click()
+check('zooming in steps to 125%', benchSay().startsWith('Zoom 125%'), benchSay())
+check('which frees zooming out', !act('out').disabled)
+for (let i = 0; i < 20; i++) act('in').click()
+check('zoom stops at 400%', benchSay().startsWith('Zoom 400%'), benchSay())
+check('and the button says so', act('in').disabled)
+
+act('flip').click()
+check('flip reports itself pressed', act('flip').getAttribute('aria-pressed') === 'true')
+check('and the drawing is actually mirrored', benchCanvas.innerHTML.includes('scaleX(-1)'))
+act('fit').click()
+check('fit returns to 100% and the middle', benchSay().startsWith('Zoom 100%') && benchSay().includes('Centred'), benchSay())
+
+// Dragging means two things, so only one set of handles may be live at a time.
+doc.querySelector<HTMLButtonElement>('[data-mode-set="place"]')!.click()
+check('placing the picture takes the display handles off the canvas', !benchCanvas.innerHTML.includes('data-display'))
+check('and the hint follows the mode', doc.querySelector('[data-hint]')!.textContent!.includes('Drag the picture'))
+doc.querySelector<HTMLButtonElement>('[data-mode-set="arrange"]')!.click()
+check('arranging brings them back', benchCanvas.innerHTML.includes('data-display'))
+
+// Arrow keys are the keyboard road to the drag, and they snap like it does.
+const benchRow = benchRows()[1]
+const frameX = () => benchCanvas.querySelectorAll('rect.rig-frame')[1]?.getAttribute('x')
+const nudge = (key: string) => benchRow.dispatchEvent(new window.KeyboardEvent('keydown', { key, bubbles: true }))
+const restX = frameX()
+nudge('ArrowRight')
+check('an arrow key moves a display', frameX() !== restX, `${restX} to ${frameX()}`)
+nudge('ArrowLeft')
+check('and it snaps back to its neighbour', frameX() === restX, `${frameX()} want ${restX}`)
+
+// Every clip rect is traced by a frame rect of the same geometry, which is the
+// rule scripts/rigs.ts holds the static rigs to.
+const clipBoxes = [...benchCanvas.querySelectorAll('clipPath rect')].map((r) =>
+  ['x', 'y', 'width', 'height'].map((k) => r.getAttribute(k)).join(','))
+const frameBoxes = [...benchCanvas.querySelectorAll('rect.rig-frame')].map((r) =>
+  ['x', 'y', 'width', 'height'].map((k) => r.getAttribute(k)).join(','))
+check('every frame traces its own clip rect', clipBoxes.length > 0 && clipBoxes.join(' ') === frameBoxes.join(' '),
+  `${clipBoxes.join(' | ')} against ${frameBoxes.join(' | ')}`)
+
+console.log('\nthe bench stylesheet reaches markup the script builds')
+// Astro scopes a component's <style> by rewriting its selectors to carry a
+// data-astro-cid attribute and stamping that attribute on the elements the
+// component renders. The bench renders none of its own, so a scoped rule
+// reaches nothing: `.bn-hit` loses its fill, and an SVG rect with no fill is
+// black, one of them over every display.
+check('no bench rule was scoped to a cid', !/\.bn-[a-z-]*\[data-astro-cid/.test(styles))
+check('the hit targets are painted transparent',
+  /#editor \.bn-hit\{fill:\s*(transparent|#0000|rgba?\(0,\s*0,\s*0,\s*0\))\}/.test(styles),
+  styles.match(/#editor \.bn-hit\{[^}]*\}/)?.[0] ?? 'no rule at all')
+check('and the selection outline is not filled either',
+  /#editor \.bn-outline\{[^}]*fill:\s*none/.test(styles),
+  styles.match(/#editor \.bn-outline\{[^}]*\}/)?.[0] ?? 'no rule at all')
 
 console.log(failures ? `\n${failures} FAILED` : '\nall checks passed')
 process.exit(failures ? 1 : 0)
