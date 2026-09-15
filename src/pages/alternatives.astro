@@ -1,170 +1,478 @@
 ---
 import Prose from '../components/Prose.astro'
 import TextPage from '../layouts/TextPage.astro'
+import { latestRelease } from '../lib/release'
+
+const { version } = await latestRelease()
+
+/* Checked on 15 September 2026 against each app's own site, its Mac App Store
+   record, or its repository. `unverified` is used wherever a primary source
+   does not settle the question, because a confident guess about somebody
+   else's software is worse than an empty cell. */
+const CHECKED = '15 September 2026'
+
+/** What a source says about one capability: stated, absent, or left open. */
+type Mark = 'yes' | 'no' | 'unverified'
+
+type App = {
+  name: string
+  self?: boolean
+  group?: 'paid' | 'free'
+  href?: string
+  spans: Mark
+  bezels: Mark
+  pair: Mark
+  schedule: Mark
+  platform: string
+  price: string
+  where: string
+  source: string
+  updated: string
+}
+
+const apps: App[] = [
+  {
+    name: 'SpreadPaper',
+    self: true,
+    spans: 'yes',
+    bezels: 'yes',
+    pair: 'yes',
+    schedule: 'yes',
+    platform: 'macOS 15 and later',
+    price: 'Free',
+    where: 'GitHub releases',
+    source: 'MIT',
+    updated: version,
+  },
+  {
+    name: 'Multi Monitor Wallpaper',
+    group: 'paid',
+    href: 'https://hobbyistsoftware.com/mmw',
+    spans: 'yes',
+    bezels: 'unverified',
+    pair: 'unverified',
+    schedule: 'unverified',
+    platform: 'macOS 10.15 and later',
+    price: '9.99 USD a year',
+    where: 'Mac App Store',
+    source: 'Closed',
+    updated: 'September 2025',
+  },
+  {
+    name: 'Superpaper',
+    group: 'free',
+    href: 'https://github.com/hhannine/superpaper',
+    spans: 'yes',
+    bezels: 'yes',
+    pair: 'no',
+    schedule: 'no',
+    platform: 'Linux and Windows, macOS untested',
+    price: 'Free',
+    where: 'Build from source',
+    source: 'MIT',
+    updated: 'December 2022',
+  },
+  {
+    name: 'Spanright',
+    group: 'free',
+    href: 'https://spanright.com',
+    spans: 'yes',
+    bezels: 'yes',
+    pair: 'no',
+    schedule: 'no',
+    platform: 'Any browser',
+    price: 'Free',
+    where: 'In a browser',
+    source: 'MIT',
+    updated: 'September 2026',
+  },
+  {
+    name: 'MultiScape',
+    group: 'free',
+    href: 'https://github.com/robbiet480/multiscape',
+    spans: 'yes',
+    bezels: 'no',
+    pair: 'no',
+    schedule: 'no',
+    platform: 'macOS, version not stated',
+    price: 'Free',
+    where: 'Build from source',
+    source: 'GPL-3.0',
+    updated: 'April 2016',
+  },
+  {
+    name: 'Fresco',
+    group: 'free',
+    href: 'https://apps.apple.com/us/app/fresco/id1251572132',
+    spans: 'unverified',
+    bezels: 'unverified',
+    pair: 'unverified',
+    schedule: 'unverified',
+    platform: 'Withdrawn',
+    price: 'Was free',
+    where: 'No longer listed',
+    source: 'Closed',
+    updated: 'Delisted',
+  },
+]
+
+const rows: { key: keyof Pick<App, 'spans' | 'bezels' | 'pair' | 'schedule'>; label: string }[] = [
+  { key: 'spans', label: 'One image across every display' },
+  { key: 'bezels', label: 'Allows for the gaps between monitors' },
+  { key: 'pair', label: 'A Light and a Dark image' },
+  { key: 'schedule', label: 'Changes with the time of day' },
+]
+
+const facts: { key: keyof Pick<App, 'platform' | 'price' | 'where' | 'source' | 'updated'>; label: string }[] = [
+  { key: 'platform', label: 'Platform' },
+  { key: 'price', label: 'Price' },
+  { key: 'where', label: 'Where you get it' },
+  { key: 'source', label: 'Licence' },
+  { key: 'updated', label: 'Last updated' },
+]
+
+const paid = apps.filter((a) => a.group === 'paid').length
+const free = apps.filter((a) => a.group === 'free').length
+
+/* Apps that come up in the same searches and set a different wallpaper on each
+   display, which is a different feature from one picture spread across them. */
+const perDisplay = [
+  { name: 'Hologram Desktop', href: 'https://gethologram.com/', note: 'A wallpaper browser with desktop widgets. Its site and listing describe neither spanning nor multiple monitors. Last updated December 2022.' },
+  { name: 'iWallpaper', href: 'https://apps.apple.com/us/app/iwallpaper-live-wallpaper/id1552826194', note: 'Live video wallpapers, where "each monitor has its own completely independent settings".' },
+  { name: 'Wallpaperer', href: 'https://apps.apple.com/us/app/wallpaperer/id1102248738', note: 'Pulls top rated images from the subreddits you choose, and will "have different images on multiple monitors".' },
+  { name: 'Wallper', href: 'https://www.wallper.app/pricing', note: 'Live wallpapers, 14.99 USD once for three Macs. Its pricing page makes no spanning claim.' },
+]
 ---
 
 <TextPage
-  title="Other apps that span a Mac wallpaper across displays | SpreadPaper"
-  description="A fair comparison of the Mac apps that spread one wallpaper across several displays, what each one suits, where SpreadPaper differs, and where it is plainly behind."
-  socialDescription="Several apps span a wallpaper across Mac displays. Here is what each is good at, and where SpreadPaper differs."
+  title="Mac apps that span one wallpaper across displays, compared | SpreadPaper"
+  description="Four apps genuinely spread one image across several Mac displays. A checked comparison of what each costs, where you get it, and which of them allows for the gaps between monitors."
+  socialDescription="Four Mac apps genuinely span one wallpaper across displays. Here is the comparison, checked against each app's own sources."
   eyebrow="Alternatives"
-  heading="Other apps that do this, and when to pick one"
-  lead="Several apps spread a wallpaper across Mac displays, and for some people one of them is the better answer. Here is what each is good at, stated as plainly as possible, and where SpreadPaper differs."
+  heading="Mac apps that span one wallpaper across displays"
+  lead="Most apps filed under multi monitor wallpapers put a different picture on each screen. Four spread one picture across all of them, which is a different thing, and this is how they compare."
 >
   <Prose>
-    <h2 id="what-you-want">Start with what you actually want</h2>
+    <h2 id="compare">The ones that span</h2>
     <p>
-      Three quite different wishes get filed under the same search. Some people want one photograph
-      spread across every screen as a single picture. Some want a steady supply of good wallpapers
-      and do not mind which screen gets which. Some want motion, video or something that reacts.
-    </p>
-    <p>
-      SpreadPaper only answers the first of those, and only for a still image. If what you want is
-      the second or the third, one of the apps below will serve you better, and that is worth saying
-      before the comparison rather than after it.
+      Four you can still get and one you cannot. Of the four, one is a paid subscription, one runs
+      in a browser rather than on your Mac, and one you compile yourself. Read down an app to weigh
+      it, or across a row for the thing you care about.
     </p>
 
-    <h2 id="paid">Paid Mac apps</h2>
+    <div class="cmp-wrap">
+      <div class="cmp-scroll" tabindex="0" role="region" aria-labelledby="compare">
+        <table class="cmp">
+          <thead>
+            <tr>
+              <td class="cmp-corner" rowspan="2"><span class="sr-only">Feature</span></td>
+              <th class="cmp-grouphead is-self" scope="colgroup">This app</th>
+              <th class="cmp-grouphead" colspan={paid} scope="colgroup">Paid</th>
+              <th class="cmp-grouphead" colspan={free} scope="colgroup">Free</th>
+            </tr>
+            <tr>
+              {apps.map((app) => (
+                <th scope="col" class:list={['cmp-appname', app.self && 'is-self']}>{app.name}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr>
+                <th scope="row">{row.label}</th>
+                {apps.map((app) => (
+                  <td class:list={[app.self && 'is-self']}>
+                    {app[row.key] === 'yes' && <><span class="g g-yes" aria-hidden="true">&#10003;</span><span class="sr-only">Yes</span></>}
+                    {app[row.key] === 'no' && <><span class="g g-no" aria-hidden="true"></span><span class="sr-only">Not offered</span></>}
+                    {app[row.key] === 'unverified' && <><span class="g g-unverified" aria-hidden="true">?</span><span class="sr-only">Not stated</span></>}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+          <tbody>
+            {facts.map((fact) => (
+              <tr>
+                <th scope="row">{fact.label}</th>
+                {apps.map((app) => <td class:list={[app.self && 'is-self']}>{app[fact.key]}</td>)}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p class="cmp-hint">Scroll the grid sideways to reach every app. The question column stays put.</p>
+      <p class="cmp-legend">
+        <span><span class="g g-yes" aria-hidden="true">&#10003;</span>The app says it does this</span>
+        <span><span class="g g-no" aria-hidden="true"></span>The app does not offer it</span>
+        <span><span class="g g-unverified" aria-hidden="true">?</span>Nobody has stated either way</span>
+      </p>
+      <p class="cmp-checked">Checked {CHECKED} against each app's own site, its Mac App Store record, or its repository.</p>
+    </div>
 
-    <h3>Multi Monitor Wallpaper</h3>
+    <h2 id="notes">What that leaves out</h2>
     <p>
-      Sold on the Mac App Store by Hobbyist Software. Because it comes from the App Store it is
-      signed and notarised, so it installs and opens with no warning at all, and it updates
-      alongside everything else you have from there.
-    </p>
-    <dl class="dl">
-      <div>
-        <dt>Suits</dt>
-        <dd>
-          Anyone who would rather pay for an app than think about signatures, and who wants App
-          Store updates and the App Store's refund route
-        </dd>
-      </div>
-      <div>
-        <dt>Difference</dt>
-        <dd>
-          SpreadPaper is free and open source, and asks you to clear a macOS warning on first launch
-        </dd>
-      </div>
-    </dl>
-
-    <h3>MultiScape</h3>
-    <p>
-      Another paid Mac app in the same territory. If it does what you need, paying for it is a
-      sensible thing to do: a commercial app has someone whose job is to answer your email and keep
-      it working on the next version of macOS.
-    </p>
-    <dl class="dl">
-      <div>
-        <dt>Suits</dt>
-        <dd>Anyone who wants a supported commercial app and is happy to pay for support</dd>
-      </div>
-      <div>
-        <dt>Difference</dt>
-        <dd>
-          SpreadPaper has no company behind it. Support is an issue queue on GitHub and one person's
-          evenings, which <a href="/project">the project page</a> says in more detail
-        </dd>
-      </div>
-    </dl>
-
-    <h3>Hologram</h3>
-    <p>
-      A paid Mac app sold direct from gethologram.com rather than through the App Store. It has not
-      been tested here, so rather than describe features nobody on this side has verified, the fair
-      thing is to point you at its own site and let it speak for itself.
-    </p>
-    <dl class="dl">
-      <div>
-        <dt>Suits</dt>
-        <dd>Anyone comparing properly. Check its site for the current feature list and price</dd>
-      </div>
-      <div>
-        <dt>Difference</dt>
-        <dd>
-          SpreadPaper's scope is deliberately narrow: one still image across every display, with
-          bezel compensation, presets, a Light and Dark pair and time of day schedules
-        </dd>
-      </div>
-    </dl>
-
-    <h2 id="free">Free Mac apps that are about the picture, not the spread</h2>
-
-    <h3>iWallpaper static</h3>
-    <p>
-      Free on the Mac App Store. It sets wallpapers per display rather than spreading one image
-      across them, which is a different job and a useful one: if what you want is a different
-      picture on each screen, managed in one place, this is closer to it than SpreadPaper is.
-    </p>
-    <dl class="dl">
-      <div>
-        <dt>Suits</dt>
-        <dd>A different wallpaper per display, free, and signed because it comes from the App Store</dd>
-      </div>
-      <div>
-        <dt>Difference</dt>
-        <dd>SpreadPaper does the opposite: one photograph treated as one continuous picture</dd>
-      </div>
-    </dl>
-
-    <h3>Wallpaperer</h3>
-    <p>
-      Also on the Mac App Store, and built around finding images from Reddit wallpaper sources. It
-      answers "I need a good picture" rather than "I need one picture across three screens", so the
-      two are not really competing. Finding something wide there and spreading it here is a
-      reasonable way to work.
-    </p>
-    <dl class="dl">
-      <div>
-        <dt>Suits</dt>
-        <dd>Anyone whose actual problem is running out of wallpapers</dd>
-      </div>
-      <div>
-        <dt>Difference</dt>
-        <dd>SpreadPaper brings no images of its own. You supply the photograph</dd>
-      </div>
-    </dl>
-
-    <h2 id="windows">If you are coming from Windows</h2>
-    <p>
-      DisplayFusion and Wallpaper Engine both span wallpapers on Windows, and people arriving from a
-      Windows desk often go looking for them first. Neither has a macOS version, so whatever you had
-      set up there does not follow you across.
+      <a href="https://hobbyistsoftware.com/mmw" rel="nofollow noopener">Multi Monitor Wallpaper</a> is the only paid app
+      still shipping that does this. It puts "a single fabulous image across all your monitors" and
+      will "auto-space screens for real-world layout", which reads like gap compensation without
+      naming it. Nothing on the listing settles whether it schedules by time of day or takes a
+      separate Light and Dark image, which is why three of its cells are open.
     </p>
     <p>
-      Superpaper is the nearest thing to a bridge: cross platform, open source, and it does bezel
-      correction, so it will run on a Mac and do the central job. It is not a native Mac app,
-      though, which shows in how it installs and how it looks next to everything else on the screen.
-      If that does not bother you, it is a genuine option and it costs nothing.
+      <a href="https://github.com/hhannine/superpaper" rel="nofollow noopener">Superpaper</a> is the closest thing to this
+      app and says so plainly: "bezel correction: let the image continuously span behind your
+      bezels", plus pixel density correction across displays of different shapes. The catch is
+      delivery. There is no Mac build in any release, the README still says "MacOS needs testing
+      and packaging", and the last release was December 2022, so running it means compiling it.
+    </p>
+    <p>
+      <a href="https://spanright.com" rel="nofollow noopener">Spanright</a> is a web page rather than an app. It cuts your
+      photograph per monitor, allows for the borders in millimetres, and hands you the files to set
+      yourself. For a desk you arrange once it is the quickest route on this page, and it is the
+      only one here with activity in 2026.
+    </p>
+    <p>
+      <a href="https://github.com/robbiet480/multiscape" rel="nofollow noopener">MultiScape</a> spans, and its repository
+      was archived with a last commit in April 2016. It is here because search results still carry
+      it.
+    </p>
+    <p>
+      <strong>Fresco</strong> has a column for the same reason. It is the app older threads
+      recommend as the free way to do this, and it has been withdrawn: its App Store page returns a
+      404 and an Apple lookup finds it in no storefront. Its row is open marks rather than ticks
+      because with the listing gone there is nothing left to check a claim against.
     </p>
 
+    <h2 id="per-display">Apps that put a different wallpaper on each screen</h2>
+    <p>
+      These come up in the same searches and are good at something else: filling several screens
+      with several pictures. If that is what you are after, start here.
+    </p>
+    <ul class="apps">
+      {perDisplay.map((app) => (
+        <li>
+          <a href={app.href} rel="nofollow noopener">{app.name}</a>
+          <p>{app.note}</p>
+        </li>
+      ))}
+    </ul>
     <h2 id="behind">Where SpreadPaper is behind</h2>
     <p>
-      The App Store apps are signed and notarised. They open the first time with no warning, they
-      update through a system Apple runs, and there is a refund route if you dislike them. That is a
-      real advantage and it would be dishonest to bury it.
-    </p>
-    <p>
-      SpreadPaper is not signed with a paid Apple Developer ID, so macOS warns you on first launch
-      and you clear it yourself in Privacy and Security. It takes a minute, once, and <a href="/help">the help page</a> walks through it. What is offered instead of a signature is that
-      the source is public and every release is built from it by GitHub Actions, so you can check rather
-      than trust. That is not the same thing as notarisation, and anyone who would rather have the signature
-      should buy one of the apps above.
-    </p>
-
-    <h2 id="fit">Where SpreadPaper fits</h2>
-    <p>
-      Free, MIT licensed, native Swift and SwiftUI, sandboxed, no account and no telemetry, on macOS
-      15 Sequoia or later with Apple silicon. It does one thing: spreads a single still image across
-      every connected display as one continuous picture, with bezel compensation for the physical
-      gaps, a live preview you can drag, saved presets, a separate Light and Dark wallpaper, and
-      time of day schedules.
-    </p>
-    <p>
-      That narrowness is the position. Nothing to buy, nothing to sign up to, and if it ever stops
-      being maintained the source is still there. If one of the other apps fits your desk better,
-      use it. <a href="/guides">The guides</a> are worth reading either way, because the tricky part
-      is the same whichever app does it.
+      It is not on the Mac App Store and has no paid signing certificate, so macOS warns you the
+      first time and you allow it once by hand. The <a href="/help">help page</a> covers that in
+      four steps. It also brings no pictures of its own: you supply the photograph, where Hologram
+      Desktop and Wallpaperer hand you a library. And it wants macOS 15 Sequoia on Apple Silicon,
+      which is a higher bar than anything else on this page.
     </p>
   </Prose>
 </TextPage>
+
+<style>
+  /* The table is wider than a phone and there is no honest way around that with
+     six apps on it, so the phone gets the real grid inside a scroller with the
+     question column pinned. The pinned column is what makes a sideways scroll
+     readable: the reader keeps the row they are on. */
+  .cmp-wrap {
+    max-width: none;
+    margin-top: 2rem;
+  }
+
+  .cmp-scroll {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    border: 1px solid var(--color-cd-border);
+    border-radius: 14px;
+    background-color: var(--color-cd-bg-secondary);
+  }
+
+  .cmp-scroll:focus-visible {
+    outline: 2px solid var(--color-cd-accent);
+    outline-offset: 2px;
+  }
+
+  .cmp {
+    width: 100%;
+    min-width: 46rem;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.9375rem;
+    text-align: left;
+  }
+
+  .cmp th,
+  .cmp td {
+    padding: 0.75rem 1rem;
+    vertical-align: top;
+    font-weight: 400;
+    text-align: left;
+  }
+
+  .cmp thead th { vertical-align: bottom; }
+
+  .cmp-grouphead {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-cd-text-tertiary);
+    padding-bottom: 0.5rem;
+  }
+
+  .cmp-appname {
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--color-cd-text);
+    border-bottom: 1px solid var(--color-cd-border-strong);
+    padding-bottom: 0.875rem;
+  }
+
+  .cmp-corner { border-bottom: 1px solid var(--color-cd-border-strong); }
+
+  /* The question column carries the container fill and a seam on its right
+     edge, which doubles as the signal that the grid continues. */
+  .cmp th[scope="row"],
+  .cmp-corner {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    width: 9.5rem;
+    background-color: var(--color-cd-bg-secondary);
+    border-right: 1px solid var(--color-cd-border);
+    font-size: 0.875rem;
+    line-height: 1.4;
+    color: var(--color-cd-text-secondary);
+  }
+
+  .cmp-corner { z-index: 3; }
+
+  @media (min-width: 48rem) {
+    .cmp { min-width: 54rem; }
+
+    .cmp th[scope="row"],
+    .cmp-corner { width: 14rem; }
+
+    .cmp th,
+    .cmp td { padding: 0.875rem 1.25rem; }
+  }
+
+  .cmp tbody tr + tr th,
+  .cmp tbody tr + tr td { border-top: 1px solid var(--color-cd-border); }
+
+  .cmp tbody + tbody th,
+  .cmp tbody + tbody td { border-top: 1px solid var(--color-cd-border-strong); }
+
+  .cmp td { color: var(--color-cd-text); }
+
+  .cmp .is-self { background-color: color-mix(in srgb, var(--color-cd-accent) 9%, transparent); }
+
+  .cmp th[scope="row"].is-self,
+  .cmp-corner.is-self { background-color: var(--color-cd-bg-secondary); }
+
+  /* A six column row is the thing a pointer loses. */
+  @media (hover: hover) and (pointer: fine) {
+    .cmp tbody tr:hover td { background-color: var(--color-cd-bg-elevated); }
+
+    .cmp tbody tr:hover th[scope="row"] {
+      background-color: var(--color-cd-bg-elevated);
+      color: var(--color-cd-text);
+    }
+
+    .cmp tbody tr:hover td.is-self {
+      background-color: color-mix(in srgb, var(--color-cd-accent) 16%, var(--color-cd-bg-elevated));
+    }
+  }
+
+  .g {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.125rem;
+    height: 1.125rem;
+    flex: none;
+    font-size: 0.9375rem;
+    line-height: 1;
+  }
+
+  .g-yes { color: var(--color-cd-text); font-weight: 600; }
+
+  .g-no::before {
+    content: "";
+    width: 0.625rem;
+    height: 1px;
+    background-color: var(--color-cd-text-tertiary);
+  }
+
+  .g-unverified {
+    color: var(--color-cd-dynamic);
+    font-weight: 600;
+    font-size: 0.875rem;
+  }
+
+  .cmp-hint {
+    max-width: none;
+    margin-top: 0.75rem;
+    font-size: 0.8125rem;
+    color: var(--color-cd-text-tertiary);
+  }
+
+  @media (min-width: 60rem) {
+    .cmp-hint { display: none; }
+  }
+
+  .cmp-legend {
+    max-width: none;
+    margin-top: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+    font-size: 0.8125rem;
+    color: var(--color-cd-text-secondary);
+  }
+
+  .cmp-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .cmp-checked {
+    margin-top: 0.75rem;
+    font-size: 0.8125rem;
+    color: var(--color-cd-text-tertiary);
+  }
+
+  .apps {
+    margin-top: 1.5rem;
+    display: block;
+    list-style: none;
+    padding-left: 0;
+    border-bottom: 1px solid var(--color-cd-border);
+  }
+
+  .apps li {
+    border-top: 1px solid var(--color-cd-border);
+    padding-block: 1.125rem;
+  }
+
+  .apps a {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-cd-text);
+    text-decoration: none;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .apps a:hover {
+      text-decoration: underline;
+      text-decoration-color: var(--color-cd-accent);
+      text-underline-offset: 3px;
+    }
+  }
+
+  .apps p {
+    margin: 0.25rem 0 0;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--color-cd-text-secondary);
+  }
+</style>
