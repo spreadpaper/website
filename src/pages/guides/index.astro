@@ -50,10 +50,12 @@ import TextPage from '../../layouts/TextPage.astro'
     text-decoration: none;
   }
 
-  .guide-list a:hover {
-    text-decoration: underline;
-    text-decoration-color: var(--color-cd-accent);
-    text-underline-offset: 3px;
+  @media (hover: hover) and (pointer: fine) {
+    .guide-list a:hover {
+      text-decoration: underline;
+      text-decoration-color: var(--color-cd-accent);
+      text-underline-offset: 3px;
+    }
   }
 
   .guide-list p {

@@ -31,9 +31,11 @@ const anchor = (id: string) => (isHome ? `#${id}` : `/#${id}`)
     transition: color 150ms ease-out, background-color 150ms ease-out;
   }
 
-  .nav-link:hover {
-    color: var(--color-cd-text);
-    background-color: var(--color-cd-bg-secondary);
+  @media (hover: hover) and (pointer: fine) {
+    .nav-link:hover {
+      color: var(--color-cd-text);
+      background-color: var(--color-cd-bg-secondary);
+    }
   }
 
   /* The section the reader is in. A real underline rather than a box-shadow, so it
@@ -59,10 +61,18 @@ const anchor = (id: string) => (isHome ? `#${id}` : `/#${id}`)
     transition: color 150ms ease-out, background-color 150ms ease-out;
   }
 
-  .nav-link-mobile:hover,
+  /* Split from the hover deliberately: this panel is opened by a thumb, so a
+     gated hover would have taken the current marker down with it. */
   .nav-link-mobile[aria-current] {
     color: var(--color-cd-text);
     background-color: var(--color-cd-bg-secondary);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .nav-link-mobile:hover {
+      color: var(--color-cd-text);
+      background-color: var(--color-cd-bg-secondary);
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {

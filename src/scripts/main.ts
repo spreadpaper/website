@@ -97,7 +97,12 @@ function setupScrollReveal() {
     (entries) => {
       entries.forEach((entry, index) => {
         if (!entry.isIntersecting) return
-        (entry.target as HTMLElement).style.transitionDelay = index > 0 ? '60ms' : '0ms'
+        // A real cascade. This was `index > 0 ? '60ms' : '0ms'`, which gave
+        // every element after the first the same delay, so they still all
+        // arrived together, just late. Capped, because a fifth element waiting
+        // 200ms to appear reads as the page being slow rather than as rhythm.
+        const delay = Math.min(index, 3) * 40
+        ;(entry.target as HTMLElement).style.transitionDelay = `${delay}ms`
         entry.target.classList.add('is-revealed')
         observer.unobserve(entry.target)
       })

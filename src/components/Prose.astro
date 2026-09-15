@@ -118,8 +118,10 @@
     transition: color 150ms ease-out;
   }
 
-  .prose-cd a:hover {
-    color: var(--color-cd-text);
+  @media (hover: hover) and (pointer: fine) {
+    .prose-cd a:hover {
+      color: var(--color-cd-text);
+    }
   }
 
   .prose-cd a:focus-visible {
@@ -363,10 +365,12 @@
     text-decoration: none;
   }
 
-  .prose-cd .toc a:hover {
-    text-decoration: underline;
-    text-decoration-color: var(--color-cd-accent);
-    text-underline-offset: 3px;
+  @media (hover: hover) and (pointer: fine) {
+    .prose-cd .toc a:hover {
+      text-decoration: underline;
+      text-decoration-color: var(--color-cd-accent);
+      text-underline-offset: 3px;
+    }
   }
 
   /* Two ways of doing one thing, so they stand side by side on a panel each.

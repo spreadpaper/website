@@ -56,13 +56,15 @@ const { value, label = 'Copy', copiedLabel = 'Copied', describes } = Astro.props
     cursor: pointer;
     overflow: hidden;
     transition:
-      transform 120ms cubic-bezier(0.23, 1, 0.32, 1),
+      transform 120ms var(--ease-out),
       border-color 180ms ease-out,
       background-color 180ms ease-out;
   }
 
-  .copy:hover {
-    background-color: var(--color-cd-bg-hover);
+  @media (hover: hover) and (pointer: fine) {
+    .copy:hover {
+      background-color: var(--color-cd-bg-hover);
+    }
   }
 
   /* The press is the only feedback available before the clipboard answers, so
@@ -95,8 +97,8 @@ const { value, label = 'Copy', copiedLabel = 'Copied', describes } = Astro.props
     gap: 0.4375rem;
     white-space: nowrap;
     transition:
-      transform 260ms cubic-bezier(0.23, 1, 0.32, 1),
-      opacity 180ms cubic-bezier(0.23, 1, 0.32, 1);
+      transform 260ms var(--ease-out),
+      opacity 180ms var(--ease-out);
   }
 
   .copy-face[data-face='done'] {
