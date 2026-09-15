@@ -537,32 +537,57 @@ function bench(root: HTMLElement) {
    *
    * @param moving - The display the reader is placing.
    */
-  function clearOverlaps(moving: Placed) {
-    /* Six displays can chain at most five pushes each; the cap is for safety
-       rather than for a case anyone can reach. */
-    for (let pass = 0; pass < 40; pass++) {
+  function clearOverlaps(anchor: Placed) {
+    const middle = (d: Placed) => {
+      const pn = panelOf(d.kind)
+      return { x: d.x + pn.w / 2, y: d.y + pn.h / 2 }
+    }
+
+    /* Distance from the display the reader placed, so a push always travels
+       outwards: of any two that collide, the one further out is the one that
+       gives way, and it carries the collision away rather than back. */
+    const outerOf = (a: Placed, b: Placed) => {
+      if (a.key === anchor.key) return b
+      if (b.key === anchor.key) return a
+      const c = middle(anchor)
+      const da = middle(a)
+      const db = middle(b)
+      const ra = (da.x - c.x) ** 2 + (da.y - c.y) ** 2
+      const rb = (db.x - c.x) ** 2 + (db.y - c.y) ** 2
+      return rb >= ra ? b : a
+    }
+
+    /* Every pair, not only the pairs the anchor is in: a display shoved off one
+       neighbour lands on the next one along, and nothing would notice. */
+    for (let pass = 0; pass < 60; pass++) {
       let moved = false
 
-      for (const other of state.displays) {
-        if (other.key === moving.key) continue
+      for (let i = 0; i < state.displays.length; i++) {
+        for (let j = i + 1; j < state.displays.length; j++) {
+          const a = state.displays[i]
+          const b = state.displays[j]
+          const pa = panelOf(a.kind)
+          const pb = panelOf(b.kind)
 
-        const a = panelOf(moving.kind)
-        const b = panelOf(other.kind)
+          /* How far `b` must travel each way to leave a seam beside `a`. All
+             four are positive only while the two actually overlap. */
+          const right = a.x + pa.w + DISPLAY_GAP - b.x
+          const left = b.x + pb.w + DISPLAY_GAP - a.x
+          const down = a.y + pa.h + DISPLAY_GAP - b.y
+          const up = b.y + pb.h + DISPLAY_GAP - a.y
+          if (right <= 0 || left <= 0 || down <= 0 || up <= 0) continue
 
-        /* How far `other` must travel each way to leave a seam. All four are
-           positive only while the two actually overlap. */
-        const right = moving.x + a.w + DISPLAY_GAP - other.x
-        const left = other.x + b.w + DISPLAY_GAP - moving.x
-        const down = moving.y + a.h + DISPLAY_GAP - other.y
-        const up = other.y + b.h + DISPLAY_GAP - moving.y
-        if (right <= 0 || left <= 0 || down <= 0 || up <= 0) continue
-
-        const least = Math.min(right, left, down, up)
-        if (least === right) other.x += right
-        else if (least === left) other.x -= left
-        else if (least === down) other.y += down
-        else other.y -= up
-        moved = true
+          /* The anchor never yields, and otherwise the outer one does. The
+             distances are measured for `b`, so `a` travels the other way. */
+          const victim = outerOf(a, b)
+          const way = victim === b ? 1 : -1
+          const least = Math.min(right, left, down, up)
+          if (least === right) victim.x += way * right
+          else if (least === left) victim.x -= way * left
+          else if (least === down) victim.y += way * down
+          else victim.y -= way * up
+          moved = true
+        }
       }
 
       if (!moved) return

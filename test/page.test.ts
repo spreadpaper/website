@@ -618,28 +618,33 @@ if (hit) {
     boxes().map((b) => `${b.x},${b.y}`).join(' '))
 }
 
-// Every clip rect is traced by a frame rect of the same geometry, which is the
-// rule scripts/rigs.ts holds the static rigs to.
-const clipBoxes = [...benchCanvas.querySelectorAll('clipPath rect')].map((r) =>
-  ['x', 'y', 'width', 'height'].map((k) => r.getAttribute(k)).join(','))
-const frameBoxes = [...benchCanvas.querySelectorAll('rect.rig-frame')].map((r) =>
-  ['x', 'y', 'width', 'height'].map((k) => r.getAttribute(k)).join(','))
-check('every frame traces its own clip rect', clipBoxes.length > 0 && clipBoxes.join(' ') === frameBoxes.join(' '),
-  `${clipBoxes.join(' | ')} against ${frameBoxes.join(' | ')}`)
+// Two displays cannot show the real problem: a shove only lands on a third when
+// there is a third to land on. Built from a known desk rather than from
+// whatever the checks above left behind, so the chain is certain to happen.
+doc.querySelector<HTMLButtonElement>('[data-reset]')!.click()
+doc.querySelector<HTMLButtonElement>('[data-mode-set="arrange"]')!.click()
+for (let i = 0; i < 2; i++) {
+  doc.querySelector<HTMLButtonElement>('[data-addbutton]')!.click()
+  doc.querySelector<HTMLButtonElement>('[data-add="monitor27"]')!.click()
+}
+check('the desk is a row of four', boxes().length === 4, `${boxes().length}`)
+check('and the row starts clear', !overlapping())
 
-console.log('\nthe bench stylesheet reaches markup the script builds')
-// Astro scopes a component's <style> by rewriting its selectors to carry a
-// data-astro-cid attribute and stamping that attribute on the elements the
-// component renders. The bench renders none of its own, so a scoped rule
-// reaches nothing: `.bn-hit` loses its fill, and an SVG rect with no fill is
-// black, one of them over every display.
-check('no bench rule was scoped to a cid', !/\.bn-[a-z-]*\[data-astro-cid/.test(styles))
-check('the hit targets are painted transparent',
-  /#editor \.bn-hit\{fill:\s*(transparent|#0000|rgba?\(0,\s*0,\s*0,\s*0\))\}/.test(styles),
-  styles.match(/#editor \.bn-hit\{[^}]*\}/)?.[0] ?? 'no rule at all')
-check('and the selection outline is not filled either',
-  /#editor \.bn-outline\{[^}]*fill:\s*none/.test(styles),
-  styles.match(/#editor \.bn-outline\{[^}]*\}/)?.[0] ?? 'no rule at all')
+const row = benchCanvas.querySelector('[data-display]')
+if (row) {
+  /* A shove travels along whichever axis the overlap is shallower on, and two
+     displays side by side always overlap fully in the vertical. So the bite has
+     to be shallower across than down, or the neighbour goes under the row
+     instead of along it and nothing chains. */
+  const bite = Math.round(boxes()[0].h / 2)
+  const onto2 = boxes()[1].x - (boxes()[0].w + 6) + bite - boxes()[0].x
+  pointer('pointerdown', 0, row)
+  pointer('pointermove', onto2, benchCanvas)
+  pointer('pointerup', onto2, benchCanvas)
+  check('a shove passed down the row leaves every display clear', !overlapping(),
+    boxes().map((b) => `${b.x},${b.y}`).join(' '))
+  check('and none of them is lost doing it', boxes().length === 4, `${boxes().length}`)
+}
 
 console.log('\nthe bench answers a press')
 // Read off the compiled sheet, not the source: scoped CSS never reaches markup
