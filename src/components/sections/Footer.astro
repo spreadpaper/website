@@ -47,15 +47,45 @@ const photographs = [
   },
 ]
 
-// The last row keeps only what is reachable nowhere else. Help, Guides and
-// Project moved into the top nav, so repeating them here was three of seven
-// links pointing at a bar the reader can already see. Alternatives stays
-// because this row is still the only link to it on the site.
-const legal = [
-  { href: '/alternatives', label: 'Alternatives' },
-  { href: '/privacy', label: 'Privacy policy' },
-  { href: '/terms', label: 'Terms of service' },
-  { href: 'mailto:hello@spreadpaper.app', label: 'hello@spreadpaper.app' },
+const repo = 'https://github.com/spreadpaper/SpreadPaper'
+
+// Grouped by where a link goes rather than by what it is about. Both columns
+// used to be GitHub, all eight of them, so the footer had nowhere to put a page
+// belonging to this site and /alternatives ended up hanging off the last line
+// on its own. The first column is that missing one.
+const columns = [
+  {
+    id: 'footer-site',
+    title: 'This site',
+    links: [
+      { href: '/help', label: 'Help' },
+      { href: '/guides', label: 'Guides' },
+      { href: '/project', label: 'Project' },
+      { href: '/alternatives', label: 'Alternatives' },
+      { href: '/privacy', label: 'Privacy policy' },
+      { href: '/terms', label: 'Terms of service' },
+    ],
+  },
+  {
+    id: 'footer-code',
+    title: 'The code',
+    links: [
+      { href: repo, label: 'Repository' },
+      { href: `${repo}/releases`, label: 'Releases' },
+      { href: `${repo}/blob/main/CHANGELOG.md`, label: 'Changelog' },
+      { href: `${repo}/issues`, label: 'Issues' },
+    ],
+  },
+  {
+    id: 'footer-around',
+    title: 'Around it',
+    links: [
+      { href: `${repo}/discussions/categories/show-and-tell`, label: 'Show and tell' },
+      { href: `${repo}/blob/main/CREDITS.md`, label: 'Credits' },
+      { href: `${repo}/blob/main/SECURITY.md`, label: 'Security policy' },
+      { href: `${repo}/blob/main/LICENSE`, label: 'MIT licence' },
+    ],
+  },
 ]
 
 // Taken from the build rather than typed, so a year never has to be a commit.
@@ -214,32 +244,14 @@ const year = new Date().getFullYear()
     transition: color 150ms var(--ease-out);
   }
 
-  .base-links {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    display: flex;
-    flex-wrap: wrap;
-    column-gap: 1.25rem;
-    row-gap: 0.25rem;
-  }
-
-  .base-links a {
-    font-size: 0.8125rem;
-    color: var(--color-cd-text-tertiary);
-    transition: color 150ms var(--ease-out);
-  }
-
   @media (hover: hover) and (pointer: fine) {
-    .base-line a:hover,
-    .base-links a:hover {
+    .base-line a:hover {
       color: var(--color-cd-text);
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .base-line a,
-    .base-links a {
+    .base-line a {
       transition: none;
     }
   }
@@ -256,25 +268,16 @@ const year = new Date().getFullYear()
         <p class="mt-4 max-w-[38ch] text-sm leading-relaxed text-pretty text-cd-text-secondary">A native macOS app that spreads one photograph across every display you have. Built for macOS 15 Sequoia and Apple Silicon, free and open source under the MIT licence.</p>
       </div>
 
-      <nav aria-labelledby="footer-project" class="col-span-6 md:col-span-3 lg:col-span-2 lg:col-start-7">
-        <h2 id="footer-project" class="cd-eyebrow">Project</h2>
-        <ul class="mt-4 flex flex-col gap-2">
-          <li><a class="footer-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="https://github.com/spreadpaper/SpreadPaper">Repository</a></li>
-          <li><a class="footer-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="https://github.com/spreadpaper/SpreadPaper/releases">Releases</a></li>
-          <li><a class="footer-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="https://github.com/spreadpaper/SpreadPaper/blob/main/CHANGELOG.md">Changelog</a></li>
-          <li><a class="footer-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="https://github.com/spreadpaper/SpreadPaper/issues">Issues</a></li>
-        </ul>
-      </nav>
-
-      <nav aria-labelledby="footer-more" class="col-span-6 md:col-span-3 lg:col-span-4">
-        <h2 id="footer-more" class="cd-eyebrow">More</h2>
-        <ul class="mt-4 flex flex-col gap-2">
-          <li><a class="footer-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="https://github.com/spreadpaper/SpreadPaper/discussions/categories/show-and-tell">Show and tell</a></li>
-          <li><a class="footer-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="https://github.com/spreadpaper/SpreadPaper/blob/main/CREDITS.md">Credits</a></li>
-          <li><a class="footer-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="https://github.com/spreadpaper/SpreadPaper/blob/main/SECURITY.md">Security policy</a></li>
-          <li><a class="footer-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="https://github.com/spreadpaper/SpreadPaper/blob/main/LICENSE">MIT licence</a></li>
-        </ul>
-      </nav>
+      {columns.map((column, index) => (
+        <nav aria-labelledby={column.id} class:list={['col-span-6 md:col-span-4 lg:col-span-2', index === 0 && 'lg:col-start-7']}>
+          <h2 id={column.id} class="cd-eyebrow">{column.title}</h2>
+          <ul class="mt-4 flex flex-col gap-2">
+            {column.links.map((link) => (
+              <li><a class="footer-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href={link.href}>{link.label}</a></li>
+            ))}
+          </ul>
+        </nav>
+      ))}
     </div>
 
     <div class="mt-12 border-t border-cd-border pt-8">
@@ -301,14 +304,8 @@ const year = new Date().getFullYear()
     </div>
 
     <div class="base-row mt-10 border-t border-cd-border pt-6">
-      <p class="base-line">Copyright {year} Robin van Baalen. Released under the <a class="focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="https://github.com/spreadpaper/SpreadPaper/blob/main/LICENSE">MIT licence</a>.</p>
-      <nav aria-label="Site">
-        <ul class="base-links">
-          {legal.map((link) => (
-            <li><a class="focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href={link.href}>{link.label}</a></li>
-          ))}
-        </ul>
-      </nav>
+      <p class="base-line">Copyright {year} <a class="focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="https://robinvanbaalen.nl">Robin van Baalen</a>. Released under the <a class="focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href={`${repo}/blob/main/LICENSE`}>MIT licence</a>.</p>
+      <p class="base-line"><a class="focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="mailto:hello@spreadpaper.app">hello@spreadpaper.app</a></p>
     </div>
   </div>
 </footer>

@@ -380,22 +380,40 @@ check('every name links to a photographer rather than a photo',
 check('and the licence is linked once',
   doc.querySelectorAll('#site-footer a[href="https://unsplash.com/license"]').length === 1)
 
-console.log('\nthe last line of the footer')
-// Help, Guides and Project moved into the top nav and came out of this row, so
-// what is left is the only route to these three pages anywhere on the site.
-// Drop one by accident and it is reachable from nothing but the sitemap.
-const lastRow = [...doc.querySelectorAll('#site-footer .base-links a')].map((a) => a.getAttribute('href')!)
-for (const href of ['/alternatives', '/privacy', '/terms', 'mailto:hello@spreadpaper.app']) {
-  check(`${href} is still linked`, lastRow.includes(href), lastRow.join(', '))
+console.log('\nthe footer columns')
+// Both columns used to point at GitHub, all eight links, so a page belonging to
+// this site had nowhere to go and /alternatives ended up alone on the last line.
+// The first column is the one that was missing, and these pages are reachable
+// from nowhere else once the top nav has had its four.
+const footerHrefs = [...doc.querySelectorAll('#site-footer a')].map((a) => a.getAttribute('href')!)
+for (const href of ['/help', '/guides', '/project', '/alternatives', '/privacy', '/terms']) {
+  const hits = footerHrefs.filter((candidate) => candidate === href).length
+  check(`${href} is linked from the footer exactly once`, hits === 1, `${hits} links`)
 }
-check('and nothing the top nav already carries came back',
-  !lastRow.some((href) => ['/help', '/guides', '/project'].includes(href)),
-  lastRow.join(', '))
 
-const copyright = doc.querySelector('#site-footer .base-line')!.textContent!.trim()
-check('the copyright line carries a four digit year', /Copyright \d{4} /.test(copyright), copyright)
-check('and links the licence',
-  doc.querySelector('#site-footer .base-line a')?.getAttribute('href')?.endsWith('/LICENSE') === true)
+const headings = [...doc.querySelectorAll('#site-footer nav[aria-labelledby] h2')].map((h) => h.textContent!.trim())
+check('three named columns', headings.length === 3, headings.join(' / '))
+check('every column heading has the id its nav points at',
+  [...doc.querySelectorAll('#site-footer nav[aria-labelledby]')].every((nav) =>
+    nav.querySelector(`#${nav.getAttribute('aria-labelledby')}`) !== null))
+
+// The site's own pages come first, because a reader at the bottom of a page is
+// on this site rather than on GitHub.
+const firstColumn = [...doc.querySelectorAll('#site-footer nav[aria-labelledby] a')]
+  .slice(0, 6)
+  .map((a) => a.getAttribute('href')!)
+check('the first column is this site, not the repository',
+  firstColumn.every((href) => href.startsWith('/')), firstColumn.join(', '))
+
+console.log('\nthe last line of the footer')
+const lastRow = [...doc.querySelectorAll('#site-footer .base-line')].map((p) => p.textContent!.trim())
+check('it is the copyright and the address, nothing else', lastRow.length === 2, lastRow.join(' | '))
+check('the copyright line carries a four digit year', /Copyright \d{4} /.test(lastRow[0] ?? ''), lastRow[0])
+const copyrightLinks = [...doc.querySelectorAll('#site-footer .base-line a')].map((a) => a.getAttribute('href')!)
+check('the name links to its author', copyrightLinks.includes('https://robinvanbaalen.nl'), copyrightLinks.join(', '))
+check('and the licence is linked', copyrightLinks.some((href) => href.endsWith('/LICENSE')), copyrightLinks.join(', '))
+check('the address is still reachable',
+  footerHrefs.includes('mailto:hello@spreadpaper.app'))
 
 console.log(failures ? `\n${failures} FAILED` : '\nall checks passed')
 process.exit(failures ? 1 : 0)
