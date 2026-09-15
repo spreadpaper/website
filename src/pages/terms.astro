@@ -1,120 +1,61 @@
 ---
-import Footer from '../components/sections/Footer.astro'
-import Nav from '../components/sections/Nav.astro'
-import Layout from '../layouts/Layout.astro'
+import Prose from '../components/Prose.astro'
+import TextPage from '../layouts/TextPage.astro'
 
 /** Last substantive change to these terms, shown at the top of the page. */
 const updatedLabel = '14 September 2026'
 ---
 
-<Layout
+<TextPage
   title="Terms of service | SpreadPaper"
   description="SpreadPaper is free software under the MIT licence. The terms that come with it, the warranty that does not, and what you may do with the app and this site."
   socialDescription="Free software under the MIT licence. Use it, read it, fork it, ship it. No warranty."
+  eyebrow="Terms"
+  heading="The MIT licence, and the little that sits around it"
+  lead="SpreadPaper is free software. There is no purchase, no subscription and no account, so most of what a normal terms page covers does not apply here. What follows is the part that does."
+  updated={updatedLabel}
 >
-  <Nav />
-  <main id="main" class="cd-section bg-cd-bg">
-    <div class="cd-shell">
-      <div class="grid grid-cols-12 gap-x-6 gap-y-10">
-        <div class="col-span-12 lg:col-span-6">
-          <p class="cd-eyebrow">Terms</p>
-          <h1
-            class="mt-3 text-3xl font-bold leading-[1.05] tracking-[-0.025em] text-balance text-cd-text sm:text-4xl lg:text-5xl"
-          >
-            The MIT licence, and the little that sits around it
-          </h1>
-        </div>
-        <div class="col-span-12 lg:col-span-5 lg:col-start-8">
-          <p class="text-lg leading-relaxed text-pretty text-cd-text-secondary sm:text-xl">
-            SpreadPaper is free software. There is no purchase, no subscription and no account, so
-            most of what a normal terms page covers does not apply here. What follows is the part
-            that does.
-          </p>
-          <p class="mt-5 text-sm text-cd-text-secondary">Last updated {updatedLabel}</p>
-        </div>
-      </div>
+  <Prose>
+    <h2>The licence is the agreement</h2>
+    <p>
+      The app and its source are released under the <a href="https://github.com/spreadpaper/SpreadPaper/blob/main/LICENSE">MIT licence</a>. You may use it for anything, including commercially, and you may copy, change, redistribute and sell it, provided the copyright notice and the licence text travel with it. Where anything on this page appears to contradict the licence, the licence wins.
+    </p>
 
-      <div class="mt-16 max-w-[62ch]">
-        <h2 class="text-xl font-semibold tracking-[-0.01em] text-cd-text">The licence is the agreement</h2>
-        <p class="mt-4 text-base leading-relaxed text-pretty text-cd-text-secondary">
-          The app and its source are released under the
-          <a
-            class="cd-inline-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2"
-            href="https://github.com/spreadpaper/SpreadPaper/blob/main/LICENSE">MIT licence</a
-          >. You may use it for anything, including commercially, and you may copy, change,
-          redistribute and sell it, provided the copyright notice and the licence text travel with
-          it. Where anything on this page appears to contradict the licence, the licence wins.
-        </p>
+    <h2>No warranty</h2>
+    <p>
+      The software is provided as is, without warranty of any kind, express or implied. Nobody is liable for any claim, damage or other liability arising from the software or its use. That is the MIT licence's own wording and it is meant literally: this is a personal project given away for free, not a product with a support contract behind it.
+    </p>
+    <p>
+      Practically, that means no guarantee it works on your setup, no promised response time, and no commitment that a given feature will keep existing. Some jurisdictions do not allow the exclusion of certain warranties, so parts of this may not apply to you.
+    </p>
 
-        <h2 class="mt-12 text-xl font-semibold tracking-[-0.01em] text-cd-text">No warranty</h2>
-        <p class="mt-4 text-base leading-relaxed text-pretty text-cd-text-secondary">
-          The software is provided as is, without warranty of any kind, express or implied. Nobody
-          is liable for any claim, damage or other liability arising from the software or its use.
-          That is the MIT licence's own wording and it is meant literally: this is a personal
-          project given away for free, not a product with a support contract behind it.
-        </p>
-        <p class="mt-4 text-base leading-relaxed text-pretty text-cd-text-secondary">
-          Practically, that means no guarantee it works on your setup, no promised response time,
-          and no commitment that a given feature will keep existing. Some jurisdictions do not allow
-          the exclusion of certain warranties, so parts of this may not apply to you.
-        </p>
+    <h2>Get it from here or from GitHub</h2>
+    <p>
+      Official builds are published only on the project's <a href="https://github.com/spreadpaper/SpreadPaper/releases">GitHub releases page</a>, which is where the download buttons here point. Copies from anywhere else have not been built by us and may be anything at all. Because the app is not signed with a paid Apple Developer ID, macOS will warn you on first launch; the front page explains the two ways through that.
+    </p>
 
-        <h2 class="mt-12 text-xl font-semibold tracking-[-0.01em] text-cd-text">Get it from here or from GitHub</h2>
-        <p class="mt-4 text-base leading-relaxed text-pretty text-cd-text-secondary">
-          Official builds are published only on the project's
-          <a
-            class="cd-inline-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2"
-            href="https://github.com/spreadpaper/SpreadPaper/releases">GitHub releases page</a
-          >, which is where the download buttons here point. Copies from anywhere else have not been
-          built by us and may be anything at all. Because the app is not signed with a paid Apple
-          Developer ID, macOS will warn you on first launch; the front page explains the two ways
-          through that.
-        </p>
+    <h2>Your images and your wallpapers</h2>
+    <p>
+      Whatever you open in SpreadPaper stays yours. Nothing is claimed over the images you use or the wallpapers the app renders from them, and nothing is uploaded. Making sure you have the right to use a given photograph is up to you. The photographs shown on this site and bundled as examples come from Unsplash under the <a href="https://unsplash.com/license">Unsplash licence</a>, credited in the footer.
+    </p>
 
-        <h2 class="mt-12 text-xl font-semibold tracking-[-0.01em] text-cd-text">Your images and your wallpapers</h2>
-        <p class="mt-4 text-base leading-relaxed text-pretty text-cd-text-secondary">
-          Whatever you open in SpreadPaper stays yours. Nothing is claimed over the images you use
-          or the wallpapers the app renders from them, and nothing is uploaded. Making sure you have
-          the right to use a given photograph is up to you. The photographs shown on this site and
-          bundled as examples come from Unsplash under the
-          <a
-            class="cd-inline-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2"
-            href="https://unsplash.com/license">Unsplash licence</a
-          >, credited in the footer.
-        </p>
+    <h2>Contributing</h2>
+    <p>
+      Issues and pull requests are welcome. Anything you contribute is taken as offered under the same MIT licence, so that it can be released as part of the project. Issues are public and the usual rule applies: do not put anything in one you would not want read.
+    </p>
 
-        <h2 class="mt-12 text-xl font-semibold tracking-[-0.01em] text-cd-text">Contributing</h2>
-        <p class="mt-4 text-base leading-relaxed text-pretty text-cd-text-secondary">
-          Issues and pull requests are welcome. Anything you contribute is taken as offered under
-          the same MIT licence, so that it can be released as part of the project. Issues are public
-          and the usual rule applies: do not put anything in one you would not want read.
-        </p>
+    <h2>The name</h2>
+    <p>
+      The MIT licence covers the code, not the name. Forks are entirely welcome, but please give yours its own name rather than shipping something else called SpreadPaper, so nobody downloads a build expecting this one.
+    </p>
 
-        <h2 class="mt-12 text-xl font-semibold tracking-[-0.01em] text-cd-text">The name</h2>
-        <p class="mt-4 text-base leading-relaxed text-pretty text-cd-text-secondary">
-          The MIT licence covers the code, not the name. Forks are entirely welcome, but please give
-          yours its own name rather than shipping something else called SpreadPaper, so nobody
-          downloads a build expecting this one.
-        </p>
+    <h2>Who and where</h2>
+    <p>
+      SpreadPaper is made by Robin van Baalen in the Netherlands. Dutch law applies to these terms, without affecting any consumer rights you have where you live. Reach the project at <a href="mailto:hello@spreadpaper.app">hello@spreadpaper.app</a>. If these terms change, the date at the top changes with them.
+    </p>
 
-        <h2 class="mt-12 text-xl font-semibold tracking-[-0.01em] text-cd-text">Who and where</h2>
-        <p class="mt-4 text-base leading-relaxed text-pretty text-cd-text-secondary">
-          SpreadPaper is made by Robin van Baalen in the Netherlands. Dutch law applies to these
-          terms, without affecting any consumer rights you have where you live. Reach the project at
-          <a
-            class="cd-inline-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2"
-            href="mailto:hello@spreadpaper.app">hello@spreadpaper.app</a
-          >. If these terms change, the date at the top changes with them.
-        </p>
-
-        <p class="mt-12 border-t border-cd-border pt-8 text-sm text-cd-text-secondary">
-          See also the <a
-            class="cd-inline-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2"
-            href="/privacy">privacy policy</a
-          >.
-        </p>
-      </div>
-    </div>
-  </main>
-  <Footer />
-</Layout>
+    <p class="see-also">
+      See also the <a href="/privacy">privacy policy</a>.
+    </p>
+  </Prose>
+</TextPage>

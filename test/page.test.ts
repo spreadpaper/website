@@ -303,5 +303,43 @@ check('every Phosphor glyph is hidden from assistive tech',
   glyphs.length > 0 && glyphs.every((g) => g.getAttribute('aria-hidden') === 'true'), `${glyphs.length} glyphs`)
 check('no icon token survived unexpanded', !html.includes('@icon'))
 
+console.log('\ninline elements keep their spaces')
+// Astro strips the newline between a word and a following tag, so prose written
+// as "Ask at\n<a ...>" ships as "Ask athello@spreadpaper.app". This reached
+// production once before anyone noticed, because it is invisible in the source
+// and only shows in the rendered line. Read every built page, not just the one.
+const builtPages = readdirSync(site, { withFileTypes: true })
+  .filter((entry) => entry.isDirectory() && entry.name !== '_astro')
+  .map((entry) => join(site, entry.name, 'index.html'))
+  .filter((file) => existsSync(file))
+  .concat(join(site, 'index.html'))
+const glued: string[] = []
+for (const file of builtPages) {
+  const page = readFileSync(file, 'utf8')
+  // A word character hard against an opening tag, or a closing tag hard against one.
+  for (const m of page.matchAll(/[a-z,;:.]<(?:a|code|strong|em)[\s>]|<\/(?:a|code|strong|em)>[a-zA-Z]/g)) {
+    glued.push(`${file.replace(site, '')}: ${page.slice(Math.max(0, m.index! - 30), m.index! + 30)}`)
+  }
+}
+check('no word is glued to an inline tag', glued.length === 0, glued.slice(0, 3).join(' | '))
+
+console.log('\nthe layout rules survive compilation')
+// A stray comment fragment in style.css once ate the whole .cd-textpage rule.
+// The build stayed green, astro check passed, and every page still returned 200,
+// because a dropped CSS rule is not an error anywhere. The only place it shows
+// is the compiled stylesheet, so read that rather than the source.
+// Astro splits these across several files, one per component that owns global
+// styles, so read all of them rather than whichever comes first alphabetically.
+const cssFiles = readdirSync(join(site, '_astro')).filter((f) => f.endsWith('.css'))
+check('stylesheets were emitted', cssFiles.length > 0, `${cssFiles.length} files`)
+if (cssFiles.length) {
+  const css = cssFiles.map((f) => readFileSync(join(site, '_astro', f), 'utf8')).join('\n')
+  // Selectors the text pages cannot lay out without. Each is load bearing:
+  // lose one and the page still builds, still passes, and looks broken.
+  for (const selector of ['.cd-textpage', '.cd-shell', '.prose-cd', '--textpage-measure', '--textpage-band']) {
+    check(`${selector} reached the compiled CSS`, css.includes(selector))
+  }
+}
+
 console.log(failures ? `\n${failures} FAILED` : '\nall checks passed')
 process.exit(failures ? 1 : 0)

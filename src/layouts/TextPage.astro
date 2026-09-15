@@ -1,15 +1,22 @@
 ---
 import Footer from '../components/sections/Footer.astro'
 import Nav from '../components/sections/Nav.astro'
-import Layout from './Layout.astro'
+import Layout, { type Crumb } from './Layout.astro'
 
 /**
  * The shell every page that is prose rather than product uses: help, project,
  * the guides, alternatives, privacy and terms.
  *
  * The front page is a composition of photographs and drawn monitors and owns
- * its own layout. These pages are read top to bottom instead, so they share one
- * header block and a single measured column, and nothing else.
+ * its own layout. These pages are read top to bottom instead, so the header is
+ * a stack rather than a split: eyebrow, heading, lead, hairline, page. The
+ * twelve column header this used to open with worked where the right hand
+ * column carried something, and stranded a lone paragraph where it did not.
+ *
+ * The page runs on `.cd-textpage`, a 60rem shell holding one left edge and two
+ * widths: the measure for words, the band for everything else. The header uses
+ * both, the rule across the band and the words on the measure, which is the
+ * shape the rest of the page repeats. Geometry lives in `src/styles/style.css`.
  */
 export interface Props {
   title: string
@@ -19,37 +26,41 @@ export interface Props {
   eyebrow: string
   /** The page heading, set at the h2 size because no page here is the hero. */
   heading: string
-  /** One paragraph beside the heading, filling the right of the row. */
+  /** One paragraph under the heading, at a lead measure. */
   lead: string
   /** Shown under the lead where a page is worth dating. */
   updated?: string
+  /** Passed straight to `Layout`, which adds a BreadcrumbList only where a page supplies one. */
+  breadcrumb?: Crumb[]
 }
 
-const { title, description, socialDescription, eyebrow, heading, lead, updated } = Astro.props
+const { title, description, socialDescription, eyebrow, heading, lead, updated, breadcrumb } =
+  Astro.props
 ---
 
-<Layout title={title} description={description} socialDescription={socialDescription}>
+<Layout
+  title={title}
+  description={description}
+  socialDescription={socialDescription}
+  breadcrumb={breadcrumb}
+>
   <Nav />
   <main id="main" class="cd-section bg-cd-bg">
-    <div class="cd-shell">
-      <div class="grid grid-cols-12 gap-x-6 gap-y-10">
-        <div class="col-span-12 lg:col-span-6">
+    <div class="cd-textpage">
+      <header class="border-b border-cd-border pb-12 sm:pb-14">
+        <div class="cd-measure">
           <p class="cd-eyebrow">{eyebrow}</p>
           <h1
-            class="mt-3 text-3xl font-bold leading-[1.05] tracking-[-0.025em] text-balance text-cd-text sm:text-4xl lg:text-5xl"
+            class="mt-4 text-3xl font-bold leading-[1.05] tracking-[-0.025em] text-balance text-cd-text sm:text-4xl lg:text-5xl"
           >
             {heading}
           </h1>
-        </div>
-        <div class="col-span-12 lg:col-span-5 lg:col-start-8">
-          <p class="text-lg leading-relaxed text-pretty text-cd-text-secondary sm:text-xl">
-            {lead}
-          </p>
+          <p class="mt-6 text-lg leading-relaxed text-pretty text-cd-text-secondary sm:text-xl">{lead}</p>
           {updated && <p class="mt-5 text-sm text-cd-text-secondary">Last updated {updated}</p>}
         </div>
-      </div>
+      </header>
 
-      <div class="mt-16 max-w-[62ch]">
+      <div class="mt-14 sm:mt-16">
         <slot />
       </div>
     </div>

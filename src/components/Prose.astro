@@ -3,8 +3,20 @@
  * Typographic defaults for the text pages, applied to a wrapper rather than to
  * every element, so a guide can be written as plain markup.
  *
- * The scale is the one in DESIGN.md: h2 takes the h3 size, because these pages
- * open at the h2 size and nothing below a page heading should compete with it.
+ * One left edge, two widths. Running prose stops at the measure. Everything
+ * else, a picture, a panel, a row of facts, runs the band. Every block starts
+ * at the same x and they differ only in where they stop, so the page reads as
+ * one column of content with wide things in it rather than as several columns
+ * that do not agree. The widths live on `.cd-textpage` in `src/styles/style.css`.
+ *
+ * The rhythm is short text, then the picture, immediately, underneath. Not text
+ * on one side and a picture on the other: the copy on these pages is a sentence
+ * or two, and a sentence beside a screenshot strands one of them.
+ *
+ * A page is also a set of sections rather than a scroll of paragraphs, so an h2
+ * carries a rule and opens at 28px. The old 20px section heading was picked to
+ * stay out of the page heading's way and ended up too quiet to divide anything.
+ * See Text pages in DESIGN.md.
  */
 ---
 
@@ -17,30 +29,54 @@
     margin-top: 1rem;
   }
 
+  /* The default width is the measure, centred. `.prose-cd` itself is the band,
+     so a block widens by giving up its own cap rather than by being moved. */
+  .prose-cd > * {
+    max-width: var(--textpage-measure, 44rem);
+  }
+
+  /* A section opening. The rule stays on the measure with the reading column it
+     belongs to. Running it across the band was tried and dropped: on the four
+     pages that are nothing but prose it would have been the only element
+     reaching that far, and a hairline extending 270px past everything on the
+     page reads as a bug rather than as a frame. */
+  .prose-cd > h2 {
+    margin-top: 5rem;
+    border-top: 1px solid var(--color-cd-border);
+    padding-top: 2.5rem;
+  }
+
   .prose-cd h2 {
-    margin-top: 3rem;
-    font-size: 1.25rem;
-    font-weight: 600;
-    letter-spacing: -0.01em;
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
     color: var(--color-cd-text);
     text-wrap: balance;
   }
 
-  .prose-cd h2:first-child {
+  .prose-cd > h2:first-child {
     margin-top: 0;
+    border-top: 0;
+    padding-top: 0;
   }
 
   .prose-cd h3 {
-    margin-top: 2rem;
-    font-size: 1rem;
+    margin-top: 2.5rem;
+    font-size: 1.125rem;
     font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.3;
     color: var(--color-cd-text);
   }
 
+  /* 17px rather than 16px. At the measure that is about 74 characters a line,
+     which the 1.7 leading carries, and it is the difference between a page that
+     reads as a document and one that reads as a form. */
   .prose-cd p,
   .prose-cd li {
-    font-size: 1rem;
-    line-height: 1.75;
+    font-size: 1.0625rem;
+    line-height: 1.7;
     color: var(--color-cd-text-secondary);
     text-wrap: pretty;
   }
@@ -70,15 +106,21 @@
     font-weight: 600;
   }
 
+  /* The `.cd-inline-link` treatment, applied to every link in running prose.
+     The underline has to be `currentColor`: a border-strong hairline measures
+     1.61:1 against the page, and colouring the link instead puts `cd-text`
+     against surrounding secondary copy at 2.17:1. Neither is a distinction
+     anyone can see, so the underline carries the link and it tracks the text. */
   .prose-cd a {
-    color: var(--color-cd-text);
+    color: var(--color-cd-text-secondary);
     text-decoration: underline;
-    text-decoration-color: var(--color-cd-border-strong);
-    text-underline-offset: 3px;
+    text-decoration-color: currentColor;
+    text-underline-offset: 2px;
+    transition: color 150ms ease-out;
   }
 
   .prose-cd a:hover {
-    text-decoration-color: var(--color-cd-accent);
+    color: var(--color-cd-text);
   }
 
   .prose-cd a:focus-visible {
@@ -87,21 +129,82 @@
     border-radius: 2px;
   }
 
-  /* A ruled block, used where a page needs to set something apart without
-     reaching for a card. The stripe is the only colour these pages spend. */
+  /* A callout: the sentence a reader loses an app by missing. The wash is mixed
+     against `transparent` so one rule works on the page, on a panel and inside a
+     route, and the copy holds 5.9:1 on the lightest of those. */
   .prose-cd .note {
     margin-top: 2rem;
+    border: 1px solid var(--color-cd-border);
     border-left: 2px solid var(--color-cd-border-strong);
-    padding-left: 1.25rem;
+    border-radius: 0 12px 12px 0;
+    padding: 1.25rem 1.5rem;
   }
 
   .prose-cd .note-accent {
     border-left-color: var(--color-cd-accent);
+    background-color: color-mix(in srgb, var(--color-cd-accent) 8%, transparent);
   }
+
+  /* Every picture here is a cutout, cropped to the part that answers the
+     question the reader arrived with, and then sized so the words inside it are
+     readable. Both are left aligned like everything else, and they differ only
+     in how far right they stop.
+
+     `.wide` is a window, at the band. The Finder capture is cropped from
+     1444x1094 to 1220x430, losing the macOS drop shadow and an empty folder, so
+     at 1216px its labels land at about 22px. The default is a dialog or a sheet
+     at 36rem: the Gatekeeper capture is cropped from 744x792 to 520x384, its
+     title, its message and its two buttons, and at 576px that text lands at
+     about 21px. The two then stand 429px and 425px tall, so the page keeps one
+     beat down the left edge while the right edge changes.
+
+     Do not size a screenshot by its pixel dimensions. That put a 1216px picture
+     of a nearly empty folder across the page and swallowed it. */
+  .prose-cd figure {
+    margin-top: 2.5rem;
+    max-width: 36rem;
+  }
+
+  .prose-cd figure.wide {
+    max-width: 100%;
+  }
+
+  /* Air after a picture, so the prose does not run up against its caption. */
+  .prose-cd > figure + * {
+    margin-top: 2.5rem;
+  }
+
+  .prose-cd img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+
+  .prose-cd figure img {
+    border: 1px solid var(--color-cd-border);
+    border-radius: 0.75rem;
+  }
+
+  /* The caption keeps the text measure even where the picture above it does not. */
+  .prose-cd figcaption {
+    margin-top: 0.875rem;
+    max-width: var(--textpage-measure, 44rem);
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--color-cd-text-secondary);
+  }
+
+  /* There was a `.pair` here that stood a picture beside the one thing to be
+     said about it. It is gone, and the reason is worth keeping: the only
+     candidate on the site was the Gatekeeper dialog, which is 455px tall beside
+     a callout of three lines. Whatever the columns were set to, a 90px block of
+     text floated in the middle of a half empty column, which is the stranded
+     column this whole redesign exists to remove. A tall picture and a short
+     sentence stack. Side by side needs two blocks of comparable mass. */
 
   /* Definition rows, matching the requirements list on the front page. */
   .prose-cd .dl {
-    margin-top: 1.5rem;
+    margin-top: 1rem;
     border-bottom: 1px solid var(--color-cd-border);
   }
 
@@ -129,5 +232,185 @@
     font-size: 1rem;
     line-height: 1.6;
     color: var(--color-cd-text);
+  }
+
+  /* `.dl.split` runs a short list of facts across the shell as a spec row, label
+     over value, which is the one shape that holds its own beside a 1216px
+     screenshot. Opt in: a comparison of four rows per app wants its own column,
+     and that is what the plain `.dl` still is. */
+  @media (min-width: 64rem) {
+    .prose-cd .dl.split {
+      max-width: none;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      column-gap: 2.5rem;
+      border-bottom: 0;
+    }
+
+    .prose-cd .dl.split > div {
+      grid-template-columns: 1fr;
+      gap: 0.5rem;
+      padding-block: 1.25rem 0;
+    }
+
+    .prose-cd .dl.split dd {
+      font-size: 1.125rem;
+      line-height: 1.45;
+    }
+  }
+
+  /* The anchor list at the head of a page: a panel running the shell with the
+     destinations side by side, so it reads as a way in rather than as the
+     page's first bulleted list. */
+  .prose-cd .toc {
+    max-width: none;
+    background-color: var(--color-cd-bg-secondary);
+    border: 1px solid var(--color-cd-border);
+    border-radius: 14px;
+    padding: 1.5rem;
+  }
+
+  @media (min-width: 48rem) {
+    .prose-cd .toc {
+      padding: 1.75rem 2rem;
+    }
+  }
+
+  /* The label is meta rather than an eyebrow: `.cd-eyebrow` is one class and
+     `.prose-cd p` is a class and an element, so the eyebrow would lose its size
+     and colour here and read as body copy wearing capitals. */
+  .prose-cd .toc > p {
+    font-size: 0.875rem;
+    line-height: 1.6;
+  }
+
+  .prose-cd .toc ul {
+    margin-top: 0.5rem;
+    padding-left: 0;
+    list-style: none;
+    gap: 0;
+  }
+
+  /* The divider sits in the middle of a 5rem channel rather than beside one
+     item, which is why the padding is split across both cells. */
+  @media (min-width: 64rem) {
+    .prose-cd .toc ul {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      column-gap: 0;
+    }
+
+    .prose-cd .toc li {
+      padding-right: 2.5rem;
+    }
+
+    .prose-cd .toc li + li {
+      border-left: 1px solid var(--color-cd-border);
+      padding-left: 2.5rem;
+    }
+  }
+
+  /* `padding-block` takes a 24px line to a 44px target. */
+  .prose-cd .toc a {
+    display: block;
+    padding-block: 0.625rem;
+    color: var(--color-cd-text);
+    font-weight: 500;
+    line-height: 1.5;
+    text-decoration: none;
+  }
+
+  .prose-cd .toc a:hover {
+    text-decoration: underline;
+    text-decoration-color: var(--color-cd-accent);
+    text-underline-offset: 3px;
+  }
+
+  /* Two ways of doing one thing, so they stand side by side on a panel each.
+     Stacked behind two h3s they read as step one and step two, which is the
+     opposite of what they are. */
+  .prose-cd .routes {
+    margin-top: 2.5rem;
+    max-width: none;
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  @media (min-width: 64rem) {
+    .prose-cd .routes {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 2rem;
+      align-items: start;
+    }
+  }
+
+  .prose-cd .route {
+    background-color: var(--color-cd-bg-secondary);
+    border: 1px solid var(--color-cd-border);
+    border-radius: 14px;
+    padding: 1.75rem;
+  }
+
+  @media (min-width: 48rem) {
+    .prose-cd .route {
+      padding: 2rem;
+    }
+  }
+
+  .prose-cd .route > * + * {
+    margin-top: 1rem;
+  }
+
+  .prose-cd .route h3 {
+    margin-top: 0;
+  }
+
+  .prose-cd .route .note {
+    margin-top: 1.5rem;
+  }
+
+  /* A command to be copied, inset into whatever it sits on rather than raised
+     off it, because a panel on a panel in the same fill reads as a mistake. */
+  .prose-cd .command {
+    background-color: var(--color-cd-canvas);
+    border: 1px solid var(--color-cd-border);
+    border-radius: 12px;
+  }
+
+  /* The closing invitation: what to do on the left, what to bring with you on
+     the right, rather than four paragraphs and a button in a narrow stack. */
+  .prose-cd .closing {
+    margin-top: 1.5rem;
+    max-width: none;
+    display: grid;
+    gap: 2rem;
+  }
+
+  @media (min-width: 64rem) {
+    .prose-cd .closing {
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+      column-gap: 4rem;
+      align-items: start;
+    }
+  }
+
+  .prose-cd .closing > div > * + * {
+    margin-top: 1rem;
+  }
+
+  /* A row of buttons, which needs more air above it than a paragraph does. */
+  .prose-cd .actions {
+    margin-top: 1.75rem;
+  }
+
+  /* A quiet aside, at the meta size. It needs a class rather than `text-sm` or
+     `mt-12`: these rules are unlayered and Tailwind's utilities are not, so a
+     utility here loses to `.prose-cd p` and fails silently. That trap is
+     written up in DESIGN.md. */
+  .prose-cd .see-also {
+    margin-top: 4rem;
+    border-top: 1px solid var(--color-cd-border);
+    padding-top: 1.5rem;
+    font-size: 0.875rem;
+    line-height: 1.6;
   }
 </style>

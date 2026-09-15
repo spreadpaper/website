@@ -155,6 +155,38 @@ body {
   margin-inline: auto;
 }
 
+/* Text pages have one left edge and two widths, and that is the whole geometry.
+   Running prose stops at the measure. Everything else, a picture, a panel, a
+   row of facts, runs the band. Nothing is centred, nothing is indented, and no
+   block ever starts at an x the block above it did not.
+
+   The right edge is ragged and that is correct: a short paragraph followed by a
+   wide picture is how a page with pictures in it looks. Three earlier attempts
+   failed on exactly this point, and the failures are worth naming because each
+   one is tempting. A twelve column header stranded one paragraph in a column of
+   its own. Putting the measure on each block and leaving the shell wide pinned
+   the text to the left with half the viewport empty beside it. Centring every
+   block on a shared axis gave the page four different left edges on the way
+   down, which is the one the reader called all over the place. Left align
+   everything, vary only the right edge.
+
+   The band is 76rem, the same as `.cd-shell`, so the left edge of the page is
+   the left edge of the wordmark in the nav above it. That is the one alignment
+   a reader can check without scrolling, and a content column inset from the nav
+   is a discrepancy they will see. */
+.cd-textpage {
+  --textpage-band: 76rem;
+  --textpage-measure: 44rem;
+
+  max-width: var(--textpage-band);
+  margin-inline: auto;
+}
+
+/* Caps a block at the measure without moving it off the left edge. */
+.cd-measure {
+  max-width: var(--textpage-measure);
+}
+
 /* Secondary, not tertiary: at this size tertiary measures under 4:1 on the page
    background and fails AA, and every eyebrow on the site inherits from here. */
 /* Monospace sample, for a command or a value the reader may copy. Lived scoped
