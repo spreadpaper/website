@@ -349,14 +349,21 @@ import Icon from '../Icon.astro'
     }
 
     /* A display that was not on the list a moment ago arrives; the ones already
-       there are recreated by the same rebuild and must not move. */
+       there are recreated by the same rebuild and must not move. The row's own
+       rule further up transitions only its colours, so the two properties this
+       moves have to be named here or the entering state snaps off. */
     #editor .bn-row {
       transform: none;
       opacity: 1;
+      transition:
+        background-color 150ms var(--ease-out),
+        border-color 150ms var(--ease-out),
+        transform 180ms var(--ease-out),
+        opacity 150ms var(--ease-out);
     }
 
     #editor .bn-row[data-entering] {
-      transform: translateY(-4px);
+      transform: translateY(-6px);
       opacity: 0;
       transition: none;
     }

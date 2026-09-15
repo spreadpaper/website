@@ -344,7 +344,10 @@ function bench(root: HTMLElement) {
       return
     }
     /* A rebuild recreates every row, so remember which keys were already on
-       screen and let only the genuinely new one animate in. */
+       screen and let only the genuinely new one animate in. The first build is
+       the bench arriving rather than a display being added, and it has to be
+       complete in its first frame, so nothing animates then. */
+    const first = listKey === ''
     const before = new Set(listKey ? listKey.split(',') : [])
     listKey = key
 
@@ -355,7 +358,7 @@ function bench(root: HTMLElement) {
       const k = 18 / Math.max(pn.w, pn.h)
       return `
         <div class="bn-row pc-focus" role="button" tabindex="0" data-row="${d.key}"
-             ${before.has(d.key + ':' + d.kind) ? '' : 'data-entering'}
+             ${first || before.has(d.key + ':' + d.kind) ? '' : 'data-entering'}
              aria-current="${d.key === state.selected}"
              aria-label="${pn.name}, ${pn.pixels}. Arrow keys move it.">
           <span class="bn-row-chip" aria-hidden="true"><span style="width:${(pn.w * k).toFixed(1)}px;height:${(pn.h * k).toFixed(1)}px"></span></span>

@@ -476,6 +476,10 @@ check('and takes the still canvas down, so only one of the two shows', benchStil
 // The svg ships empty; a viewBox means the desk was drawn from state.
 check('the canvas is drawn', /^-?\d/.test(benchCanvas?.getAttribute('viewBox') ?? ''), benchCanvas?.getAttribute('viewBox') ?? 'none')
 check('it opens on two displays', benchRows().length === 2, `${benchRows().length} rows`)
+// The first build is deliberately not marked, since the bench arriving is not a
+// display being added. That is not asserted here: the marker is cleared on the
+// next animation frame, which has long passed by the time this runs, so the
+// check would pass whether the guard existed or not.
 
 const benchStart = benchWide()
 doc.querySelector<HTMLButtonElement>('[data-addbutton]')!.click()
@@ -484,6 +488,12 @@ check('and offers the shared panel catalogue', doc.querySelectorAll('[data-add]'
   `${doc.querySelectorAll('[data-add]').length} panels`)
 doc.querySelector<HTMLButtonElement>('[data-add="ultrawide34"]')!.click()
 check('a third display is listed', benchRows().length === 3, `${benchRows().length} rows`)
+// The rebuild recreates all three, so the two that were already there must not
+// be marked, or adding one display animates the whole list.
+const entering = benchRows().filter((row) => row.hasAttribute('data-entering'))
+check('only the display just added is marked as arriving', entering.length === 1,
+  `${entering.length} of ${benchRows().length} rows marked`)
+check('and it is the new one', entering[0] === benchRows()[2])
 check('the canvas widens to hold it', benchWide() > benchStart, `${benchWide()} vs ${benchStart}`)
 check('and the new one is selected', benchRows()[2].getAttribute('aria-current') === 'true')
 
