@@ -23,11 +23,9 @@ import { JSDOM } from 'jsdom'
 
 const site = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist')
 const html = readFileSync(join(site, 'index.html'), 'utf8')
-// Astro emits each script as a file, or inlines it into the page once it drops
-// under 4KB, and it has crossed that line in both directions. The homepage now
-// carries two of them, the page script and the hero's switch, so taking the
-// first one found tested whichever Astro happened to put first and silently
-// skipped the other. Run every one of them.
+// Astro emits a script as a file, or inlines it once it drops under 4KB, and
+// the homepage carries two. Take every one: picking one tests whichever Astro
+// happened to put first and skips the other in silence.
 const bundles = [
   ...readdirSync(join(site, '_astro'))
     .filter((f) => f.endsWith('.js'))
@@ -188,8 +186,7 @@ check('and restores the glyphs',
     doc.querySelector('[data-nav-icon="close"]')!.hasAttribute('hidden'))
 
 console.log('\nthe nav lists destinations')
-// The bar lists where you can go. It used to list the four homepage sections,
-// which made every link on a text page a trip back to the homepage.
+// Section anchors here would make every link on a text page a trip home.
 const DESTINATIONS = ['Features', 'Help', 'Guides', 'Project']
 const navLabels = [...doc.querySelectorAll('#nav-links a')].map((a) => a.textContent!.trim())
 check('the four destinations are there, in order', navLabels.join(' ') === DESTINATIONS.join(' '), navLabels.join(' '))
@@ -355,10 +352,8 @@ if (cssFiles.length) {
 }
 
 console.log('\nthe photograph credits')
-// Six bands and six names in two separate grids, so the only thing keeping a
-// photographer under their own photograph is that both lists are built from the
-// same array in the same order. Nothing else would catch a swap: the page still
-// builds, still looks right, and credits the wrong person.
+// Two grids off one array: order is the only thing keeping a photographer
+// under their own photograph, and a swap still builds and still looks right.
 const bands = [...doc.querySelectorAll('#site-footer .mos-seg')]
 const credits = [...doc.querySelectorAll('#site-footer .mos-name')]
 check('six bands are in the strip', bands.length === 6, `${bands.length} bands`)
@@ -387,10 +382,8 @@ check('and the licence is linked once',
   doc.querySelectorAll('#site-footer a[href="https://unsplash.com/license"]').length === 1)
 
 console.log('\nthe footer columns')
-// Both columns used to point at GitHub, all eight links, so a page belonging to
-// this site had nowhere to go and /alternatives ended up alone on the last line.
-// The first column is the one that was missing, and these pages are reachable
-// from nowhere else once the top nav has had its four.
+// Once the top nav has taken its four, these pages are reachable from nowhere
+// else, so a column that drifts back to all GitHub orphans them.
 const footerHrefs = [...doc.querySelectorAll('#site-footer a')].map((a) => a.getAttribute('href')!)
 for (const href of ['/help', '/guides', '/project', '/alternatives', '/privacy', '/terms']) {
   const hits = footerHrefs.filter((candidate) => candidate === href).length
@@ -422,9 +415,7 @@ check('the address is still reachable',
   footerHrefs.includes('mailto:hello@spreadpaper.app'))
 
 console.log('\nthe hero switch')
-// The stage ships spanned and the switch ships hidden, so a reader with no
-// JavaScript gets the desk the app makes and never sees a control that cannot
-// do anything. Both halves of that are invisible if they break.
+// A reader with no JavaScript needs the spanned desk and no dead control.
 const heroStage = doc.getElementById('hero-stage')!
 const heroToggle = doc.getElementById('hero-toggle')!
 const heroState = doc.getElementById('hero-state')!
@@ -441,14 +432,12 @@ heroToggle.dispatchEvent(new window.MouseEvent('click', { bubbles: true }))
 check('clicking again turns it back on', heroToggle.getAttribute('aria-checked') === 'true' && heroStage.hasAttribute('data-on'))
 check('and the sentence comes back', heroState.textContent!.trim() === spokenBefore)
 
-// Two rigs per breakpoint, one carrying the photograph per screen and one
-// carrying it across them. Lose a layer and the wipe reveals nothing.
+// Lose a layer and the wipe reveals nothing.
 const heroRigs = [...heroStage.querySelectorAll('svg.rig')]
 check('four rigs: a pair for each breakpoint', heroRigs.length === 4, `${heroRigs.length} rigs`)
 check('half of them are the upper layer', heroRigs.filter((r) => r.classList.contains('rig-layer')).length === 2)
 
-// display:none does not stop a fetch, so a second URL would make a phone
-// download a photograph it never sees, and the preload matches only one.
+// display:none does not stop a fetch, and the preload matches one URL.
 const heroPhotos = new Set([...heroStage.querySelectorAll('image')].map((i) => i.getAttribute('href')!))
 check('every rig points at the one preloaded photograph', heroPhotos.size === 1, [...heroPhotos].join(', '))
 

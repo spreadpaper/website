@@ -4,10 +4,7 @@ import Icon from '../Icon.astro'
 
 const stars = await starCount()
 
-// The bar lists where you can go, not where you are on the page. Before this it
-// carried the four homepage sections, which meant every link on /help, /guides
-// and /project was a trip back to the homepage, and the pages the site had
-// grown were reachable only from the footer.
+// The bar lists where you can go, not where you are on the page.
 const path = Astro.url.pathname.replace(/\/+$/, '')
 const isHome = path === ''
 
@@ -27,17 +24,14 @@ const links = [
 ---
 
 <style>
-  /* --- Site nav ---------------------------------------------------------
-     The bar is sticky, so anything an in-page link targets has to clear it. */
+  /* The bar is sticky, so anything an in-page link targets has to clear it. */
   section[id],
   main[id] {
     scroll-margin-top: 5rem;
   }
 
-  /* Three zones: the wordmark holds the left, the links sit on the centre, the
-     two actions hold the right. The outer columns are equal fractions so the
-     middle one lands on the centre of the band rather than the centre of
-     whatever is left over. */
+  /* Equal outer fractions, so the middle column lands on the centre of the
+     band rather than the centre of whatever is left over. */
   .nav-row {
     display: grid;
     grid-template-columns: 1fr auto 1fr;
@@ -75,9 +69,8 @@ const links = [
     }
   }
 
-  /* The page you are on, raised out of the bar. A filled pill rather than the
-     underline this carried before: the underline marked a section you were
-     scrolling through, and this marks a destination you have arrived at. */
+  /* A filled pill, because this marks a destination you arrived at rather
+     than a section you are scrolling through. */
   .nav-link[aria-current],
   .nav-link-mobile[aria-current] {
     color: var(--color-cd-text);

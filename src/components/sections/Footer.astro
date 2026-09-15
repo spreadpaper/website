@@ -1,7 +1,5 @@
 ---
-// Every photograph the site and the app use, each checked against the file it
-// credits. The order is the order they run through a day in the Types section,
-// which is the order they sit in the strip.
+// Ordered the way they run through a day in Types, which is strip order.
 const photographs = [
   {
     file: '/photos/600/hero-beach.jpg',
@@ -49,10 +47,7 @@ const photographs = [
 
 const repo = 'https://github.com/spreadpaper/SpreadPaper'
 
-// Grouped by where a link goes rather than by what it is about. Both columns
-// used to be GitHub, all eight of them, so the footer had nowhere to put a page
-// belonging to this site and /alternatives ended up hanging off the last line
-// on its own. The first column is that missing one.
+// Grouped by where a link goes, not by what it is about.
 const columns = [
   {
     id: 'footer-site',
@@ -93,7 +88,7 @@ const year = new Date().getFullYear()
 ---
 
 <style>
-  /* --- Footer links: quiet until hovered or focused --- */
+  /* Quiet until hovered or focused. */
   .footer-link {
     display: inline-flex;
     align-items: center;
@@ -110,9 +105,8 @@ const year = new Date().getFullYear()
     }
   }
 
-  /* The three kind tints together, in the one place on the page where none of them
-     is claiming to be about its own kind. It replaces the hairline rather than
-     sitting under it, so the footer still opens on a single rule. */
+  /* The three kind tints together, where none of them claims a kind. It
+     replaces the hairline, so the footer still opens on one rule. */
   #site-footer {
     position: relative;
   }
@@ -131,11 +125,8 @@ const year = new Date().getFullYear()
     );
   }
 
-  /* --- The photographs, laid out the way the app lays them out ---------
-     Six bands end to end as one panorama, with the page showing through the
-     seams where the bezels would be. The credit is the strip: each segment
-     links to its photograph, and the name under it links to its photographer,
-     so a name always sits under the picture it belongs to. */
+  /* Six bands end to end as one panorama, the page showing through the seams
+     where the bezels would be. */
   .mos {
     margin-top: 1.5rem;
     display: grid;
@@ -220,10 +211,7 @@ const year = new Date().getFullYear()
     }
   }
 
-  /* --- The last line ---------------------------------------------------
-     One row at the smallest size the footer uses: the sentence on the left,
-     the links that live nowhere else on the right, both on one baseline.
-     The footer has said everything by this point, so this only closes it. */
+  /* One row at the smallest size the footer uses, on one baseline. */
   .base-row {
     display: flex;
     flex-wrap: wrap;

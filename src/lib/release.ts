@@ -1,28 +1,33 @@
-/** Last release seen, so a build with no network still writes real figures. */
+/** Stands in when the API is unreachable, so an offline build writes real figures. */
 const FALLBACK: Release = { version: '1.10.1', size: '74 MB' }
 
+/** The facts the download card quotes: which build it offers and how big it is. */
 export type Release = {
   /** The tag with any leading `v` removed, so it reads as a version and not a ref. */
   version: string
-  /** The disk image, rounded the way a person would say it out loud. */
+  /** The disk image, rounded the way a person says it out loud. */
   size: string
 }
 
 let cached: Release | undefined
 
-/** GitHub reports bytes. Nobody reads bytes, and a tenth of a megabyte is noise. */
+/**
+ * Renders a byte count the way the download card quotes it. Rounds to whole
+ * megabytes, since a tenth of one is noise next to a button.
+ *
+ * @param bytes - Size as GitHub reports it.
+ * @returns A string like `74 MB`.
+ */
 function megabytes(bytes: number): string {
   return `${Math.round(bytes / 1_000_000)} MB`
 }
 
 /**
- * The latest release, read once per build so the hero can say which version it is
- * offering and how big the download is without costing the reader a request.
+ * Reads the latest release once per build, so the hero can name the version it
+ * offers and its size without costing the reader a request. Rate limits and
+ * outages fall back rather than failing the build.
  *
- * A failed or rate limited request falls back rather than failing the build, since
- * the site has to keep deploying offline. Unlike the star count nothing refreshes
- * this in the page, so the fallback is updated whenever it drifts far enough to
- * matter, which is what the test guards.
+ * @returns The version and download size, from the API or the fallback.
  */
 export async function latestRelease(): Promise<Release> {
   if (cached !== undefined) return cached

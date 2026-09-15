@@ -6,8 +6,7 @@ import Icon from '../Icon.astro'
 const stars = await starCount()
 const { version, size } = await latestRelease()
 
-// What the card answers, in the order somebody decides in: which one am I
-// getting, how big is it, will it run here, what am I agreeing to.
+// Ordered the way somebody decides: which build, how big, will it run, terms.
 const facts = [
   { term: 'Version', value: version },
   { term: 'Download', value: size },
@@ -21,11 +20,7 @@ const repeatedAlt = 'The same beach photograph starting again on each of the scr
 
 <section id="hero" aria-labelledby="hero-title" class="cd-section bg-cd-bg">
   <style>
-    /* --- The top row -------------------------------------------------------
-       The claim holds the left, the download holds the right, bottom aligned
-       so the button lands on the same line the headline ends on. Before this
-       the two buttons sat under a paragraph in the right hand column and the
-       picture was the third thing down the page. */
+    /* Bottom aligned, so the button lands on the line the headline ends on. */
     #hero .hero-top {
       display: grid;
       grid-template-columns: minmax(0, 1fr);
@@ -40,8 +35,7 @@ const repeatedAlt = 'The same beach photograph starting again on each of the scr
       }
     }
 
-    /* The download card. The button and the answer to whether this will run on
-       your Mac belong in the same object, so nobody has to go looking. */
+    /* The button and whether it will run on your Mac, in one object. */
     #hero .hero-card {
       border: 1px solid var(--color-cd-border);
       border-radius: 16px;
@@ -76,10 +70,8 @@ const repeatedAlt = 'The same beach photograph starting again on each of the scr
       font-variant-numeric: tabular-nums;
     }
 
-    /* --- The switch --------------------------------------------------------
-       A macOS switch, because what it does is turn the app on over a desk that
-       is already there. Its sentence changes with it, so the state is readable
-       without watching the picture. */
+    /* A switch, not a pair of options: it turns the app on over a desk that
+       is already there. */
     #hero .sw-toggle {
       display: inline-flex;
       align-items: center;
@@ -128,12 +120,9 @@ const repeatedAlt = 'The same beach photograph starting again on each of the scr
       background-color: #fff;
     }
 
-    /* --- The two layers ----------------------------------------------------
-       The lower rig stays in flow and sets the height, the upper one lifts out
-       of flow onto it. Both draw the same frames and the same stand from the
-       same viewBox, so only the photograph differs and nothing is measured.
-       The shadow belongs to the layer underneath: two would cut at the edge
-       the wipe is drawing. */
+    /* Same viewBox on both rigs, so the upper one needs no measuring to land
+       on the lower. The shadow stays on the lower one: two would cut at the
+       edge the wipe draws. */
     #hero .hero-stage {
       position: relative;
     }
@@ -146,10 +135,8 @@ const repeatedAlt = 'The same beach photograph starting again on each of the scr
       filter: none;
     }
 
-    /* Longer than the site's other transitions on purpose. This one is
-       explaining rather than acknowledging a press, and the eye needs an edge
-       to follow or the two desks read as one desk flickering. Left to right,
-       the way the photograph itself travels across the screens. */
+    /* Longer than the site's other transitions: the eye needs an edge to
+       follow, or the two desks read as one desk flickering. */
     #hero .hero-stage .rig-layer {
       clip-path: inset(0 100% 0 0);
       transition: clip-path 420ms var(--ease-out);
@@ -159,8 +146,7 @@ const repeatedAlt = 'The same beach photograph starting again on each of the scr
       clip-path: inset(0 0 0 0);
     }
 
-    /* Without the script the switch is gone, so the desk has to be the one
-       worth showing rather than the one the app fixes. */
+    /* No script means no switch, so rest on the desk worth showing. */
     #hero .hero-stage:not([data-ready]) .rig-layer {
       clip-path: inset(0 0 0 0);
       transition: none;
@@ -231,10 +217,8 @@ const repeatedAlt = 'The same beach photograph starting again on each of the scr
             <polygon points="-3,206 184,206 201,236 -20,236"/>
           </g>
           <rect class="rig-chin" x="0" y="191" width="181" height="15" rx="3"/>
-          <!-- One image per screen, each sized to its own screen, which is what a
-               wallpaper handed to several displays does. The clip is the union of
-               all three so the corners round; an image draws only inside the box
-               its own x, y, width and height describe. -->
+          <!-- An image draws only inside its own box, so one per screen is what
+               macOS hands over. The clip is their union, for the corners. -->
           <g clip-path="url(#rig-desk-base)">
             <image class="rig-photo" href="/photos/hero-beach.jpg" x="0" y="83" width="181" height="117" preserveAspectRatio="xMidYMid slice"/>
             <image class="rig-photo" href="/photos/hero-beach.jpg" x="195" y="0" width="355" height="200" preserveAspectRatio="xMidYMid slice"/>
@@ -315,9 +299,9 @@ const repeatedAlt = 'The same beach photograph starting again on each of the scr
 
 <script>
   /**
-   * The hero switch. It ships hidden and the stage ships spanned, so a reader
-   * with no JavaScript gets the desk the app makes rather than the one it fixes,
-   * and never sees a control that cannot do anything.
+   * Wires the hero switch, which ships hidden so a reader with no JavaScript
+   * never meets a control that cannot do anything. The stage rests spanned,
+   * on the desk the app makes.
    */
   const SAYS = {
     on: 'One picture cut to the shape of the desk, carried on over the frames and across the gaps.',
