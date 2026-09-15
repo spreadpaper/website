@@ -90,13 +90,16 @@ function union(displays: Placed[]): Union {
 
 /**
  * Where the photograph sits before anybody drags it: centred on the desk, at
- * the picture's own aspect, and big enough to cover every screen with slack to
- * spare on both axes.
+ * its own aspect, and covering every screen with slack on both axes.
+ * Covering is what stops the canvas showing through.
  *
- * Derived rather than written down, because neither half is known in advance. A
- * panorama over a portrait pair has to grow a long way sideways and a square
- * picture over three monitors in a row has to grow downwards; one rule covers
- * both, and covering is what stops the canvas showing through a screen.
+ * Derived rather than written down, since neither half is known in advance: a
+ * panorama over a portrait pair grows sideways and a square picture over
+ * three monitors in a row grows down. One rule covers both.
+ *
+ * @param u - The box every screen sits inside.
+ * @param aspect - The picture's width over its height.
+ * @returns The picture's box in viewBox units.
  */
 function photoBox(u: Union, aspect: number) {
   const h = Math.max(u.h + MIN_SLACK * 2, (u.w + MIN_SLACK * 2) / aspect)
@@ -280,10 +283,9 @@ function bench(root: HTMLElement) {
     /* Mirror first, then scale, then move, all about the middle of the
        arrangement, so a flip turns the picture on its own axis and a zoom grows
        out of the point the displays are centred on. */
-    /* Zoom is read from a custom property on the canvas rather than written
-       into the string. The canvas outlives this group, so the transition lives
-       somewhere stable and a rebuilt group picks up the value mid-flight. Pan
-       stays literal: it changes every frame of a drag and must not lag. */
+    /* Zoom rides a property on the canvas, which outlives this group, so a
+       rebuild picks the value up mid-transition. Pan stays literal: it moves
+       every frame of a drag and must not lag. */
     el.canvas.style.setProperty('--bn-zoom', String(zoom))
     const place = `transform-origin: ${b.cx}px ${b.cy}px; transform: translate(${dx}px, ${dy}px) scale(var(--bn-zoom)) scaleX(${flip ? -1 : 1})`
     const img = (cls: string) =>
@@ -343,10 +345,9 @@ function bench(root: HTMLElement) {
       markSelected()
       return
     }
-    /* A rebuild recreates every row, so remember which keys were already on
-       screen and let only the genuinely new one animate in. The first build is
-       the bench arriving rather than a display being added, and it has to be
-       complete in its first frame, so nothing animates then. */
+    /* A rebuild recreates every row, so only a key that was not here a moment
+       ago arrives. The first build is the bench itself, which has to be
+       complete in its first frame. */
     const first = listKey === ''
     const before = new Set(listKey ? listKey.split(',') : [])
     listKey = key
@@ -658,16 +659,40 @@ function bench(root: HTMLElement) {
 
   function removeDisplay(key: string) {
     if (state.displays.length < 2) return
+
+    /* The row leaves the DOM as a copy of itself rather than by holding up the
+       state, so the desk loses the display the moment it is asked to. Measured
+       first: a grid row has no height to collapse from once it is out of one. */
+    const going = el.list.querySelector<HTMLElement>(`[data-row="${key}"]`)
+    const leaving = going?.cloneNode(true) as HTMLElement | undefined
+    const at = going ? [...el.list.children].indexOf(going) : -1
+    if (leaving && going) {
+      leaving.style.height = going.offsetHeight + 'px'
+      leaving.removeAttribute('data-row')
+      leaving.setAttribute('aria-hidden', 'true')
+      leaving.querySelectorAll('button').forEach((b) => b.setAttribute('tabindex', '-1'))
+    }
+
     state.displays = state.displays.filter((d) => d.key !== key)
     if (!state.displays.some((d) => d.key === state.selected)) state.selected = state.displays[0].key
     render()
+
+    if (leaving) {
+      el.list.insertBefore(leaving, el.list.children[at] ?? null)
+      requestAnimationFrame(() => leaving.setAttribute('data-leaving', ''))
+      const drop = () => leaving.remove()
+      leaving.addEventListener('transitionend', (e) => {
+        if (e.propertyName === 'height') drop()
+      })
+      /* jsdom and a reduced-motion reader both finish without firing one. */
+      setTimeout(drop, 400)
+    }
+
     el.addButton.focus()
   }
 
-  /* `hidden` is display:none and cannot be transitioned, so it stays the
-     mounted flag and `data-open` carries the animation. The button's own
-     aria-expanded is then the only reliable reading of the state, since the
-     panel is still mounted while it animates out. */
+  /* The panel stays mounted while it animates out, so `hidden` cannot say
+     whether the menu is open. aria-expanded can. */
   const menuOpen = () => el.addButton.getAttribute('aria-expanded') === 'true'
 
   function openMenu() {

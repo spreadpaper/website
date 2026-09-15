@@ -476,10 +476,8 @@ check('and takes the still canvas down, so only one of the two shows', benchStil
 // The svg ships empty; a viewBox means the desk was drawn from state.
 check('the canvas is drawn', /^-?\d/.test(benchCanvas?.getAttribute('viewBox') ?? ''), benchCanvas?.getAttribute('viewBox') ?? 'none')
 check('it opens on two displays', benchRows().length === 2, `${benchRows().length} rows`)
-// The first build is deliberately not marked, since the bench arriving is not a
-// display being added. That is not asserted here: the marker is cleared on the
-// next animation frame, which has long passed by the time this runs, so the
-// check would pass whether the guard existed or not.
+// The first build marks no row, which is not asserted: the marker clears on
+// the next animation frame, so such a check cannot fail.
 
 const benchStart = benchWide()
 doc.querySelector<HTMLButtonElement>('[data-addbutton]')!.click()
@@ -488,8 +486,7 @@ check('and offers the shared panel catalogue', doc.querySelectorAll('[data-add]'
   `${doc.querySelectorAll('[data-add]').length} panels`)
 doc.querySelector<HTMLButtonElement>('[data-add="ultrawide34"]')!.click()
 check('a third display is listed', benchRows().length === 3, `${benchRows().length} rows`)
-// The rebuild recreates all three, so the two that were already there must not
-// be marked, or adding one display animates the whole list.
+// The rebuild recreates all three, so marking the wrong ones animates the lot.
 const entering = benchRows().filter((row) => row.hasAttribute('data-entering'))
 check('only the display just added is marked as arriving', entering.length === 1,
   `${entering.length} of ${benchRows().length} rows marked`)
@@ -501,6 +498,14 @@ doc.querySelectorAll<HTMLButtonElement>('[data-remove]')[2].click()
 check('removing it takes it off the list', benchRows().length === 2, `${benchRows().length} rows`)
 check('and the selection lands on one that still exists',
   benchRows().some((row) => row.getAttribute('aria-current') === 'true'))
+// A copy is left behind to animate out, so the desk loses the display at once
+// while the row still closes its own gap. It must not be a row any more.
+const ghost = doc.querySelector('[data-list] .bn-row:not([data-row])')
+check('a copy of the removed row is left to animate out', Boolean(ghost))
+check('and it is out of reach while it goes',
+  ghost?.getAttribute('aria-hidden') === 'true' &&
+    [...(ghost?.querySelectorAll('button') ?? [])].every((b) => b.getAttribute('tabindex') === '-1'))
+check('it carries a height to collapse from', /^\d/.test((ghost as HTMLElement)?.style.height ?? ''))
 
 // A desk with no displays has nothing to draw, so the last one stays.
 doc.querySelectorAll<HTMLButtonElement>('[data-remove]')[1].click()
@@ -566,13 +571,8 @@ check('and the selection outline is not filled either',
   styles.match(/#editor \.bn-outline\{[^}]*\}/)?.[0] ?? 'no rule at all')
 
 console.log('\nthe bench answers a press')
-// Scoped component CSS never reaches markup a script builds, so every one of
-// these lives in the global block and is checked against the compiled sheet
-// rather than the source. See DESIGN.md, Overriding the primitives.
-const benchCss = readdirSync(join(site, '_astro'))
-  .filter((f) => f.endsWith('.css'))
-  .map((f) => readFileSync(join(site, '_astro', f), 'utf8'))
-  .join('\n')
+// Read off the compiled sheet, not the source: scoped CSS never reaches markup
+// a script builds. See DESIGN.md, Overriding the primitives.
 
 for (const selector of [
   '.bn-thumb:active',
@@ -581,7 +581,7 @@ for (const selector of [
   '.bn-tool:not(:disabled):active',
   '.bn-remove:not(:disabled):active',
 ]) {
-  check(`${selector} reached the compiled CSS`, benchCss.includes(selector))
+  check(`${selector} reached the compiled CSS`, styles.includes(selector))
 }
 
 console.log('\nthe bench motion survives compilation')
@@ -590,25 +590,23 @@ console.log('\nthe bench motion survives compilation')
 // Matched to the brace rather than by substring: `@property --bn-zoom-X` would
 // satisfy an includes() check while registering a property nothing reads.
 check('--bn-zoom is registered, so it interpolates as a number',
-  /@property\s+--bn-zoom\s*\{[^}]*syntax:\s*"?'?<number>/.test(benchCss))
-check('and the canvas is what transitions it', /\.bn-canvas\{[^}]*--bn-zoom/.test(benchCss.replace(/\s+/g, '')),
+  /@property\s+--bn-zoom\s*\{[^}]*syntax:\s*"?'?<number>/.test(styles))
+check('and the canvas is what transitions it', /\.bn-canvas\{[^}]*--bn-zoom/.test(styles.replace(/\s+/g, '')),
   'the transition has to sit on the element that outlives the rebuild')
-check('a drag drops the easing', benchCss.includes('.bn-canvas[data-dragging]'))
-check('the menu has an open state to animate to', benchCss.includes('.bn-menu[data-open]'))
-check('a new row has an entering state', benchCss.includes('.bn-row[data-entering]'))
+check('a drag drops the easing', styles.includes('.bn-canvas[data-dragging]'))
+check('the menu has an open state to animate to', styles.includes('.bn-menu[data-open]'))
+check('a new row has an entering state', styles.includes('.bn-row[data-entering]'))
+check('and a removed one has a leaving state', styles.includes('.bn-row[data-leaving]'))
+check('the leaving row collapses, or the rows under it jump',
+  /\.bn-row\[data-leaving\]\{[^}]*height:0/.test(styles.replace(/\s+/g, '')))
 
 // The script and the stylesheet have to agree on the property name, and nothing
 // else would catch a rename: the transform silently resolves to nothing.
-const benchScript = readdirSync(join(site, '_astro'))
-  .filter((f) => f.endsWith('.js'))
-  .map((f) => readFileSync(join(site, '_astro', f), 'utf8'))
-  .join('\n')
 check('the drawn transform reads the same property the CSS declares',
-  benchScript.includes('scale(var(--bn-zoom))') && benchScript.includes('--bn-zoom'))
+  bundles.join("\n").includes('scale(var(--bn-zoom))') && bundles.join("\n").includes('--bn-zoom'))
 
-// The panel stays mounted while it animates out, so `hidden` can no longer say
-// whether the menu is open. The button's aria-expanded is the reading the
-// script trusts, and it has to be there for that to work.
+// The panel stays mounted while it animates out, so aria-expanded rather than
+// `hidden` is what the script reads.
 const addButton = doc.querySelector('[data-addbutton]')
 check('the add button carries the state the script reads',
   addButton?.hasAttribute('aria-expanded') === true)
