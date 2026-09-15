@@ -1,80 +1,343 @@
 ---
+import { latestRelease } from '../../lib/release'
 import { starCount } from '../../lib/stars'
 import Icon from '../Icon.astro'
 
 const stars = await starCount()
+const { version, size } = await latestRelease()
+
+// What the card answers, in the order somebody decides in: which one am I
+// getting, how big is it, will it run here, what am I agreeing to.
+const facts = [
+  { term: 'Version', value: version },
+  { term: 'Download', value: size },
+  { term: 'Requires', value: 'macOS 15' },
+  { term: 'Licence', value: 'MIT' },
+]
+
+const spannedAlt = 'A beach at sunset, one photograph carried unbroken across the screens on a Mac desk.'
+const repeatedAlt = 'The same beach photograph starting again on each of the screens on a Mac desk.'
 ---
 
 <section id="hero" aria-labelledby="hero-title" class="cd-section bg-cd-bg">
+  <style>
+    /* --- The top row -------------------------------------------------------
+       The claim holds the left, the download holds the right, bottom aligned
+       so the button lands on the same line the headline ends on. Before this
+       the two buttons sat under a paragraph in the right hand column and the
+       picture was the third thing down the page. */
+    #hero .hero-top {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 2rem;
+    }
+
+    @media (min-width: 64rem) {
+      #hero .hero-top {
+        grid-template-columns: minmax(0, 1fr) 20rem;
+        column-gap: 4rem;
+        align-items: end;
+      }
+    }
+
+    /* The download card. The button and the answer to whether this will run on
+       your Mac belong in the same object, so nobody has to go looking. */
+    #hero .hero-card {
+      border: 1px solid var(--color-cd-border);
+      border-radius: 16px;
+      background-color: var(--color-cd-bg-secondary);
+      padding: 1.25rem;
+    }
+
+    #hero .hero-facts {
+      margin: 1.25rem 0 0;
+      padding: 1.125rem 0 0;
+      border-top: 1px solid var(--color-cd-border);
+      display: grid;
+      gap: 0.5rem;
+    }
+
+    #hero .hero-fact {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 1rem;
+      font-size: 0.8125rem;
+    }
+
+    #hero .hero-fact dt {
+      color: var(--color-cd-text-tertiary);
+    }
+
+    #hero .hero-fact dd {
+      margin: 0;
+      font-weight: 600;
+      color: var(--color-cd-text-secondary);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* --- The switch --------------------------------------------------------
+       A macOS switch, because what it does is turn the app on over a desk that
+       is already there. Its sentence changes with it, so the state is readable
+       without watching the picture. */
+    #hero .sw-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      border: 0;
+      background: transparent;
+      padding: 0;
+      font: inherit;
+      color: var(--color-cd-text);
+      cursor: pointer;
+    }
+
+    #hero .sw-track {
+      width: 3.25rem;
+      height: 1.875rem;
+      flex: none;
+      border-radius: 9999px;
+      border: 1px solid var(--color-cd-border-strong);
+      background-color: var(--color-cd-bg-elevated);
+      display: flex;
+      align-items: center;
+      padding: 2px;
+      transition:
+        background-color 200ms var(--ease-out),
+        border-color 200ms var(--ease-out);
+    }
+
+    #hero .sw-knob {
+      width: 1.5rem;
+      height: 1.5rem;
+      border-radius: 9999px;
+      background-color: var(--color-cd-text-secondary);
+      box-shadow: 0 1px 3px rgb(0 0 0 / 0.5);
+      transition:
+        transform 200ms var(--ease-out),
+        background-color 200ms var(--ease-out);
+    }
+
+    #hero .sw-toggle[aria-checked='true'] .sw-track {
+      background-image: linear-gradient(180deg, #5e5ce6 0%, #4a48c9 100%);
+      border-color: transparent;
+    }
+
+    #hero .sw-toggle[aria-checked='true'] .sw-knob {
+      transform: translateX(1.375rem);
+      background-color: #fff;
+    }
+
+    /* --- The two layers ----------------------------------------------------
+       The lower rig stays in flow and sets the height, the upper one lifts out
+       of flow onto it. Both draw the same frames and the same stand from the
+       same viewBox, so only the photograph differs and nothing is measured.
+       The shadow belongs to the layer underneath: two would cut at the edge
+       the wipe is drawing. */
+    #hero .hero-stage {
+      position: relative;
+    }
+
+    #hero .rig-layer {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      filter: none;
+    }
+
+    /* Longer than the site's other transitions on purpose. This one is
+       explaining rather than acknowledging a press, and the eye needs an edge
+       to follow or the two desks read as one desk flickering. Left to right,
+       the way the photograph itself travels across the screens. */
+    #hero .hero-stage .rig-layer {
+      clip-path: inset(0 100% 0 0);
+      transition: clip-path 420ms var(--ease-out);
+    }
+
+    #hero .hero-stage[data-on] .rig-layer {
+      clip-path: inset(0 0 0 0);
+    }
+
+    /* Without the script the switch is gone, so the desk has to be the one
+       worth showing rather than the one the app fixes. */
+    #hero .hero-stage:not([data-ready]) .rig-layer {
+      clip-path: inset(0 0 0 0);
+      transition: none;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #hero .hero-stage .rig-layer {
+        transition-duration: 120ms;
+      }
+
+      #hero .sw-track,
+      #hero .sw-knob {
+        transition-duration: 80ms;
+      }
+    }
+  </style>
+
   <div class="cd-shell">
-    <p class="cd-eyebrow">Free and open source</p>
-
-    <div class="mt-5 grid grid-cols-12 gap-x-6 gap-y-10">
-
-      <h1 id="hero-title" class="col-span-12 text-5xl font-extrabold leading-[0.95] tracking-[-0.035em] text-balance text-cd-text sm:text-7xl lg:col-span-7 lg:text-8xl">One wallpaper across <span class="text-cd-accent">every</span> monitor</h1>
-
-      <div class="col-span-12 flex flex-col gap-6 lg:col-span-5 lg:col-start-8">
-        <p class="max-w-[46ch] text-lg leading-relaxed text-pretty text-cd-text-secondary sm:text-xl">macOS gives every monitor its own wallpaper. SpreadPaper gives them one picture, carried on over the frames instead of starting again on each screen. Keep it still, pair a light one with a dark one, or run a whole day on a schedule, on every display you have, or on just the one.</p>
-
-        <div class="flex max-w-[46ch] flex-col items-stretch gap-3">
-          <a class="cd-button cd-button-primary px-7 py-3.5 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cd-accent" href="https://github.com/spreadpaper/SpreadPaper/releases/latest"><Icon name="download-simple" width="18" height="18" />Download for macOS</a>
-          <a class="cd-star justify-center py-3.5 pl-7 pr-1 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cd-accent" href="https://github.com/spreadpaper/SpreadPaper"><Icon name="star" width="18" height="18" />Star on GitHub<span class="cd-star-count px-5" data-stars>{stars}</span><span class="sr-only">people have starred it</span></a>
-        </div>
-
-        <p class="max-w-[46ch] text-sm leading-relaxed text-pretty text-cd-text-secondary">Free and open source under the MIT licence. Requires macOS 15 Sequoia or later on an Apple Silicon Mac.</p>
+    <div class="hero-top">
+      <div>
+        <p class="cd-eyebrow">Free and open source</p>
+        <h1 id="hero-title" class="mt-5 text-5xl font-extrabold leading-[0.95] tracking-[-0.035em] text-balance text-cd-text sm:text-6xl lg:text-7xl">One wallpaper across <span class="text-cd-accent">every</span> monitor</h1>
+        <p class="mt-6 max-w-[52ch] text-lg leading-relaxed text-pretty text-cd-text-secondary sm:text-xl">macOS gives every monitor its own wallpaper. SpreadPaper gives them one picture, carried on over the frames instead of starting again on each screen. Keep it still, pair a light one with a dark one, or run a whole day on a schedule.</p>
       </div>
 
-      <figure class="col-span-12 mt-2 sm:mt-6">
-        <!-- Both rigs must keep the same href. display:none does not stop a fetch, so
-             two URLs would make a phone download the wide rig's photograph it never
-             sees as well as its own, and the preload in index.html matches only one. -->
-        <div class="-mx-5 sm:mx-0">
-          <svg class="rig rig-desk hidden sm:block" viewBox="0 0 911 236" role="img" aria-label="A beach at sunset, one photograph carried unbroken across the screens on a Mac desk." focusable="false">
-            <defs>
-              <clipPath id="rig-desk-hero">
-                <rect x="0" y="83" width="181" height="117" rx="8"/>
-                <rect x="195" y="0" width="355" height="200" rx="10"/>
-                <rect x="556" y="0" width="355" height="200" rx="10"/>
-              </clipPath>
-            </defs>
-            <ellipse class="rig-glow" cx="455.5" cy="232" rx="401" ry="18"/>
-            <g class="rig-stand">
-              <rect x="358.5" y="200" width="28" height="28"/><rect x="317.5" y="228" width="110" height="8" rx="4"/>
-              <rect x="719.5" y="200" width="28" height="28"/><rect x="678.5" y="228" width="110" height="8" rx="4"/>
-              <polygon points="-3,206 184,206 201,236 -20,236"/>
-            </g>
-            <rect class="rig-chin" x="0" y="191" width="181" height="15" rx="3"/>
-            <g clip-path="url(#rig-desk-hero)">
-              <image class="rig-photo" href="/photos/hero-beach.jpg" x="0" y="0" width="911" height="200" preserveAspectRatio="xMidYMid slice"/>
-              <rect class="rig-frame" x="0" y="83" width="181" height="117" rx="8"/>
-              <rect class="rig-frame" x="195" y="0" width="355" height="200" rx="10"/>
-              <rect class="rig-frame" x="556" y="0" width="355" height="200" rx="10"/>
-            </g>
-          </svg>
-
-          <svg class="rig rig-dual sm:hidden" viewBox="0 0 716 236" role="img" aria-label="A beach at sunset, one photograph carried unbroken across the screens on a Mac desk." focusable="false">
-            <defs>
-              <clipPath id="rig-dual-hero">
-                <rect x="0" y="0" width="355" height="200" rx="10"/>
-                <rect x="361" y="0" width="355" height="200" rx="10"/>
-              </clipPath>
-            </defs>
-            <ellipse class="rig-glow" cx="358" cy="232" rx="315" ry="18"/>
-            <g class="rig-stand">
-              <rect x="163.5" y="200" width="28" height="28"/><rect x="122.5" y="228" width="110" height="8" rx="4"/>
-              <rect x="524.5" y="200" width="28" height="28"/><rect x="483.5" y="228" width="110" height="8" rx="4"/>
-            </g>
-            <g clip-path="url(#rig-dual-hero)">
-              <image class="rig-photo" href="/photos/hero-beach.jpg" x="0" y="0" width="716" height="200" preserveAspectRatio="xMidYMid slice"/>
-              <rect class="rig-frame" x="0" y="0" width="355" height="200" rx="10"/>
-              <rect class="rig-frame" x="361" y="0" width="355" height="200" rx="10"/>
-            </g>
-          </svg>
+      <div class="hero-card">
+        <div class="flex flex-col gap-3">
+          <a class="cd-button cd-button-primary h-12 px-6 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cd-accent" href="https://github.com/spreadpaper/SpreadPaper/releases/latest"><Icon name="download-simple" width="18" height="18" />Download for macOS</a>
+          <a class="cd-star h-12 justify-center pl-5 pr-1 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cd-accent" href="https://github.com/spreadpaper/SpreadPaper"><Icon name="star" width="18" height="18" />Star on GitHub<span class="cd-star-count px-4" data-stars>{stars}</span><span class="sr-only">people have starred it</span></a>
         </div>
 
-        <figcaption class="mt-4 text-sm text-cd-text-secondary">Photograph by <a class="cd-inline-link focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cd-accent" href="https://unsplash.com/@gkumar2175">Ganapathy Kumar</a> on Unsplash, one of the photographs the app ships with.</figcaption>
-      </figure>
-
+        <dl class="hero-facts">
+          {facts.map((fact) => (
+            <div class="hero-fact">
+              <dt>{fact.term}</dt>
+              <dd>{fact.value}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
     </div>
+
+    <div id="hero-switch" hidden class="mt-10 flex flex-wrap items-center gap-3.5">
+      <button type="button" id="hero-toggle" role="switch" aria-checked="true" aria-controls="hero-stage" class="sw-toggle focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cd-accent">
+        <span class="sw-track"><span class="sw-knob"></span></span>
+        <span class="text-[0.9375rem] font-semibold whitespace-nowrap">SpreadPaper</span>
+      </button>
+      <span id="hero-state" class="text-[0.9375rem] leading-relaxed text-cd-text-secondary">One picture cut to the shape of the desk, carried on over the frames and across the gaps.</span>
+    </div>
+
+    <figure class="mt-10">
+      <!-- Every rig keeps the same href. display:none does not stop a fetch, so a
+           second URL would make a phone download a photograph it never sees, and
+           the preload in Layout.astro matches only this one. -->
+      <div id="hero-stage" data-on class="hero-stage -mx-5 sm:mx-0">
+        <svg class="rig rig-desk hidden sm:block" viewBox="0 0 911 236" role="img" aria-label={repeatedAlt} focusable="false">
+          <defs>
+            <clipPath id="rig-desk-base">
+              <rect x="0" y="83" width="181" height="117" rx="8"/>
+              <rect x="195" y="0" width="355" height="200" rx="10"/>
+              <rect x="556" y="0" width="355" height="200" rx="10"/>
+            </clipPath>
+          </defs>
+          <ellipse class="rig-glow" cx="455.5" cy="232" rx="401" ry="18"/>
+          <g class="rig-stand">
+            <rect x="358.5" y="200" width="28" height="28"/><rect x="317.5" y="228" width="110" height="8" rx="4"/>
+            <rect x="719.5" y="200" width="28" height="28"/><rect x="678.5" y="228" width="110" height="8" rx="4"/>
+            <polygon points="-3,206 184,206 201,236 -20,236"/>
+          </g>
+          <rect class="rig-chin" x="0" y="191" width="181" height="15" rx="3"/>
+          <!-- One image per screen, each sized to its own screen, which is what a
+               wallpaper handed to several displays does. The clip is the union of
+               all three so the corners round; an image draws only inside the box
+               its own x, y, width and height describe. -->
+          <g clip-path="url(#rig-desk-base)">
+            <image class="rig-photo" href="/photos/hero-beach.jpg" x="0" y="83" width="181" height="117" preserveAspectRatio="xMidYMid slice"/>
+            <image class="rig-photo" href="/photos/hero-beach.jpg" x="195" y="0" width="355" height="200" preserveAspectRatio="xMidYMid slice"/>
+            <image class="rig-photo" href="/photos/hero-beach.jpg" x="556" y="0" width="355" height="200" preserveAspectRatio="xMidYMid slice"/>
+            <rect class="rig-frame" x="0" y="83" width="181" height="117" rx="8"/>
+            <rect class="rig-frame" x="195" y="0" width="355" height="200" rx="10"/>
+            <rect class="rig-frame" x="556" y="0" width="355" height="200" rx="10"/>
+          </g>
+        </svg>
+
+        <svg class="rig rig-desk rig-layer hidden sm:block" viewBox="0 0 911 236" role="img" aria-label={spannedAlt} focusable="false">
+          <defs>
+            <clipPath id="rig-desk-span">
+              <rect x="0" y="83" width="181" height="117" rx="8"/>
+              <rect x="195" y="0" width="355" height="200" rx="10"/>
+              <rect x="556" y="0" width="355" height="200" rx="10"/>
+            </clipPath>
+          </defs>
+          <ellipse class="rig-glow" cx="455.5" cy="232" rx="401" ry="18"/>
+          <g class="rig-stand">
+            <rect x="358.5" y="200" width="28" height="28"/><rect x="317.5" y="228" width="110" height="8" rx="4"/>
+            <rect x="719.5" y="200" width="28" height="28"/><rect x="678.5" y="228" width="110" height="8" rx="4"/>
+            <polygon points="-3,206 184,206 201,236 -20,236"/>
+          </g>
+          <rect class="rig-chin" x="0" y="191" width="181" height="15" rx="3"/>
+          <g clip-path="url(#rig-desk-span)">
+            <image class="rig-photo" href="/photos/hero-beach.jpg" x="0" y="0" width="911" height="200" preserveAspectRatio="xMidYMid slice"/>
+            <rect class="rig-frame" x="0" y="83" width="181" height="117" rx="8"/>
+            <rect class="rig-frame" x="195" y="0" width="355" height="200" rx="10"/>
+            <rect class="rig-frame" x="556" y="0" width="355" height="200" rx="10"/>
+          </g>
+        </svg>
+
+        <svg class="rig rig-dual sm:hidden" viewBox="0 0 716 236" role="img" aria-label={repeatedAlt} focusable="false">
+          <defs>
+            <clipPath id="rig-dual-base">
+              <rect x="0" y="0" width="355" height="200" rx="10"/>
+              <rect x="361" y="0" width="355" height="200" rx="10"/>
+            </clipPath>
+          </defs>
+          <ellipse class="rig-glow" cx="358" cy="232" rx="315" ry="18"/>
+          <g class="rig-stand">
+            <rect x="163.5" y="200" width="28" height="28"/><rect x="122.5" y="228" width="110" height="8" rx="4"/>
+            <rect x="524.5" y="200" width="28" height="28"/><rect x="483.5" y="228" width="110" height="8" rx="4"/>
+          </g>
+          <g clip-path="url(#rig-dual-base)">
+            <image class="rig-photo" href="/photos/hero-beach.jpg" x="0" y="0" width="355" height="200" preserveAspectRatio="xMidYMid slice"/>
+            <image class="rig-photo" href="/photos/hero-beach.jpg" x="361" y="0" width="355" height="200" preserveAspectRatio="xMidYMid slice"/>
+            <rect class="rig-frame" x="0" y="0" width="355" height="200" rx="10"/>
+            <rect class="rig-frame" x="361" y="0" width="355" height="200" rx="10"/>
+          </g>
+        </svg>
+
+        <svg class="rig rig-dual rig-layer sm:hidden" viewBox="0 0 716 236" role="img" aria-label={spannedAlt} focusable="false">
+          <defs>
+            <clipPath id="rig-dual-span">
+              <rect x="0" y="0" width="355" height="200" rx="10"/>
+              <rect x="361" y="0" width="355" height="200" rx="10"/>
+            </clipPath>
+          </defs>
+          <ellipse class="rig-glow" cx="358" cy="232" rx="315" ry="18"/>
+          <g class="rig-stand">
+            <rect x="163.5" y="200" width="28" height="28"/><rect x="122.5" y="228" width="110" height="8" rx="4"/>
+            <rect x="524.5" y="200" width="28" height="28"/><rect x="483.5" y="228" width="110" height="8" rx="4"/>
+          </g>
+          <g clip-path="url(#rig-dual-span)">
+            <image class="rig-photo" href="/photos/hero-beach.jpg" x="0" y="0" width="716" height="200" preserveAspectRatio="xMidYMid slice"/>
+            <rect class="rig-frame" x="0" y="0" width="355" height="200" rx="10"/>
+            <rect class="rig-frame" x="361" y="0" width="355" height="200" rx="10"/>
+          </g>
+        </svg>
+      </div>
+
+      <figcaption class="mt-4 text-sm text-cd-text-secondary">Photograph by <a class="cd-inline-link focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cd-accent" href="https://unsplash.com/@gkumar2175">Ganapathy Kumar</a> on Unsplash, one of the photographs the app ships with.</figcaption>
+    </figure>
   </div>
 </section>
+
+<script>
+  /**
+   * The hero switch. It ships hidden and the stage ships spanned, so a reader
+   * with no JavaScript gets the desk the app makes rather than the one it fixes,
+   * and never sees a control that cannot do anything.
+   */
+  const SAYS = {
+    on: 'One picture cut to the shape of the desk, carried on over the frames and across the gaps.',
+    off: 'Each display gets the whole picture, so the horizon starts again at every frame.',
+  }
+
+  const control = document.getElementById('hero-switch')
+  const toggle = document.getElementById('hero-toggle')
+  const stage = document.getElementById('hero-stage')
+  const state = document.getElementById('hero-state')
+
+  if (control && toggle && stage && state) {
+    control.removeAttribute('hidden')
+    stage.setAttribute('data-ready', '')
+
+    toggle.addEventListener('click', () => {
+      const on = toggle.getAttribute('aria-checked') !== 'true'
+      toggle.setAttribute('aria-checked', String(on))
+      stage.toggleAttribute('data-on', on)
+      state.textContent = on ? SAYS.on : SAYS.off
+    })
+  }
+</script>

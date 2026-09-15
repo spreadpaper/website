@@ -23,13 +23,17 @@ import { JSDOM } from 'jsdom'
 
 const site = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist')
 const html = readFileSync(join(site, 'index.html'), 'utf8')
-// Astro emits the script as a file, or inlines it into the page once it drops
-// under 4KB, and it has crossed that line in both directions. Take it from
-// wherever this build put it rather than assuming there is a file.
-const bundleName = readdirSync(join(site, '_astro')).find((f) => f.endsWith('.js'))
-const bundle = bundleName
-  ? readFileSync(join(site, '_astro', bundleName), 'utf8')
-  : html.match(/<script type="module">([\s\S]*?)<\/script>/)![1]
+// Astro emits each script as a file, or inlines it into the page once it drops
+// under 4KB, and it has crossed that line in both directions. The homepage now
+// carries two of them, the page script and the hero's switch, so taking the
+// first one found tested whichever Astro happened to put first and silently
+// skipped the other. Run every one of them.
+const bundles = [
+  ...readdirSync(join(site, '_astro'))
+    .filter((f) => f.endsWith('.js'))
+    .map((f) => readFileSync(join(site, '_astro', f), 'utf8')),
+  ...[...html.matchAll(/<script type="module">([\s\S]*?)<\/script>/g)].map((m) => m[1]),
+]
 
 let failures = 0
 const check = (name: string, condition: unknown, detail = '') => {
@@ -86,7 +90,9 @@ check('no panel sits in the tab order yet', panelsBefore.every((p) => !p.hasAttr
 check('nav menu links exist in the markup', doc.querySelectorAll('#nav-menu a').length > 0)
 check('no tabs-ready flag before the script', !tabRoot?.hasAttribute('data-tabs-ready'))
 
-window.eval(bundle)
+// Each in its own scope: two modules declaring the same name is ordinary in the
+// browser and should not become an error only in here.
+bundles.forEach((source) => window.eval(`(function () {\n${source}\n})()`))
 
 const panels0 = panelsBefore
 
@@ -414,6 +420,49 @@ check('the name links to its author', copyrightLinks.includes('https://robinvanb
 check('and the licence is linked', copyrightLinks.some((href) => href.endsWith('/LICENSE')), copyrightLinks.join(', '))
 check('the address is still reachable',
   footerHrefs.includes('mailto:hello@spreadpaper.app'))
+
+console.log('\nthe hero switch')
+// The stage ships spanned and the switch ships hidden, so a reader with no
+// JavaScript gets the desk the app makes and never sees a control that cannot
+// do anything. Both halves of that are invisible if they break.
+const heroStage = doc.getElementById('hero-stage')!
+const heroToggle = doc.getElementById('hero-toggle')!
+const heroState = doc.getElementById('hero-state')!
+check('the stage ships on, so the spanned desk is what a still page shows', heroStage.hasAttribute('data-on'))
+check('the switch says so too', heroToggle.getAttribute('aria-checked') === 'true')
+check('the switch was revealed by the script', !doc.getElementById('hero-switch')!.hasAttribute('hidden'))
+check('and the stage is flagged ready, which is what arms the wipe', heroStage.hasAttribute('data-ready'))
+
+const spokenBefore = heroState.textContent!.trim()
+heroToggle.dispatchEvent(new window.MouseEvent('click', { bubbles: true }))
+check('clicking turns it off', heroToggle.getAttribute('aria-checked') === 'false' && !heroStage.hasAttribute('data-on'))
+check('and the sentence follows the switch', heroState.textContent!.trim() !== spokenBefore)
+heroToggle.dispatchEvent(new window.MouseEvent('click', { bubbles: true }))
+check('clicking again turns it back on', heroToggle.getAttribute('aria-checked') === 'true' && heroStage.hasAttribute('data-on'))
+check('and the sentence comes back', heroState.textContent!.trim() === spokenBefore)
+
+// Two rigs per breakpoint, one carrying the photograph per screen and one
+// carrying it across them. Lose a layer and the wipe reveals nothing.
+const heroRigs = [...heroStage.querySelectorAll('svg.rig')]
+check('four rigs: a pair for each breakpoint', heroRigs.length === 4, `${heroRigs.length} rigs`)
+check('half of them are the upper layer', heroRigs.filter((r) => r.classList.contains('rig-layer')).length === 2)
+
+// display:none does not stop a fetch, so a second URL would make a phone
+// download a photograph it never sees, and the preload matches only one.
+const heroPhotos = new Set([...heroStage.querySelectorAll('image')].map((i) => i.getAttribute('href')!))
+check('every rig points at the one preloaded photograph', heroPhotos.size === 1, [...heroPhotos].join(', '))
+
+console.log('\nthe download card')
+const cardFacts = [...doc.querySelectorAll('#hero .hero-fact')].map((row) => [
+  row.querySelector('dt')!.textContent!.trim(),
+  row.querySelector('dd')!.textContent!.trim(),
+])
+check('it answers four things', cardFacts.length === 4, JSON.stringify(cardFacts))
+const fact = (term: string) => cardFacts.find((row) => row[0] === term)?.[1] ?? ''
+check('the version is a version, read from the release at build time', /^\d+\.\d+\.\d+$/.test(fact('Version')), fact('Version'))
+check('the size is megabytes, not bytes', /^\d+ MB$/.test(fact('Download')), fact('Download'))
+check('it names the macOS it needs', fact('Requires').includes('macOS'), fact('Requires'))
+check('and the licence', fact('Licence') === 'MIT', fact('Licence'))
 
 console.log(failures ? `\n${failures} FAILED` : '\nall checks passed')
 process.exit(failures ? 1 : 0)
