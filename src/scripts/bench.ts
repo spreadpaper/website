@@ -22,6 +22,7 @@ const GLYPH: Record<string, string> = {
   flip: 'M213.66,181.66l-32,32a8,8,0,0,1-11.32-11.32L188.69,184H48a8,8,0,0,1,0-16H188.69l-18.35-18.34a8,8,0,0,1,11.32-11.32l32,32A8,8,0,0,1,213.66,181.66Zm-139.32-64a8,8,0,0,0,11.32-11.32L67.31,88H208a8,8,0,0,0,0-16H67.31L85.66,53.66A8,8,0,0,0,74.34,42.34l-32,32a8,8,0,0,0,0,11.32Z',
   x: 'M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z',
   image: 'M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40Zm0,16V158.75l-26.07-26.06a16,16,0,0,0-22.63,0l-20,20-44-44a16,16,0,0,0-22.62,0L40,149.37V56ZM40,172l52-52,80,80H40Zm176,28H194.63l-36-36,20-20L216,181.38V200ZM144,100a12,12,0,1,1,12,12A12,12,0,0,1,144,100Z',
+  monitor: 'M208,40H48A24,24,0,0,0,24,64V168a24,24,0,0,0,24,24h72v24H88a8,8,0,0,0,0,16h80a8,8,0,0,0,0-16H136V192h72a24,24,0,0,0,24-24V64A24,24,0,0,0,208,40Zm8,128a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V64a8,8,0,0,1,8-8H208a8,8,0,0,1,8,8Z',
 }
 
 const icon = (name: string) =>
@@ -156,13 +157,13 @@ function benchMarkup() {
   <div class="bn" data-bench>
     <div>
       <div class="bn-panel">
-        <p class="bn-panel-title">The picture</p>
+        <p class="bn-panel-title">The wallpaper</p>
         <div class="bn-thumbs">${thumbs}</div>
         <button class="cd-button cd-button-secondary bn-choose pc-focus" type="button" data-choose>
-          ${icon('image')}Choose a picture
+          ${icon('image')}Choose a wallpaper
         </button>
         <input class="sr-only" type="file" accept="image/*" data-file id="${id}-file">
-        <label class="sr-only" for="${id}-file">Choose a picture from your Mac</label>
+        <label class="sr-only" for="${id}-file">Choose a wallpaper from your Mac</label>
         <p class="bn-filename" data-filename>Drop one on the canvas, or choose a file.</p>
       </div>
 
@@ -180,13 +181,17 @@ function benchMarkup() {
     <div class="bn-stage">
       <div class="bn-canvas-box" data-box>
         <svg class="bn-canvas" data-canvas data-mode="arrange" preserveAspectRatio="xMidYMid meet"
-             role="img" aria-label="The editor canvas, with your displays drawn on it and one photograph across them." focusable="false"></svg>
+             role="img" aria-label="The editor canvas, with your displays drawn on it and one wallpaper across them." focusable="false"></svg>
       </div>
 
       <div class="bn-bar">
-        <div class="bn-seg" role="group" aria-label="What dragging the canvas does">
-          <button class="bn-seg-item pc-focus" type="button" data-mode-set="arrange" aria-pressed="true">Arrange displays</button>
-          <button class="bn-seg-item pc-focus" type="button" data-mode-set="place" aria-pressed="false">Place the picture</button>
+        <div class="bn-mode">
+        <span class="bn-mode-label" aria-hidden="true">Drag</span>
+        <div class="bn-seg" role="radiogroup" aria-label="What you drag on the canvas" data-seg>
+          <span class="bn-seg-thumb" data-seg-thumb aria-hidden="true"></span>
+          <button class="bn-seg-item pc-focus" type="button" role="radio" data-mode-set="arrange" aria-checked="true" tabindex="0" aria-label="Drag the displays">${icon('monitor')}Displays</button>
+          <button class="bn-seg-item pc-focus" type="button" role="radio" data-mode-set="place" aria-checked="false" tabindex="-1" aria-label="Drag the wallpaper">${icon('image')}Wallpaper</button>
+        </div>
         </div>
 
         <div class="bn-tools" role="group" aria-label="Picture controls">${tools}</div>
@@ -396,8 +401,18 @@ function bench(root: HTMLElement) {
       hitX === 0 && hitY === 0 ? 'Centred' : snapped ? 'Snapped' : null,
     ].filter(Boolean).join(', ')
 
+    /* Roving tabindex: a radiogroup is one tab stop, and the arrows move
+       inside it. The thumb is measured rather than assumed, since the two
+       labels are not the same width. */
+    const seg = root.querySelector<HTMLElement>('[data-seg-thumb]')
     root.querySelectorAll<HTMLElement>('[data-mode-set]').forEach((btn) => {
-      btn.setAttribute('aria-pressed', String(btn.dataset.modeSet === state.mode))
+      const on = btn.dataset.modeSet === state.mode
+      btn.setAttribute('aria-checked', String(on))
+      btn.tabIndex = on ? 0 : -1
+      if (on && seg) {
+        seg.style.width = btn.offsetWidth + 'px'
+        seg.style.transform = `translateX(${btn.offsetLeft - 3}px)`
+      }
     })
 
     const out = root.querySelector<HTMLButtonElement>('[data-act="out"]')
@@ -410,7 +425,7 @@ function bench(root: HTMLElement) {
     el.hint.textContent =
       state.mode === 'arrange'
         ? 'Drag a display to move it. It snaps to the edges and the middles of the others, and butts up against them. On a Mac the app reads this arrangement from the system.'
-        : 'Drag the picture to move it across every display at once. It snaps to the middle of the arrangement and to its edges as it passes them.'
+        : 'Drag the wallpaper to move it across every display at once. It snaps to the middle of the arrangement and to its edges as it passes them.'
   }
 
   function render() {
@@ -787,12 +802,30 @@ function bench(root: HTMLElement) {
 
   /* --- The control bar --- */
 
-  root.querySelectorAll<HTMLElement>('[data-mode-set]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      state.mode = btn.dataset.modeSet ?? 'arrange'
-      state.guides = []
-      render()
-    })
+  const modes = [...root.querySelectorAll<HTMLElement>('[data-mode-set]')]
+
+  function setMode(mode: string, moveFocus = false) {
+    state.mode = mode
+    state.guides = []
+    render()
+    if (moveFocus) modes.find((b) => b.dataset.modeSet === mode)?.focus()
+  }
+
+  modes.forEach((btn) => {
+    btn.addEventListener('click', () => setMode(btn.dataset.modeSet ?? 'arrange'))
+  })
+
+  root.querySelector('[data-seg]')?.addEventListener('keydown', (event) => {
+    const e = event as KeyboardEvent
+    const at = modes.findIndex((b) => b.dataset.modeSet === state.mode)
+    let next = at
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = (at + 1) % modes.length
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = (at - 1 + modes.length) % modes.length
+    else if (e.key === 'Home') next = 0
+    else if (e.key === 'End') next = modes.length - 1
+    else return
+    e.preventDefault()
+    setMode(modes[next].dataset.modeSet ?? 'arrange', true)
   })
 
   root.querySelectorAll<HTMLElement>('[data-act]').forEach((btn) => {

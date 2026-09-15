@@ -225,20 +225,53 @@ import Icon from '../Icon.astro'
       margin-top: 0.75rem;
     }
 
+    /* The word in front of the track is the whole point of the control: on its
+       own it names two things without saying what choosing one does. */
+    #editor .bn-mode { display: flex; align-items: center; gap: 0.625rem; }
+
+    #editor .bn-mode-label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--color-cd-text-tertiary);
+    }
+
+    /* An inset track with the selection raised out of it, which is how a Mac
+       draws one of these. Two greys against each other read as neither. */
     #editor .bn-seg {
+      position: relative;
       display: flex;
       gap: 2px;
       padding: 3px;
       border-radius: 9999px;
-      border: 1px solid var(--color-cd-border-strong);
+      border: 1px solid var(--color-cd-border);
+      background-color: var(--color-cd-canvas);
+      box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.35);
+    }
+
+    /* Measured in the render, since the two labels are different widths. */
+    #editor .bn-seg-thumb {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      height: calc(100% - 6px);
+      border-radius: 9999px;
       background-color: var(--color-cd-bg-elevated);
+      box-shadow:
+        0 1px 2px rgb(0 0 0 / 0.45),
+        inset 0 1px 0 rgb(255 255 255 / 0.05);
+      transition:
+        transform 200ms var(--ease-out),
+        width 200ms var(--ease-out);
     }
 
     #editor .bn-seg-item {
+      position: relative;
+      z-index: 1;
       display: flex;
       align-items: center;
+      gap: 0.4375rem;
       min-height: 2rem;
-      padding: 0 0.75rem;
+      padding: 0 0.875rem;
       border: 0; border-radius: 9999px;
       background: transparent;
       font: inherit; font-size: 0.8125rem; font-weight: 600;
@@ -247,10 +280,15 @@ import Icon from '../Icon.astro'
       transition: background-color 150ms ease-out, color 150ms ease-out;
     }
 
-    #editor .bn-seg-item[aria-pressed="true"] { background-color: var(--color-cd-bg-hover); color: var(--color-cd-text); }
+    #editor .bn-seg-item svg { width: 0.875rem; height: 0.875rem; }
+    #editor .bn-seg-item[aria-checked="true"] { color: var(--color-cd-text); font-weight: 600; }
 
     @media (hover: hover) and (pointer: fine) {
-      #editor .bn-seg-item:not([aria-pressed="true"]):hover { color: var(--color-cd-text); }
+      #editor .bn-seg-item:not([aria-checked="true"]):hover { color: var(--color-cd-text); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #editor .bn-seg-thumb { transition-duration: 80ms; }
     }
 
     /* The four glyphs the editor's HUD really draws, as real buttons. */
@@ -434,7 +472,7 @@ import Icon from '../Icon.astro'
     <div class="max-w-[46rem]" data-reveal>
       <p class="cd-eyebrow">The editor</p>
       <h2 id="editor-title" class="mt-4 text-3xl sm:text-4xl lg:text-5xl font-bold tracking-[-0.025em] leading-[1.05] text-cd-text text-balance">Place the wallpaper exactly where your monitors sit</h2>
-      <p class="mt-6 max-w-[56ch] text-lg leading-relaxed text-pretty text-cd-text-secondary sm:text-xl">The canvas is your desk: the same sizes, the same order, the same gaps. Drop a picture on it and drag until it sits where you want it.</p>
+      <p class="mt-6 max-w-[56ch] text-lg leading-relaxed text-pretty text-cd-text-secondary sm:text-xl">The canvas is your desk: the same sizes, the same order, the same gaps. Drop a wallpaper on it and drag until it sits where you want it.</p>
     </div>
 
     <figure class="mt-12" data-reveal>
@@ -469,11 +507,11 @@ import Icon from '../Icon.astro'
     <div class="mt-16 grid grid-cols-12 gap-x-6 gap-y-8">
       <div class="col-span-12 lg:col-span-4" data-reveal>
         <h3 class="text-xl font-semibold tracking-[-0.01em] text-cd-text">Zoom, fit and flip</h3>
-        <p class="mt-2 text-base leading-relaxed text-cd-text-secondary max-w-[62ch] text-pretty">Zoom between 10 and 300 per cent, fit the picture to the canvas in one click, and mirror it when the composition reads better the other way round.</p>
+        <p class="mt-2 text-base leading-relaxed text-cd-text-secondary max-w-[62ch] text-pretty">Zoom between 10 and 300 per cent, fit the wallpaper to the canvas in one click, and mirror it when the composition reads better the other way round.</p>
       </div>
       <div class="col-span-12 lg:col-span-4" data-reveal>
         <h3 class="text-xl font-semibold tracking-[-0.01em] text-cd-text">One file for every screen</h3>
-        <p class="mt-2 text-base leading-relaxed text-cd-text-secondary max-w-[62ch] text-pretty">Every display gets its own rendered file, keyed on the display ID rather than the name, so two identical monitors never share one picture.</p>
+        <p class="mt-2 text-base leading-relaxed text-cd-text-secondary max-w-[62ch] text-pretty">Every display gets its own rendered file, keyed on the display ID rather than the name, so two identical monitors never share one wallpaper.</p>
       </div>
       <div class="col-span-12 lg:col-span-4" data-reveal>
         <h3 class="text-xl font-semibold tracking-[-0.01em] text-cd-text">Look before you save</h3>

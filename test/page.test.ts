@@ -533,9 +533,32 @@ check('fit returns to 100% and the middle', benchSay().startsWith('Zoom 100%') &
 // Dragging means two things, so only one set of handles may be live at a time.
 doc.querySelector<HTMLButtonElement>('[data-mode-set="place"]')!.click()
 check('placing the picture takes the display handles off the canvas', !benchCanvas.innerHTML.includes('data-display'))
-check('and the hint follows the mode', doc.querySelector('[data-hint]')!.textContent!.includes('Drag the picture'))
+check('and the hint follows the mode', doc.querySelector('[data-hint]')!.textContent!.includes('Drag the wallpaper'))
 doc.querySelector<HTMLButtonElement>('[data-mode-set="arrange"]')!.click()
 check('arranging brings them back', benchCanvas.innerHTML.includes('data-display'))
+
+// One of two rather than two switches, which is a radiogroup: one tab stop,
+// arrows inside it, and the selection carrying focus with it.
+const seg = doc.querySelector('[data-seg]')!
+const segItems = [...doc.querySelectorAll<HTMLElement>('[data-mode-set]')]
+check('the mode control is a radiogroup', seg.getAttribute('role') === 'radiogroup')
+check('and its options are radios', segItems.every((b) => b.getAttribute('role') === 'radio'))
+check('exactly one is checked', segItems.filter((b) => b.getAttribute('aria-checked') === 'true').length === 1)
+check('and only that one is in the tab order',
+  segItems.filter((b) => b.tabIndex === 0).length === 1 &&
+    segItems.find((b) => b.getAttribute('aria-checked') === 'true')!.tabIndex === 0)
+
+seg.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }))
+check('an arrow key moves the selection', segItems[1].getAttribute('aria-checked') === 'true')
+check('and the tab stop moves with it', segItems[1].tabIndex === 0 && segItems[0].tabIndex === -1)
+check('and the canvas follows', !benchCanvas.innerHTML.includes('data-display'))
+seg.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }))
+check('and the opposite arrow returns it', segItems[0].getAttribute('aria-checked') === 'true' &&
+  benchCanvas.innerHTML.includes('data-display'))
+
+// The thumb is positioned from a measurement, so it has to be written at all.
+const segThumb = doc.querySelector<HTMLElement>('[data-seg-thumb]')!
+check('the selection thumb is placed by the render', /translateX/.test(segThumb.style.transform), segThumb.style.transform || 'unset')
 
 // Arrow keys are the keyboard road to the drag, and they snap like it does.
 const benchRow = benchRows()[1]
