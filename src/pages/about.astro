@@ -73,7 +73,7 @@ const facts = [
           <div class="sign">
             <img src="https://github.com/rvanbaalen.png?size=96" alt="" width="38" height="38" />
             <div>
-              <div class="sign-who">Robin van Baalen</div>
+              <div class="sign-who"><a class="sign-link" href="https://robinvanbaalen.nl">Robin van Baalen</a></div>
               <div class="sign-where">Curaçao, Dutch Caribbean</div>
             </div>
           </div>
@@ -185,6 +185,18 @@ const facts = [
     font-size: 0.9375rem;
     font-weight: 600;
     color: var(--color-cd-text);
+  }
+
+  .sign-link {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-color: var(--color-cd-border-strong);
+    text-underline-offset: 3px;
+    transition: text-decoration-color 150ms var(--ease-out);
+  }
+
+  .sign-link:hover {
+    text-decoration-color: var(--color-cd-accent);
   }
 
   .sign-where {
