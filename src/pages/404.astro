@@ -97,17 +97,19 @@ const destinations: Destination[] = [
               class="nf-slot"
               data-hay={`${page.name} ${page.what} ${page.path} ${page.words}`.toLowerCase()}
             >
-              <a class="nf-row" href={page.path}>
-                <span>
-                  <b class="nf-name" data-text={page.name}>
-                    {page.name}
-                  </b>
-                  <span class="nf-what" data-text={page.what}>
-                    {page.what}
+              <div class="nf-clip">
+                <a class="nf-row" href={page.path}>
+                  <span>
+                    <b class="nf-name" data-text={page.name}>
+                      {page.name}
+                    </b>
+                    <span class="nf-what" data-text={page.what}>
+                      {page.what}
+                    </span>
                   </span>
-                </span>
-                <span class="nf-path">{page.path}</span>
-              </a>
+                  <span class="nf-path">{page.path}</span>
+                </a>
+              </div>
             </div>
           ))
         }
@@ -119,7 +121,7 @@ const destinations: Destination[] = [
       <p class="nf-keys" id="nf-keys" hidden>
         <span><kbd>&uarr;</kbd><kbd>&darr;</kbd> move</span>
         <span><kbd>&crarr;</kbd> open</span>
-        <span><kbd>esc</kbd> leave the field</span>
+        <span><kbd>esc</kbd> clear</span>
       </p>
     </div>
   </main>
@@ -192,9 +194,17 @@ const destinations: Destination[] = [
     }
 
     input.addEventListener('input', draw)
+    input.addEventListener('search', draw)
     input.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') {
-        input.blur()
+        // A search input clears itself on Escape without firing `input`, so the
+        // filter is reset here and a second press leaves the field.
+        if (input.value !== '') {
+          input.value = ''
+          draw()
+        } else {
+          input.blur()
+        }
       } else if (event.key === 'ArrowDown') {
         event.preventDefault()
         moveCursor(1)
@@ -319,13 +329,18 @@ const destinations: Destination[] = [
     opacity: 0;
   }
 
+  /* Padding lives on the row, inside the clipper. A grid item stretched to a
+     zero track still renders its own padding, so the clipper carries none. */
+  .nf-clip {
+    min-height: 0;
+    overflow: hidden;
+  }
+
   .nf-row {
     display: grid;
     grid-template-columns: 1fr auto;
     gap: 1rem;
     align-items: center;
-    min-height: 0;
-    overflow: hidden;
     padding-block: 0.8125rem;
     padding-inline: 1rem;
     background: var(--color-cd-bg-secondary);
