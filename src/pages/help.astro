@@ -1,0 +1,145 @@
+---
+import CopyButton from '../components/CopyButton.astro'
+import Icon from '../components/Icon.astro'
+import Prose from '../components/Prose.astro'
+import TextPage from '../layouts/TextPage.astro'
+
+/**
+ * One job: get someone past the first launch warning. Instructions, not essay.
+ *
+ * Write what to do and what is true, never what did not happen. An earlier
+ * draft opened "Nothing was scanned and nothing was found", four clauses about
+ * absences that tell a stuck reader nothing.
+ *
+ * The dialog strings are quoted verbatim, ".app" included, because people paste
+ * them into a search box. Do not tidy them.
+ */
+const warningAlt =
+  'The macOS warning dialog, titled "SpreadPaper.app" Not Opened, reading: Apple could not verify "SpreadPaper.app" is free of malware that may harm your Mac or compromise your privacy. Move to Trash is the highlighted default button, with Done below it.'
+
+const dmgAlt =
+  'The SpreadPaper disk image open in Finder, with the SpreadPaper app icon beside a shortcut to the Applications folder, which is what you drag it onto.'
+
+const openAnywayAlt =
+  'The Security section of System Settings, Privacy and Security, reading: "SpreadPaper.app" was blocked to protect your Mac, with an Open Anyway button beside it.'
+
+const breadcrumb = [
+  { name: 'Home', path: '/' },
+  { name: 'Help', path: '/help' },
+]
+---
+
+<TextPage
+  title="SpreadPaper Help: Install and Open on macOS"
+  description="macOS warns you the first time you open SpreadPaper. Two ways through it: four clicks in System Settings, or one line in Terminal."
+  socialDescription="Two ways past the macOS warning the first time you open SpreadPaper."
+  eyebrow="Help"
+  heading="Opening SpreadPaper for the first time"
+  lead="macOS warns you the first time you open SpreadPaper, because the project does not have a paid Apple developer signing account yet. Allow it once and it opens normally from then on."
+  breadcrumb={breadcrumb}
+>
+  <Prose>
+    <div class="steps">
+      <section class="step">
+        <div class="step-text">
+          <p class="step-kicker">Install</p>
+          <h2 id="first-launch">Drag it into Applications</h2>
+          <p>Open the disk image. SpreadPaper sits beside a shortcut to your Applications folder, so drag it across.</p>
+          <p>Both routes below need the app in Applications, and one of them will only work there.</p>
+        </div>
+        <figure>
+          <img src="/help/dmg-drag-to-applications.png" width="1220" height="430" alt={dmgAlt} />
+          <figcaption>The disk image as it opens.</figcaption>
+        </figure>
+      </section>
+
+      <section class="step">
+        <div class="step-text">
+          <p class="step-kicker">First launch</p>
+          <h2>Open it, and read the two buttons</h2>
+          <p>Open SpreadPaper from Applications. macOS shows the warning beside this.</p>
+          <div class="note note-warn">
+            <p><strong>Click Done.</strong> Move to Trash is the blue default button, so it is the one your eye lands on. It deletes the app you just downloaded.</p>
+          </div>
+        </div>
+        <figure>
+          <img src="/help/gatekeeper-warning.png" width="520" height="384" alt={warningAlt} />
+        </figure>
+      </section>
+
+      <section class="step">
+        <div class="step-text">
+          <p class="step-kicker">Allow it</p>
+          <h2>In System Settings</h2>
+          <ol>
+            <li>Open System Settings, then Privacy and Security.</li>
+            <li>Scroll to Security.</li>
+            <li>Click Open Anyway beside SpreadPaper.</li>
+            <li>Enter your login password.</li>
+          </ol>
+          <p>SpreadPaper opens, and opens normally from then on.</p>
+          <p>The button appears once macOS has blocked a launch, and stays for about an hour. If it is missing, open SpreadPaper again and click Done on the warning.</p>
+        </div>
+        <figure>
+          <img src="/help/settings-open-anyway.png" width="965" height="350" alt={openAnywayAlt} />
+        </figure>
+      </section>
+
+      <section class="step step-full">
+        <div class="step-text">
+          <p class="step-kicker">Or instead</p>
+          <h2>Clear the flag in Terminal</h2>
+          <p>One line, before you open the app. It clears the quarantine flag macOS attached on download, so the warning never appears.</p>
+          <div class="command flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
+            <code class="cd-code min-w-0 flex-1 break-words py-1 pl-1">xattr -dr com.apple.quarantine /Applications/SpreadPaper.app</code>
+            <CopyButton value="xattr -dr com.apple.quarantine /Applications/SpreadPaper.app" describes="the quarantine command" />
+          </div>
+          <p>SpreadPaper opens straight away, with no warning.</p>
+          <p>Keep the app in Applications under its own name so the path matches.</p>
+        </div>
+      </section>
+    </div>
+
+    <section class="panel">
+      <h2 id="still-stuck">Questions, problems and ideas</h2>
+      <div class="closing">
+      <div>
+        <p>Bezel compensation, presets and schedules all began as someone opening an issue. Questions, bugs and ideas go to the same place.</p>
+        <div class="actions flex flex-wrap items-center gap-3">
+          <a href="https://github.com/spreadpaper/SpreadPaper/issues" class="cd-button cd-button-secondary h-11 px-6 text-[0.9375rem] focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2">
+            <Icon name="github-logo" width="18" height="18" />
+            Open an issue on GitHub
+          </a>
+        </div>
+      </div>
+
+      <div>
+        <p>Reporting a bug? Include your macOS version, from System Settings, General, About, and your SpreadPaper version, from the app's About window.</p>
+          <p>Prefer email? <a href="mailto:hello@spreadpaper.app">hello@spreadpaper.app</a> reaches the same person.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2 id="requirements">Requirements</h2>
+      <dl class="dl split">
+        <div>
+          <dt>macOS</dt>
+          <dd>15.0 Sequoia or later</dd>
+        </div>
+        <div>
+          <dt>Mac</dt>
+          <dd>Apple silicon</dd>
+        </div>
+        <div>
+          <dt>Displays</dt>
+          <dd>Any number, any arrangement</dd>
+        </div>
+        <div>
+          <dt>Account</dt>
+          <dd>None</dd>
+        </div>
+      </dl>
+    </section>
+  </Prose>
+</TextPage>

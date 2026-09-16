@@ -1,23 +1,59 @@
 ---
 import '../styles/style.css'
 
+/** One step on the trail from the homepage to this page. */
+export interface Crumb {
+  name: string
+  /** Site absolute, with a leading slash. `/` is the homepage. */
+  path: string
+}
+
 export interface Props {
   title: string
   description: string
   /** Social card copy, which sells rather than describes and so differs from `description`. */
   socialDescription: string
+  /**
+   * The trail to this page, homepage first. Given, it adds a BreadcrumbList to
+   * the graph; omitted, the graph is the shared one and nothing changes, which
+   * is why the homepage passes nothing.
+   */
+  breadcrumb?: Crumb[]
 }
 
-const { title, description, socialDescription } = Astro.props
+const { title, description, socialDescription, breadcrumb } = Astro.props
 
 const canonical = new URL(Astro.url.pathname, Astro.site).href
 const ogImage = new URL('/og-image.jpg', Astro.site).href
 const imageAlt =
   'Two monitors on a desk showing one photograph of a lake and mountains carried across both screens'
 
+/**
+ * Appended to the graph only where a page supplies a trail, so the four shared
+ * nodes below stay byte for byte what they were on every page.
+ */
+const breadcrumbNode = breadcrumb?.length
+  ? [
+      {
+        '@type': 'BreadcrumbList',
+        '@id': `${canonical}#breadcrumb`,
+        itemListElement: breadcrumb.map((crumb, index) => ({
+          '@type': 'ListItem',
+          position: index + 1,
+          name: crumb.name,
+          // The trailing slash is added rather than trusted to the author: Astro
+          // builds to directories, so `canonical` is always `/help/`, and a crumb
+          // pointing at `/help` would name a second URL for the same page.
+          item: new URL(crumb.path.endsWith('/') ? crumb.path : `${crumb.path}/`, Astro.site).href,
+        })),
+      },
+    ]
+  : []
+
 const schema = {
   '@context': 'https://schema.org',
   '@graph': [
+    ...breadcrumbNode,
     {
       '@type': 'WebSite',
       '@id': 'https://spreadpaper.app/#website',

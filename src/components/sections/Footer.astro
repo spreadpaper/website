@@ -1,5 +1,94 @@
+---
+// Ordered the way they run through a day in Types, which is strip order.
+const photographs = [
+  {
+    file: '/photos/600/hero-beach.jpg',
+    subject: 'Tropical beach at sunset in Maui',
+    name: 'Ganapathy Kumar',
+    profile: 'https://unsplash.com/@gkumar2175',
+    photo: 'https://unsplash.com/photos/tropical-beach-at-sunset-in-maui-7782WXBriyM',
+  },
+  {
+    file: '/photos/600/hero-beach-night.jpg',
+    subject: 'Coconut palms silhouetted at dusk',
+    name: 'Michaela',
+    profile: 'https://unsplash.com/@m_hampi',
+    photo: 'https://unsplash.com/photos/silhouette-photo-of-coconut-trees-79l_GcSoHrA',
+  },
+  {
+    file: '/photos/600/hero-day-1.jpg',
+    subject: 'Green mountains under a blue sky',
+    name: 'Simon Lohmann',
+    profile: 'https://unsplash.com/@slohmann',
+    photo: 'https://unsplash.com/photos/green-mountains-under-blue-sky-during-daytime-I_n_b44cqhk',
+  },
+  {
+    file: '/photos/600/hero-day-2.jpg',
+    subject: 'Mountain peak under a blue sky',
+    name: 'Antony Sklivagkos',
+    profile: 'https://unsplash.com/@antoskli',
+    photo: 'https://unsplash.com/photos/mountain-peak-under-blue-sky-iTYShprNeRE',
+  },
+  {
+    file: '/photos/600/hero-day-3.jpg',
+    subject: 'Aerial view of a brown mountain range',
+    name: 'Michał Parzuchowski',
+    profile: 'https://unsplash.com/@mparzuchowski',
+    photo: 'https://unsplash.com/photos/aerial-photo-of-brown-mountain-under-gray-sky-HbhJyWnE9Oo',
+  },
+  {
+    file: '/photos/600/hero-day-4.jpg',
+    subject: 'Snow-covered mountain under the stars',
+    name: 'Benjamin Voros',
+    profile: 'https://unsplash.com/@vorosbenisop',
+    photo: 'https://unsplash.com/photos/snow-mountain-under-stars-phIFdC6lA4E',
+  },
+]
+
+const repo = 'https://github.com/spreadpaper/SpreadPaper'
+
+// Grouped by where a link goes, not by what it is about.
+const columns = [
+  {
+    id: 'footer-site',
+    title: 'This site',
+    links: [
+      { href: '/help', label: 'Help' },
+      { href: '/guides', label: 'Guides' },
+      { href: '/about', label: 'About' },
+      { href: '/alternatives', label: 'Alternatives' },
+      { href: '/privacy', label: 'Privacy policy' },
+      { href: '/terms', label: 'Terms of service' },
+    ],
+  },
+  {
+    id: 'footer-code',
+    title: 'The code',
+    links: [
+      { href: repo, label: 'Repository' },
+      { href: `${repo}/releases`, label: 'Releases' },
+      { href: `${repo}/blob/main/CHANGELOG.md`, label: 'Changelog' },
+      { href: `${repo}/issues`, label: 'Issues' },
+    ],
+  },
+  {
+    id: 'footer-around',
+    title: 'Around it',
+    links: [
+      { href: `${repo}/discussions/categories/show-and-tell`, label: 'Show and tell' },
+      { href: `${repo}/blob/main/CREDITS.md`, label: 'Credits' },
+      { href: `${repo}/blob/main/SECURITY.md`, label: 'Security policy' },
+      { href: `${repo}/blob/main/LICENSE`, label: 'MIT licence' },
+    ],
+  },
+]
+
+// Taken from the build rather than typed, so a year never has to be a commit.
+const year = new Date().getFullYear()
+---
+
 <style>
-  /* --- Footer links: quiet until hovered or focused --- */
+  /* Quiet until hovered or focused. */
   .footer-link {
     display: inline-flex;
     align-items: center;
@@ -10,13 +99,14 @@
     transition: color 150ms ease-out;
   }
 
-  .footer-link:hover {
-    color: var(--color-cd-text);
+  @media (hover: hover) and (pointer: fine) {
+    .footer-link:hover {
+      color: var(--color-cd-text);
+    }
   }
 
-  /* The three kind tints together, in the one place on the page where none of them
-     is claiming to be about its own kind. It replaces the hairline rather than
-     sitting under it, so the footer still opens on a single rule. */
+  /* The three kind tints together, where none of them claims a kind. It
+     replaces the hairline, so the footer still opens on one rule. */
   #site-footer {
     position: relative;
   }
@@ -34,6 +124,125 @@
       var(--color-cd-dynamic) 100%
     );
   }
+
+  /* Six bands end to end as one panorama, the page showing through the seams
+     where the bezels would be. */
+  .mos {
+    margin-top: 1.5rem;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+    border: 1px solid var(--color-cd-border);
+    border-radius: 10px;
+    /* The gaps are this colour showing through, so they read as bezels
+       rather than as a border drawn around each segment. */
+    background-color: var(--color-cd-bg);
+    overflow: hidden;
+  }
+
+  .mos-seg {
+    display: block;
+  }
+
+  .mos-seg img {
+    display: block;
+    width: 100%;
+    height: 5rem;
+    object-fit: cover;
+    transition: opacity 150ms var(--ease-out);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .mos-seg:hover img {
+      opacity: 0.82;
+    }
+  }
+
+  /* Same column count as the strip, so every name lands under its own band. */
+  .mos-names {
+    margin: 0.75rem 0 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+  }
+
+  .mos-name {
+    display: block;
+    padding-right: 0.5rem;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    color: var(--color-cd-text-tertiary);
+    transition: color 150ms var(--ease-out);
+  }
+
+  .mos-name b {
+    display: block;
+    font-weight: 600;
+    color: var(--color-cd-text-secondary);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .mos-name:hover {
+      color: var(--color-cd-text-secondary);
+    }
+
+    .mos-name:hover b {
+      color: var(--color-cd-text);
+    }
+  }
+
+  @media (min-width: 48rem) {
+    .mos,
+    .mos-names {
+      grid-template-columns: repeat(6, 1fr);
+    }
+
+    .mos-seg img {
+      height: 5.5rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .mos-seg img,
+    .mos-name {
+      transition: none;
+    }
+  }
+
+  /* One row at the smallest size the footer uses, on one baseline. */
+  .base-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    column-gap: 2rem;
+    row-gap: 0.75rem;
+  }
+
+  .base-line {
+    margin: 0;
+    font-size: 0.8125rem;
+    color: var(--color-cd-text-tertiary);
+  }
+
+  .base-line a {
+    color: var(--color-cd-text-secondary);
+    transition: color 150ms var(--ease-out);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .base-line a:hover {
+      color: var(--color-cd-text);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .base-line a {
+      transition: none;
+    }
+  }
 </style>
 
 <footer id="site-footer" class="bg-cd-bg px-5 py-14">
@@ -47,43 +256,44 @@
         <p class="mt-4 max-w-[38ch] text-sm leading-relaxed text-pretty text-cd-text-secondary">A native macOS app that spreads one photograph across every display you have. Built for macOS 15 Sequoia and Apple Silicon, free and open source under the MIT licence.</p>
       </div>
 
-      <nav aria-labelledby="footer-project" class="col-span-6 md:col-span-3 lg:col-span-2 lg:col-start-7">
-        <h2 id="footer-project" class="cd-eyebrow">Project</h2>
-        <ul class="mt-4 flex flex-col gap-2">
-          <li><a class="footer-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="https://github.com/spreadpaper/SpreadPaper">Repository</a></li>
-          <li><a class="footer-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="https://github.com/spreadpaper/SpreadPaper/releases">Releases</a></li>
-          <li><a class="footer-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="https://github.com/spreadpaper/SpreadPaper/blob/main/CHANGELOG.md">Changelog</a></li>
-          <li><a class="footer-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="https://github.com/spreadpaper/SpreadPaper/issues">Issues</a></li>
-        </ul>
-      </nav>
-
-      <nav aria-labelledby="footer-more" class="col-span-6 md:col-span-3 lg:col-span-4">
-        <h2 id="footer-more" class="cd-eyebrow">More</h2>
-        <ul class="mt-4 flex flex-col gap-2">
-          <li><a class="footer-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="https://github.com/spreadpaper/SpreadPaper/discussions/categories/show-and-tell">Show and tell</a></li>
-          <li><a class="footer-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="https://github.com/spreadpaper/SpreadPaper/blob/main/CREDITS.md">Credits</a></li>
-          <li><a class="footer-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="https://github.com/spreadpaper/SpreadPaper/blob/main/SECURITY.md">Security policy</a></li>
-          <li><a class="footer-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="https://github.com/spreadpaper/SpreadPaper/blob/main/LICENSE">MIT licence</a></li>
-        </ul>
-      </nav>
+      {columns.map((column, index) => (
+        <nav aria-labelledby={column.id} class:list={['col-span-6 md:col-span-4 lg:col-span-2', index === 0 && 'lg:col-start-7']}>
+          <h2 id={column.id} class="cd-eyebrow">{column.title}</h2>
+          <ul class="mt-4 flex flex-col gap-2">
+            {column.links.map((link) => (
+              <li><a class="footer-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href={link.href}>{link.label}</a></li>
+            ))}
+          </ul>
+        </nav>
+      ))}
     </div>
 
     <div class="mt-12 border-t border-cd-border pt-8">
       <h2 class="cd-eyebrow">Photographs</h2>
-      <p class="mt-4 max-w-[62ch] text-sm leading-relaxed text-pretty text-cd-text-secondary">Every photograph on this page and in the app comes from Unsplash and is used under the <a class="cd-inline-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="https://unsplash.com/license">Unsplash licence</a>. Each one was cropped to a panoramic band so it lines up across the displays.</p>
-      <ul class="mt-5 grid gap-x-8 gap-y-2.5 sm:grid-cols-2 lg:grid-cols-3">
-        <li class="text-sm leading-relaxed text-cd-text-secondary">Tropical beach at sunset in Maui, by <a class="cd-inline-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="https://unsplash.com/@gkumar2175">Ganapathy Kumar</a> on <a class="cd-inline-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="https://unsplash.com/photos/tropical-beach-at-sunset-in-maui-7782WXBriyM">Unsplash</a></li>
-        <li class="text-sm leading-relaxed text-cd-text-secondary">Coconut palms silhouetted at dusk, by <a class="cd-inline-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="https://unsplash.com/@m_hampi">Michaela</a> on <a class="cd-inline-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="https://unsplash.com/photos/silhouette-photo-of-coconut-trees-79l_GcSoHrA">Unsplash</a></li>
-        <li class="text-sm leading-relaxed text-cd-text-secondary">Green mountains under a blue sky, by <a class="cd-inline-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="https://unsplash.com/@slohmann">Simon Lohmann</a> on <a class="cd-inline-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="https://unsplash.com/photos/green-mountains-under-blue-sky-during-daytime-I_n_b44cqhk">Unsplash</a></li>
-        <li class="text-sm leading-relaxed text-cd-text-secondary">Mountain peak under a blue sky, by <a class="cd-inline-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="https://unsplash.com/@antoskli">Antony Sklivagkos</a> on <a class="cd-inline-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="https://unsplash.com/photos/mountain-peak-under-blue-sky-iTYShprNeRE">Unsplash</a></li>
-        <li class="text-sm leading-relaxed text-cd-text-secondary">Aerial view of a brown mountain range, by <a class="cd-inline-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="https://unsplash.com/@mparzuchowski">Michał Parzuchowski</a> on <a class="cd-inline-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="https://unsplash.com/photos/aerial-photo-of-brown-mountain-under-gray-sky-HbhJyWnE9Oo">Unsplash</a></li>
-        <li class="text-sm leading-relaxed text-cd-text-secondary">Snow-covered mountain under the stars, by <a class="cd-inline-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="https://unsplash.com/@vorosbenisop">Benjamin Voros</a> on <a class="cd-inline-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="https://unsplash.com/photos/snow-mountain-under-stars-phIFdC6lA4E">Unsplash</a></li>
+      <p class="mt-4 max-w-[62ch] text-sm leading-relaxed text-pretty text-cd-text-secondary">Every photograph on this site and in the app comes from Unsplash and is used under the <a class="cd-inline-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="https://unsplash.com/license">Unsplash licence</a>. Each one was cropped to a panoramic band so it lines up across the displays.</p>
+      <div class="mos">
+        {photographs.map((photograph) => (
+          <a class="mos-seg focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:-outline-offset-2 " href={photograph.photo} aria-label={`${photograph.subject}, by ${photograph.name} on Unsplash`}>
+            <img src={photograph.file} alt="" width="600" height="139" loading="lazy" decoding="async" />
+          </a>
+        ))}
+      </div>
+
+      <ul class="mos-names">
+        {photographs.map((photograph) => (
+          <li>
+            <a class="mos-name focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href={photograph.profile}>
+              <b>{photograph.name}</b>
+              <span>on Unsplash</span>
+            </a>
+          </li>
+        ))}
       </ul>
     </div>
 
-    <div class="mt-10 border-t border-cd-border pt-8">
-      <p class="text-sm text-cd-text-secondary">Copyright Robin van Baalen. Released under the <a class="cd-inline-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="https://github.com/spreadpaper/SpreadPaper/blob/main/LICENSE">MIT licence</a>.</p>
-      <p class="mt-2.5 text-sm text-cd-text-secondary"><a class="cd-inline-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="/privacy">Privacy policy</a> <span aria-hidden="true" class="px-1.5 text-cd-text-tertiary">&middot;</span> <a class="cd-inline-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="/terms">Terms of service</a> <span aria-hidden="true" class="px-1.5 text-cd-text-tertiary">&middot;</span> <a class="cd-inline-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="mailto:hello@spreadpaper.app">hello@spreadpaper.app</a></p>
+    <div class="base-row mt-10 border-t border-cd-border pt-6">
+      <p class="base-line">Copyright {year} <a class="focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="https://robinvanbaalen.nl">Robin van Baalen</a>. Released under the <a class="focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href={`${repo}/blob/main/LICENSE`}>MIT licence</a>.</p>
+      <p class="base-line"><a class="focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2 " href="mailto:hello@spreadpaper.app">hello@spreadpaper.app</a></p>
     </div>
   </div>
 </footer>

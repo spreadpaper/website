@@ -1,0 +1,148 @@
+---
+import Prose from '../../components/Prose.astro'
+import TextPage from '../../layouts/TextPage.astro'
+
+const SPAN = '/guides/span-wallpaper-across-two-monitors-mac/'
+const BEZEL = '/guides/bezel-compensation/'
+
+/** A question someone arrives with, and the section of a guide that answers it. */
+type Question = {
+  q: string
+  /** The guide it comes from, named so the reader knows where they are going. */
+  src: string
+  /** Deep linked to the answering section wherever that section has an id. */
+  href: string
+}
+
+const questions: Question[] = [
+  {
+    q: 'Why does macOS put the same wallpaper on every screen?',
+    src: 'Spread one wallpaper across two monitors',
+    href: `${SPAN}#why`,
+  },
+  {
+    q: 'How do I get one photograph across two monitors?',
+    src: 'Spread one wallpaper across two monitors',
+    href: `${SPAN}#steps`,
+  },
+  {
+    q: 'Can I do it without installing anything?',
+    src: 'Spread one wallpaper across two monitors',
+    href: `${SPAN}#manual`,
+  },
+  {
+    q: 'Why does the picture step sideways at the seam?',
+    src: 'How bezel compensation works',
+    href: `${BEZEL}#slicing`,
+  },
+  {
+    q: 'What number goes in the bezel field, and in what units?',
+    src: 'How bezel compensation works',
+    href: `${BEZEL}#example`,
+  },
+  {
+    q: 'What about three displays, or a portrait screen?',
+    src: 'Spread one wallpaper across two monitors',
+    href: `${SPAN}#more-displays`,
+  },
+]
+---
+
+<TextPage
+  title="Guides | SpreadPaper"
+  description="Answers to the questions that come with running one wallpaper across several displays on a Mac: spanning two monitors, doing it by hand, and how bezel compensation works."
+  socialDescription="Guides to running one wallpaper across every display on a Mac."
+  eyebrow="Guides"
+  heading="Guides to one picture across every display"
+  lead="Longer pieces than the help page. Here is what they answer, so you can go straight to the part you came for."
+>
+  <Prose>
+    <ul class="qs-list">
+      {
+        questions.map((item) => (
+          <li>
+            <a class="qs-item" href={item.href}>
+              <span>
+                <span class="qs-q">{item.q}</span>
+                <span class="qs-src">{item.src}</span>
+              </span>
+              <span class="qs-arrow" aria-hidden="true">&rarr;</span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+
+    <p>
+      Ask for your own setup on <a href="https://github.com/spreadpaper/SpreadPaper/issues">GitHub</a
+      > and it becomes the next guide. For installing and first launch, the <a href="/help"
+        >help page</a
+      > has it.
+    </p>
+  </Prose>
+</TextPage>
+
+<style>
+  .qs-list {
+    margin: 0 0 2.75rem;
+    padding-left: 0;
+    list-style: none;
+    border-top: 1px solid var(--color-cd-border);
+  }
+
+  .qs-list li {
+    margin: 0;
+    border-bottom: 1px solid var(--color-cd-border);
+  }
+
+  .qs-item {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1.25rem;
+    align-items: baseline;
+    padding-block: 1.125rem;
+    text-decoration: none;
+  }
+
+  .qs-q {
+    display: block;
+    font-size: 1.0625rem;
+    font-weight: 500;
+    line-height: 1.4;
+    letter-spacing: -0.01em;
+    color: var(--color-cd-text);
+    transition: color 160ms var(--ease-out);
+  }
+
+  .qs-src {
+    display: block;
+    margin-top: 0.375rem;
+    font-size: 0.8125rem;
+    color: var(--color-cd-text-tertiary);
+  }
+
+  .qs-arrow {
+    color: var(--color-cd-text-tertiary);
+    transition:
+      transform 160ms var(--ease-out),
+      color 160ms var(--ease-out);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .qs-item:hover .qs-q {
+      color: #fff;
+    }
+
+    .qs-item:hover .qs-arrow {
+      transform: translateX(3px);
+      color: var(--color-cd-accent);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .qs-q,
+    .qs-arrow {
+      transition: none;
+    }
+  }
+</style>

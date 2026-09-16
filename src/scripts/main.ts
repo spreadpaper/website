@@ -1,3 +1,5 @@
+import { setupEditorBench } from './bench'
+
 /**
  * Wires the small-width nav menu to its toggle, keeping `aria-expanded` and
  * the icon pair in step. Escape closes it and hands focus back.
@@ -39,48 +41,6 @@ function setupMobileMenu() {
 }
 
 /**
- * Marks the nav link for the section the reader is in with `aria-current`.
- * Runs off one observer rather than a scroll handler.
- */
-function setupScrollSpy() {
-  const linksById = new Map<string, Element[]>()
-  document.querySelectorAll('#site-nav a[href^="#"]').forEach((link) => {
-    const id = link.getAttribute('href')!.slice(1)
-    if (!id) return
-    if (!linksById.has(id)) linksById.set(id, [])
-    linksById.get(id)!.push(link)
-  })
-
-  // Sections only: the wordmark points at `#main`, which wraps every one of them
-  // and so always intersects, and would take the mark on every scroll position.
-  const sections = [...linksById.keys()]
-    .map((id) => document.getElementById(id))
-    .filter((element): element is HTMLElement => element?.tagName === 'SECTION')
-  if (!sections.length) return
-
-  const visible = new Set<string>()
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) visible.add(entry.target.id)
-        else visible.delete(entry.target.id)
-      })
-
-      const active = sections.find((section) => visible.has(section.id))
-      linksById.forEach((links, id) => {
-        links.forEach((link) => {
-          if (active && active.id === id) link.setAttribute('aria-current', 'true')
-          else link.removeAttribute('aria-current')
-        })
-      })
-    },
-    { rootMargin: '-20% 0px -70% 0px' }
-  )
-
-  sections.forEach((section) => observer.observe(section))
-}
-
-/**
  * Fades a block in once as it reaches the viewport. Opting in per element
  * with `data-reveal` keeps the page readable if the script never runs.
  */
@@ -94,7 +54,12 @@ function setupScrollReveal() {
     (entries) => {
       entries.forEach((entry, index) => {
         if (!entry.isIntersecting) return
-        (entry.target as HTMLElement).style.transitionDelay = index > 0 ? '60ms' : '0ms'
+        // A real cascade. This was `index > 0 ? '60ms' : '0ms'`, which gave
+        // every element after the first the same delay, so they still all
+        // arrived together, just late. Capped, because a fifth element waiting
+        // 200ms to appear reads as the page being slow rather than as rhythm.
+        const delay = Math.min(index, 3) * 40
+        ;(entry.target as HTMLElement).style.transitionDelay = `${delay}ms`
         entry.target.classList.add('is-revealed')
         observer.unobserve(entry.target)
       })
@@ -105,43 +70,6 @@ function setupScrollReveal() {
   targets.forEach((target) => observer.observe(target))
 }
 
-/**
- * Copies the text of the element a button names in `data-copy-target`, then
- * swaps its label and glyph for a confirmation that clears itself. The
- * button ships hidden, so it appears only once it can do something.
- */
-function setupCopyButtons() {
-  document.querySelectorAll<HTMLElement>('[data-copy-target]').forEach((button) => {
-    const label = button.querySelector('[data-copy-text]')
-    const source = document.getElementById(button.dataset.copyTarget!)
-
-    if (!label || !source || !navigator.clipboard) return
-
-    button.toggleAttribute('hidden', false)
-
-    const idleIcon = button.querySelector('[data-copy-icon="idle"]')
-    const doneIcon = button.querySelector('[data-copy-icon="done"]')
-
-    const setCopied = (copied: boolean) => {
-      label.textContent = copied ? button.dataset.copiedLabel! : button.dataset.copyLabel!
-      if (idleIcon) idleIcon.toggleAttribute('hidden', copied)
-      if (doneIcon) doneIcon.toggleAttribute('hidden', !copied)
-    }
-
-    let reset: ReturnType<typeof setTimeout> | undefined
-    button.addEventListener('click', async () => {
-      try {
-        await navigator.clipboard.writeText(source.textContent!.trim())
-      } catch {
-        return
-      }
-
-      setCopied(true)
-      clearTimeout(reset)
-      reset = setTimeout(() => setCopied(false), 2000)
-    })
-  })
-}
 
 /**
  * Binds each range input that names a CSS custom property to the element it
@@ -310,10 +238,9 @@ function setupStarCount(): void {
 }
 
 setupMobileMenu()
-setupScrollSpy()
 setupScrollReveal()
-setupCopyButtons()
 setupBezelSliders()
 setupTabs()
 setupClockPhase()
 setupStarCount()
+setupEditorBench()

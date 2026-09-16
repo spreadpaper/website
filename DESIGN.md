@@ -2,7 +2,9 @@
 
 The site is the app's gallery window with the chrome taken off. Dark, quiet, photographic. The photographs do the selling, the type does the talking, and nothing decorates. If a thing on the page is not a photograph, a monitor, a word, or a hairline, it should not be there.
 
-Read `src/style.css` before you write markup. `.spread`, `.rig`, `.cd-section`, `.cd-shell`, `.cd-card`, `.cd-button*` and `.cd-eyebrow` already exist. Do not reinvent them, and do not add a second card style.
+Read `src/styles/style.css` before you write markup. `.rig`, `.cd-section`, `.cd-shell`, `.cd-card`, `.cd-button*`, `.cd-code` and `.cd-eyebrow` already exist. Do not reinvent them.
+
+The front page has one card style and wants no second one. The text pages have three surfaces, added in September 2026 and described under Text pages below, because a help page that has to show a screenshot, a warning and two alternative routes cannot say all three things with one fill.
 
 ## What went wrong in the first iteration, since the fix follows from it
 
@@ -22,7 +24,7 @@ This is the rule the last iteration lacked. It is checkable, so check it.
 
 ## Type scale
 
-Six sizes, no others. Contrast between them is the whole design.
+Six sizes on the front page, no others. Contrast between them is the whole design. The text pages run a seventh, their section heading, which is set out under Text pages and exists only there.
 
 - h1, hero only, one per page: `text-5xl sm:text-7xl lg:text-8xl font-extrabold tracking-[-0.035em] leading-[0.95] text-cd-text`
 - h2, one per section: `text-3xl sm:text-4xl lg:text-5xl font-bold tracking-[-0.025em] leading-[1.05] text-cd-text`
@@ -48,9 +50,45 @@ Every section is `<section class="cd-section"><div class="cd-shell">`. Inside th
 
 Section backgrounds alternate `bg-cd-bg` and `bg-cd-canvas` or `bg-cd-bg-secondary`. Never two identical backgrounds adjacent, and the seam between two sections stays a hard edge: no gradient bleeding one section into the next.
 
+## Text pages
+
+The site is no longer one page. `/help`, `/project`, `/guides`, `/alternatives`, `/privacy` and `/terms` are text pages, and they are a different kind of object from the homepage: prose a person came to read, not a composition that has to sell anything. They run on `src/layouts/TextPage.astro` with `src/components/Prose.astro` inside it, and a new one adds a page, never a new layout.
+
+This section was rewritten in September 2026, after the help page grew two screenshots and the rules below turned out to be wrong for a page that has pictures in it. What it said before is kept in each paragraph, because the reason a rule changed is more useful than the rule.
+
+They open at the h2 size, not the h1 size. The element is still an `<h1>`, because a page owes its reader one, but it is set at `text-3xl sm:text-4xl lg:text-5xl`. The h1 size is the hero's, and the hero is a claim about the product. None of these pages is the hero, and a privacy policy set at 96px is a joke about itself. That part stands.
+
+What does not stand is the line under it, that an `h2` in `Prose.astro` takes the h3 size so nothing competes with the page heading. At 20px it was too quiet to divide anything, and a page of eleven paragraphs under three whispered headings is the scroll it looked like. The text page section heading is the seventh size: `1.75rem`, weight 700, tracking `-0.02em`, with a `border-cd-border` rule above it and 5rem of air. It is a section opening, not a label. An `h3` under it takes `1.125rem`. Both sit far enough below a 48px page heading to stay out of its way. Body copy on these pages is 17px rather than 16px, which at the measure is about 66 characters a line and is the difference between a page that reads as a document and one that reads as a form.
+
+The header is a stack, not a split. It was a twelve column row, heading in the left six and lead in the right five, which is composition law rule 3. That works where the right column carries something. On `/help` it carried one paragraph and then the grid stopped, so the page opened with a stranded column of air over a narrow measure, which is the exact thing the Banned list ends on. Eyebrow, heading, lead, all on the measure, then a hairline across the band. Rule 3 no longer applies to these pages.
+
+One left edge, two widths, and it took four attempts to get here. `.cd-textpage` in `src/styles/style.css` sets them: `--textpage-measure` at 44rem for running prose, `--textpage-band` at 76rem for everything else. The band is 76rem because that is `.cd-shell`, so the left edge of the page is the left edge of the wordmark in the nav above it, which is the one alignment a reader can check without scrolling. Every block starts at the same x and they differ only in where they stop. The right edge is ragged, and that is what a page with pictures in it looks like.
+
+The three failures are worth naming, because each one is tempting and each one was shown to a reader who rejected it. A twelve column header stranded a single paragraph in a column of its own: "one column is purely reserved for one paragraph of text". Moving the measure onto each block and leaving the shell wide freed the figures and pinned everything else to the left with half the viewport empty beside it, which read as a broken grid. Centring every block on a shared axis then gave the page four different left edges on the way down, since blocks of different widths centred on one axis start at four different places: "centered, left aligned, full width, everything is all over the place". Left align everything. Vary only the right edge.
+
+Text first, then the picture under it. Not text on one side and a picture on the other. The reference for this rhythm is the tailwindcss.com homepage, where a feature is a heading of two or three words, one sentence, and then the visual immediately below it, full width, with no alternation of sides. The copy on these pages is a sentence or two, and a sentence set beside a screenshot strands one of the two whatever the columns are.
+
+A section opening is space and a 28px heading, and no rule. Rules were tried both ways and both were wrong. Across the band, they would have been the only thing on the four prose-only pages reaching that far. On the measure, `/help` ended up with a 704px hairline sitting directly above a 1216px row of values whose own hairlines ran past both of its ends, two hairline widths stacked 100px apart, which is the incoherence this layout exists to remove. Space divides sections perfectly well and it cannot be the wrong width.
+
+A section opening is also not free, so weigh it against what follows. This is the rule the first version of `/help` lacked, and the reader's verdict on the result was "lots of space and it adds absolutely zero value". Above the fold it had a contents card indexing three headings that were already on screen, and then "System requirements" given a 28px heading and 64px of air to introduce four values, the longest of which is "Any number, any arrangement". Between the page heading and the thing every visitor came for sat 583px of almost nothing.
+
+Two things follow, and they generalise past this page. A contents list earns its place only when the reader cannot see the headings it lists; on a page of three sections it is furniture. And a block of facts that qualifies a page rather than advancing it, the requirements here, takes the meta size and a strip, not a section: `.facts` in `Prose.astro`. The same 583px is now 254px and the heading someone arrived for is above the fold.
+
+Every screenshot is a cutout. Crop to the part that answers the question the reader arrived with, then size it so the words inside it are readable, then stop. Do not size a capture by its pixel dimensions: the Finder capture of the disk image is 1444 by 1094 and almost all of it is an empty folder, and run across the full band it swallowed the page. It is now 1220 by 430, the two icons and the chrome around them, shown at the band where its labels read at about 22px. The Gatekeeper dialog is 520 by 384, cropped to its title, its message and its two buttons, the padlock above them being a third of the height and saying nothing the words do not; it shows at 36rem where that text reads at about 21px. The two then stand 429px and 425px tall, so the page keeps one beat.
+
+Crop until an annotation would be unnecessary, and then do not annotate. A red rectangle and an arrow arrived on the first System Settings capture, pointing at one row of a sidebar in a 1428 by 1366 window whose other two thirds showed a pane the reader does not want. The annotation was not the problem, it was doing its job; it was compensating for the crop. Cropped to the sidebar the row becomes the subject of the picture, and the rectangle and the arrow have nothing left to do. Ask what the picture is of. If the answer needs an arrow, the picture is of the wrong thing.
+
+If a crop still leaves you needing to point, because the target is one of several controls that look alike, the marker is `--color-cd-accent` at 2px, never red. Red on this site is `--color-cd-danger`, and the single most important sentence on `/help` is that the blue default button in the warning dialog destroys the app. A red "look here" box on that page would collide with the one meaning red is carrying, on exactly the page where it matters.
+
+Crop off the macOS drop shadow first, and take the window rect from the alpha channel rather than by eye: a screen capture pads the window with its shadow, `Image.open(p).getchannel('A').point(lambda v: 255 if v >= 250 else 0).getbbox()` gives the window exactly. Before that was done the `figure` border was drawing a rounded rectangle around the shadow while the window floated somewhere inside it, which is the single ugliest thing that has been on this site.
+
+Three surfaces, and the list is closed. `.toc` and `.route` are panels: `bg-cd-bg-secondary`, one hairline, 14px radius, the same recipe `.cd-card` uses, so they are one style wearing two names rather than two styles. `.command` is the inverse, `bg-cd-canvas` inset into a panel, because a panel on a panel in the same fill reads as a mistake. `.note` is a callout with a 2px left edge, and `.note-accent` adds an 8 per cent accent wash mixed against `transparent`, so the one rule holds on the page, on a panel and inside a route. Measured rather than assumed: the wash resolves to `#1c1c2a` over `cd-bg` and `#232334` over `cd-bg-secondary`, and secondary copy sits at 6.35:1 and 5.82:1 on them, both clear of the 4.5:1 floor. Secondary on a bare panel is 6.26:1. The `.note` outer hairline measures 1.17:1 against a panel and is therefore invisible there by design: the left edge and the wash carry the callout, and the hairline is only doing work on the page background.
+
+The rest of the composition law does not apply, with one exception that turns out to hold everywhere. Rule 2, that a visual beside text must reach 70 per cent of that text block's height, was written about a rig beside a paragraph, and its inverse is just as true: a 455px tall dialog beside a three line callout strands the callout in the middle of a half empty column, whatever the columns are set to. A `.pair` component was built for exactly that and then deleted, because the only candidate on the site failed it. A tall picture and a short sentence stack. Side by side needs two blocks of comparable mass, which is what `.routes` and `.closing` have and a picture and a caption do not. Rule 1 about empty columns goes with it, but only once the axis is centred: the air either side of a measured paragraph is a margin, and a margin is the measure doing its job. The same air all on one side is the void rule 1 was written about, and that is what went wrong here. What still holds is the colour rules, the focus rules, the ban on em dashes, and every word in Copy.
+
 ## The rig
 
-A rig is one photograph shown across a drawn set of monitors. It replaced the bare `.spread` band everywhere on the page, gallery thumbnails included: there the rig simply loses its stand, its foot and its light, which is `rig-thumb`. `.spread` is gone from `src/style.css` and nothing should reintroduce it.
+A rig is one photograph shown across a drawn set of monitors. It replaced the bare `.spread` band everywhere on the page, gallery thumbnails included: there the rig simply loses its stand, its foot and its light, which is `rig-thumb`. `.spread` is gone from `src/styles/style.css` and nothing should reintroduce it.
 
 One thing the geometry cannot decide for you, found by looking at the hero rather than at the markup. A screen low and to one side of a rig samples the low, far corner of the photograph, and if that corner is much darker than the rest, the screen reads as a different picture even though the drawing is correct. The hero's laptop did exactly this against a sunset whose bottom left is near black foliage, directly under an h1 claiming one photograph across every monitor. So when a rig mixes screen heights, either put the smaller screen on a riser so it shares the others' vertical band, or choose a photograph with an even horizon. Check it by looking, because the markup will be innocent.
 
@@ -154,7 +192,7 @@ The check on the copy button stays in the button's own text colour. Success gree
 
 ## Surfaces, borders, shadows
 
-One border weight: `border border-cd-border`. `border-cd-border-strong` only on an interactive edge. Radii: `rounded-xl` on cards, `rounded-full` on buttons, `rounded-lg` on a spread thumbnail. Screens inside a rig take an 8px radius in viewBox units scaled to match. No other radii.
+One border weight: `border border-cd-border`. `border-cd-border-strong` on an interactive edge, and on the left edge of a plain `.note`, where 2px of it is the whole of the callout. Radii: `rounded-xl` on cards, `rounded-full` on buttons, `rounded-lg` on a spread thumbnail, 14px on a text page panel and 12px on a `.command` or a `.note`. Screens inside a rig take an 8px radius in viewBox units scaled to match. No other radii.
 
 Shadows only under something that genuinely floats: a rig casts one soft shadow on the desk, cards get none, the sticky nav gets none. No glows, no coloured shadows, no ring stacks. The light ellipse under a rig is light, not a shadow, and a rig gets one of each and no more.
 
@@ -162,7 +200,11 @@ Dividers are `border-t border-cd-border`, full width of the shell. Use them inst
 
 ## Overriding the primitives
 
-A Tailwind utility cannot override a property that `.spread`, `.rig`, `.cd-card` or `.cd-button` already sets. Those classes live unlayered in `src/style.css`, the utilities live in `@layer utilities`, and unlayered CSS wins over layered CSS regardless of specificity. So `rounded-none` on a `.spread` is inert, and it fails silently: the class is in the markup and simply does nothing. To change one of those properties, pair the classes in a section `<style>` block so it wins on specificity, as the hero does for its full-bleed corner. Keep such a rule local until a second section needs it; the moment one does, it moves to `src/style.css` as a shared variant rather than being copied.
+A Tailwind utility cannot override a property that `.rig`, `.cd-card` or `.cd-button` already sets. Those classes live unlayered in `src/styles/style.css`, the utilities live in `@layer utilities`, and unlayered CSS wins over layered CSS regardless of specificity. So `rounded-none` on a `.cd-card` is inert, and it fails silently: the class is in the markup and simply does nothing. To change one of those properties, pair the classes in a section `<style>` block so it wins on specificity, as the hero does for its full-bleed corner. Keep such a rule local until a second section needs it; the moment one does, it moves to `src/styles/style.css` as a shared variant rather than being copied.
+
+A third silent failure lives one level up, in Astro's own scoping. A component's `<style>` block is not the CSS you wrote: Astro rewrites every selector to carry a `[data-astro-cid-…]` attribute and stamps that attribute on the elements the component itself renders. Anything a script creates later carries no such attribute, so a scoped rule never reaches it. The editor bench draws its canvas from state in `src/scripts/bench.ts`, and `.bn-hit { fill: transparent }` sat in the section's scoped block doing nothing at all, which put a solid black rectangle over every display, because an SVG `rect` with no fill defaults to black rather than to nothing. `.bn-outline` and every class on a display row went the same way. Styles for markup that JavaScript builds belong in `<style is:global>`, or in `src/styles/` if a second section ever needs them, and a global block earns its keep by prefixing every selector with the section id. This is also why the rig classes looked right throughout while the bench's own did not: `rigs.css` is global already.
+
+Everything in `Prose.astro` is unlayered too, which is the same trap one level down and it has already been walked into. `<p class="mt-12 border-t border-cd-border pt-8">` at the foot of the privacy page rendered with 1rem of margin, because `.prose-cd > * + *` is unlayered and `mt-12` is not. Inside `.prose-cd`, spacing and typography come from a class in that file, never from a utility. `.see-also` is that paragraph's class.
 
 ## Motion
 
@@ -190,7 +232,7 @@ Inline SVG with `clipPath` and `<image>` is universal and needs no guard. `prese
 
 Scroll-driven animations sit near 83% and are not a floor to build on. Our scroll reveal stays in the existing IntersectionObserver in `src/main.js`. If anyone wants a CSS scroll timeline, it goes behind `@supports (animation-timeline: view())` and the page must be complete without it.
 
-That `color-mix()` is safe does not make an accent wash across a whole section a good idea. That ban is aesthetic, not technical.
+That `color-mix()` is safe does not make an accent wash across a whole section a good idea. That ban is aesthetic, not technical. A callout is not a section: `.note-accent` washes an 8 per cent accent behind four lines of text and that is the size this stays.
 
 ## What the 2026 trend reports say, and why we are not doing it
 

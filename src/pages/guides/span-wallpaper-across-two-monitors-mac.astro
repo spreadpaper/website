@@ -1,0 +1,169 @@
+---
+import Prose from '../../components/Prose.astro'
+import TextPage from '../../layouts/TextPage.astro'
+---
+
+<TextPage
+  title="How to span a wallpaper across two monitors on a Mac | SpreadPaper"
+  description="macOS puts the same wallpaper on every display instead of spreading one across them. Here is how to stretch a single photograph over two monitors, bezel gap included, in about five minutes."
+  socialDescription="macOS cannot span a wallpaper across displays. Here is the whole job, from picking an image wide enough to lining the join up across the bezels."
+  eyebrow="Guide"
+  heading="How to span a wallpaper across two monitors on a Mac"
+  lead="macOS gives every display the same image rather than one image across all of them. This is the whole job, from choosing a photograph wide enough to making the picture line up across the gap between the screens."
+>
+  <Prose>
+    <h2 id="why">Why macOS repeats the image instead of spreading it</h2>
+    <p>
+      macOS treats each display as its own canvas. Pick a wide panorama in System Settings and every
+      monitor shows a scaled copy of the whole photograph, so a desk with two screens on it ends up
+      with two identical pictures. There is no hidden preference for this and no keyboard trick that
+      reveals one. The behaviour is the design.
+    </p>
+    <p>
+      Spanning one image therefore means doing something macOS will not do for you: cutting the
+      photograph into one piece per display, sized to that display's own resolution, positioned to
+      match where the monitors sit on your desk, then setting each piece as that display's
+      wallpaper. That is the work. An app can do it in a few clicks, or you can do it by hand, and
+      both routes are below.
+    </p>
+
+    <h2 id="before">What you need before you start</h2>
+    <dl class="dl">
+      <div>
+        <dt>Displays</dt>
+        <dd>Two or more, connected, and arranged in System Settings the way they sit on the desk</dd>
+      </div>
+      <div>
+        <dt>An image</dt>
+        <dd>
+          Roughly as wide in pixels as your displays are put together, and a little wider is better
+        </dd>
+      </div>
+      <div>
+        <dt>A Mac</dt>
+        <dd>macOS 15 Sequoia or later on Apple silicon, if you are going to use SpreadPaper</dd>
+      </div>
+      <div>
+        <dt>Time</dt>
+        <dd>About five minutes, most of it spent choosing the photograph</dd>
+      </div>
+    </dl>
+    <p>
+      Width is the part people get wrong, so do the arithmetic first. Add up the horizontal
+      resolution of the displays you want to cover. Two 1080p monitors side by side want about 3840
+      pixels across. Two 1440p monitors want about 5120. Two 4K monitors want roughly 7680. Anything
+      narrower than that is being enlarged to fit, which is where soft, mushy wallpapers come from.
+    </p>
+    <p>
+      Aim a little above the number rather than exactly at it. Bezel compensation hides a strip of
+      the image behind each monitor's housing, and you want those pixels to exist rather than be
+      invented by the scaler.
+    </p>
+
+    <h2 id="steps">Spanning the wallpaper with SpreadPaper</h2>
+    <ol>
+      <li>
+        Open System Settings, then Displays, and check the arrangement. Drag the rectangles until
+        they match how the monitors actually sit, including which one is higher. SpreadPaper reads
+        that arrangement rather than asking you to describe it, so getting it right here is what
+        makes everything afterwards line up.
+      </li>
+      <li>
+        Download SpreadPaper and drag it to your Applications folder. macOS shows a warning the
+        first time you open it, because the app is not signed with a paid Apple Developer ID. The <a href="/help">help page</a> covers the two ways past it, and it only happens once.
+      </li>
+      <li>
+        Open the app and choose your image. The preview draws your displays in their real
+        arrangement with the photograph laid across them, so you are looking at the result rather
+        than at a file browser.
+      </li>
+      <li>
+        Position it. Drag the image to move it under the screens, zoom to fill the width, and flip
+        it horizontally if the composition works better reversed. Watch the preview rather than the
+        numbers: what you are aiming for is a subject that is not cut in half by a bezel.
+      </li>
+      <li>
+        Set the bezel gap. Raise it until a horizon or a roofline runs through the seam unbroken.
+        This is the step that makes the picture read as one picture instead of two neighbouring
+        ones.
+      </li>
+      <li>
+        Apply. Each display is rendered at its own native resolution, so a 4K monitor gets 4K pixels
+        and a 1080p monitor beside it gets its own, rather than both being cut from one shared
+        bitmap.
+      </li>
+      <li>
+        Save it as a preset if you want it back later. From there you can also set a separate Light
+        and Dark wallpaper, or put a set of images on a time of day schedule.
+      </li>
+    </ol>
+
+    <h2 id="bezels">Getting the join right</h2>
+    <p>
+      The gap between two monitors is physical. Their housings sit next to each other and the
+      picture has to carry on behind that housing, the way a view carries on behind a window frame.
+      Without bezel compensation the wallpaper is continuous in pixels but not to your eye: a
+      horizon steps up as it crosses the join, a road kinks, a face gains a slice of extra cheek.
+    </p>
+    <p>
+      Bezel compensation deals with it by leaving out the strip of the image that would fall behind
+      the frames. The number you enter is how much housing sits between the two panels, in points,
+      the same units as the display arrangement. How many points a millimetre of plastic comes to
+      depends on the display, so set it by eye: raise the value until a long straight line crosses
+      the seam intact. On a pair of 27 inch 1440p monitors that usually lands near 70.
+    </p>
+    <div class="note note-accent">
+      <p>
+        <a href="/guides/bezel-compensation/">The bezel compensation guide</a> goes through what to
+        measure, how to check the result, and why the gap is not the same as the frame you can see.
+      </p>
+    </div>
+
+    <h2 id="manual">Doing it by hand instead</h2>
+    <p>
+      You do not have to install anything. The manual route works, and it is worth knowing so you
+      can decide whether an app is worth it.
+    </p>
+    <ol>
+      <li>
+        Work out each display's pixel rectangle inside the combined desktop, from the arrangement in
+        System Settings.
+      </li>
+      <li>Open the photograph in an image editor and scale it to the combined width.</li>
+      <li>
+        Add the bezel strips into your slice positions, so the pixels that would sit behind the
+        housings are dropped rather than shown.
+      </li>
+      <li>Export one file per display, each at that display's native resolution.</li>
+      <li>In System Settings, set each exported file as the wallpaper for its own display.</li>
+    </ol>
+    <p>
+      That is a reasonable afternoon's work for one image you intend to keep for a year. It becomes
+      tedious the moment anything changes. Nudging the photograph a little to the left means
+      recalculating every slice. A new picture means the whole sequence again. So does plugging in a
+      laptop, moving a monitor to the other side of the desk, changing a resolution, or deciding the
+      bezel strip was a bit too narrow. The arithmetic is not hard, there is only a lot of it, and
+      it comes back every time.
+    </p>
+
+    <h2 id="more-displays">Three displays, portrait screens, and mixed sizes</h2>
+    <p>
+      Nothing here is specific to two monitors. The same steps cover three, a portrait screen
+      standing beside a landscape one, or a laptop open next to an external display. Mixed
+      resolutions are fine, because each display is rendered at its own, and a portrait screen is a
+      taller slice of the same photograph.
+    </p>
+    <p>
+      What does change is the width you need. Three 4K monitors side by side want something close to
+      11520 pixels across, and a laptop parked at the end of the row adds its own. If a wallpaper
+      looks soft on a wide setup, the source image is almost always the reason.
+    </p>
+
+    <h2 id="next">Where to go next</h2>
+    <p>
+      <a href="/guides/bezel-compensation/">Bezel compensation</a> is the detail behind the step that
+      does most of the work. <a href="/help">Help</a> covers the first launch warning and the short list
+      of things that go wrong. <a href="/guides">The guides</a> have the rest.
+    </p>
+  </Prose>
+</TextPage>
