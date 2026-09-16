@@ -851,18 +851,13 @@ function bench(root: HTMLElement) {
   })
 
   /* Arrow keys nudge the selected display, which is the keyboard road to the
-     drag. */
+     drag. Enter and Space are left alone: both children of a row are real
+     buttons and synthesise their own click, and cancelling the keydown would
+     take that click away from whichever one the reader is standing on. */
   el.list.addEventListener('keydown', (e) => {
     const row = (e.target as Element | null)?.closest('[data-row]')
     if (!row) return
     const key = row.getAttribute('data-row') ?? ''
-
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault()
-      state.selected = key
-      render()
-      return
-    }
 
     const step = e.shiftKey ? 1 : 12
     const moves: Record<string, [number, number] | undefined> = {

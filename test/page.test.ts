@@ -711,6 +711,42 @@ if (row) {
   check('and none of them is lost doing it', boxes().length === 4, `${boxes().length}`)
 }
 
+console.log('\nthe row answers the keyboard')
+/* jsdom never synthesises a button's activation, so a key pressed on one looks
+   the same whether the page let it through or cancelled it, and a handler that
+   swallows Enter passes every check. This is the browser rule that was missing:
+   a keydown nobody cancels becomes a click on the button under it. */
+const pressed = (button: Element, key: string) => {
+  const stroke = new window.KeyboardEvent('keydown', { key, bubbles: true, cancelable: true })
+  button.dispatchEvent(stroke)
+  if (!stroke.defaultPrevented) button.dispatchEvent(new window.MouseEvent('click', { bubbles: true }))
+  return stroke
+}
+
+doc.querySelector<HTMLButtonElement>('[data-reset]')!.click()
+doc.querySelector<HTMLButtonElement>('[data-mode-set="arrange"]')!.click()
+check('the desk is back to the opening pair', benchRows().length === 2, `${benchRows().length} rows`)
+
+const pickSecond = benchRows()[1].querySelector('[data-row-pick]')!
+for (const key of ['Enter', ' ']) {
+  const stroke = pressed(pickSecond, key)
+  check(`${key === ' ' ? 'space' : 'enter'} on the pick button is left to the browser`, !stroke.defaultPrevented)
+}
+check('and it selects the display it belongs to',
+  benchRows()[1].querySelector('[data-row-pick]')!.getAttribute('aria-current') === 'true')
+
+/* The row used to cancel both keys for everything inside it, which is every
+   control now that it holds two. The button was announced and did nothing. */
+const before = benchRows().length
+const removeSecond = benchRows()[1].querySelector('[data-remove]')!
+const stroke = pressed(removeSecond, 'Enter')
+check('enter on remove is left to the browser too', !stroke.defaultPrevented)
+check('so it removes the display rather than selecting it',
+  benchRows().length === before - 1, `${benchRows().length} rows, was ${before}`)
+
+doc.querySelector<HTMLButtonElement>('[data-reset]')!.click()
+check('and the desk comes back for what follows', benchRows().length === 2, `${benchRows().length} rows`)
+
 console.log('\nthe drag and the scale under it')
 /* The canvas is a fixed box holding a viewBox that grows with the desk, so the
    scale moves while a drag is in flight. On a page of its own, because every
