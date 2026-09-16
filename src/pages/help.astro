@@ -13,6 +13,10 @@ import TextPage from '../layouts/TextPage.astro'
  *
  * The dialog strings are quoted verbatim, ".app" included, because people paste
  * them into a search box. Do not tidy them.
+ *
+ * The rail beside the steps keeps the reader's place across the trip to the
+ * Mac and back. It is progressive: the anchors work with no JavaScript, and
+ * the marking and the position tracking are added on top.
  */
 const warningAlt =
   'The macOS warning dialog, titled "SpreadPaper.app" Not Opened, reading: Apple could not verify "SpreadPaper.app" is free of malware that may harm your Mac or compromise your privacy. Move to Trash is the highlighted default button, with Done below it.'
@@ -23,6 +27,23 @@ const dmgAlt =
 const openAnywayAlt =
   'The Security section of System Settings, Privacy and Security, reading: "SpreadPaper.app" was blocked to protect your Mac, with an Open Anyway button beside it.'
 
+const QUARANTINE = 'xattr -dr com.apple.quarantine /Applications/SpreadPaper.app'
+
+/** One step of the walkthrough, and the short label the rail shows for it. */
+type Step = {
+  id: string
+  kicker: string
+  heading: string
+  /** What the rail calls it, which has to fit a 14rem column. */
+  short: string
+}
+
+const steps: Step[] = [
+  { id: 'install', kicker: 'Install', heading: 'Drag it into Applications', short: 'Drag it into Applications' },
+  { id: 'first-launch', kicker: 'First launch', heading: 'Open it, and click Done', short: 'Open it, click Done' },
+  { id: 'allow', kicker: 'Allow it', heading: 'Allow it, either way', short: 'Allow it, either way' },
+]
+
 const breadcrumb = [
   { name: 'Home', path: '/' },
   { name: 'Help', path: '/help' },
@@ -30,92 +51,170 @@ const breadcrumb = [
 ---
 
 <TextPage
-  title="SpreadPaper Help: Install and Open on macOS"
-  description="macOS warns you the first time you open SpreadPaper. Two ways through it: four clicks in System Settings, or one line in Terminal."
-  socialDescription="Two ways past the macOS warning the first time you open SpreadPaper."
+  title="Opening SpreadPaper for the first time | SpreadPaper"
+  description="macOS warns you the first time you open SpreadPaper. Three steps to get past it, with the two ways to allow the app side by side."
+  socialDescription="macOS warns you once. Here is how to get past it, in three steps."
   eyebrow="Help"
   heading="Opening SpreadPaper for the first time"
   lead="macOS warns you the first time you open SpreadPaper, because the project does not have a paid Apple developer signing account yet. Allow it once and it opens normally from then on."
   breadcrumb={breadcrumb}
 >
   <Prose>
-    <div class="steps">
-      <section class="step">
-        <div class="step-text">
-          <p class="step-kicker">Install</p>
-          <h2 id="first-launch">Drag it into Applications</h2>
-          <p>Open the disk image. SpreadPaper sits beside a shortcut to your Applications folder, so drag it across.</p>
-          <p>Both routes below need the app in Applications, and one of them will only work there.</p>
-        </div>
-        <figure>
-          <img src="/help/dmg-drag-to-applications.png" width="1220" height="430" alt={dmgAlt} />
-          <figcaption>The disk image as it opens.</figcaption>
-        </figure>
-      </section>
-
-      <section class="step">
-        <div class="step-text">
-          <p class="step-kicker">First launch</p>
-          <h2>Open it, and read the two buttons</h2>
-          <p>Open SpreadPaper from Applications. macOS shows the warning beside this.</p>
-          <div class="note note-warn">
-            <p><strong>Click Done.</strong> Move to Trash is the blue default button, so it is the one your eye lands on. It deletes the app you just downloaded.</p>
+    <div class="hp-grid">
+      <div class="steps">
+        <section class="step" id="step-install" data-sec="install">
+          <div class="step-text">
+            <p class="step-kicker">Install</p>
+            <h2 id="first-launch">Drag it into Applications</h2>
+            <p>Open the disk image. SpreadPaper sits beside a shortcut to your Applications folder, so drag it across.</p>
+            <p>Both routes below need the app in Applications, and one of them will only work there.</p>
+            <button class="hp-mark" type="button" data-mark="install" hidden>
+                <span class="hp-tick" aria-hidden="true">
+                  <svg width="9" height="9" viewBox="0 0 12 12" fill="none">
+                    <path
+                      d="M2.5 6.3 L4.8 8.6 L9.5 3.6"
+                      stroke="#0b2a13"
+                      stroke-width="2.2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"></path>
+                  </svg>
+                </span>
+                <span data-mark-label>Mark as done</span>
+              </button>
           </div>
-        </div>
-        <figure>
-          <img src="/help/gatekeeper-warning.png" width="520" height="384" alt={warningAlt} />
-        </figure>
-      </section>
+          <figure>
+            <img src="/help/dmg-drag-to-applications.png" width="1220" height="430" alt={dmgAlt} />
+            <figcaption>The disk image as it opens.</figcaption>
+          </figure>
+        </section>
 
-      <section class="step">
-        <div class="step-text">
-          <p class="step-kicker">Allow it</p>
-          <h2>In System Settings</h2>
-          <ol>
-            <li>Open System Settings, then Privacy and Security.</li>
-            <li>Scroll to Security.</li>
-            <li>Click Open Anyway beside SpreadPaper.</li>
-            <li>Enter your login password.</li>
-          </ol>
-          <p>SpreadPaper opens, and opens normally from then on.</p>
-          <p>The button appears once macOS has blocked a launch, and stays for about an hour. If it is missing, open SpreadPaper again and click Done on the warning.</p>
-        </div>
-        <figure>
-          <img src="/help/settings-open-anyway.png" width="965" height="350" alt={openAnywayAlt} />
-        </figure>
-      </section>
-
-      <section class="step step-full">
-        <div class="step-text">
-          <p class="step-kicker">Or instead</p>
-          <h2>Clear the flag in Terminal</h2>
-          <p>One line, before you open the app. It clears the quarantine flag macOS attached on download, so the warning never appears.</p>
-          <div class="command flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
-            <code class="cd-code min-w-0 flex-1 break-words py-1 pl-1">xattr -dr com.apple.quarantine /Applications/SpreadPaper.app</code>
-            <CopyButton value="xattr -dr com.apple.quarantine /Applications/SpreadPaper.app" describes="the quarantine command" />
+        <section class="step" id="step-first-launch" data-sec="first-launch">
+          <div class="step-text">
+            <p class="step-kicker">First launch</p>
+            <h2>Open it, and click Done</h2>
+            <p>Open SpreadPaper from Applications. macOS shows the warning beside this.</p>
+            <div class="note note-warn">
+              <p><strong>Click Done.</strong> Move to Trash is the blue default button, so it is the one your eye lands on. It deletes the app you just downloaded.</p>
+            </div>
+            <button class="hp-mark" type="button" data-mark="first-launch" hidden>
+                <span class="hp-tick" aria-hidden="true">
+                  <svg width="9" height="9" viewBox="0 0 12 12" fill="none">
+                    <path
+                      d="M2.5 6.3 L4.8 8.6 L9.5 3.6"
+                      stroke="#0b2a13"
+                      stroke-width="2.2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"></path>
+                  </svg>
+                </span>
+                <span data-mark-label>Mark as done</span>
+              </button>
           </div>
-          <p>SpreadPaper opens straight away, with no warning.</p>
-          <p>Keep the app in Applications under its own name so the path matches.</p>
-        </div>
-      </section>
+          <figure>
+            <img src="/help/gatekeeper-warning.png" width="520" height="384" alt={warningAlt} />
+          </figure>
+        </section>
+
+        <section class="step" id="step-allow" data-sec="allow">
+          <div class="step-text">
+            <p class="step-kicker">Allow it</p>
+            <h2>Allow it, either way</h2>
+            <p>Two routes do the same thing. Take whichever you would rather.</p>
+
+            <h3>In System Settings</h3>
+            <ol>
+              <li>Open System Settings, then Privacy and Security.</li>
+              <li>Scroll to Security.</li>
+              <li>Click Open Anyway beside SpreadPaper.</li>
+              <li>Enter your login password.</li>
+            </ol>
+            <p>The button appears once macOS has blocked a launch, and stays for about an hour. If it is missing, open SpreadPaper again and click Done on the warning.</p>
+
+            <h3>Or clear the flag in Terminal</h3>
+            <p>One line, before you open the app. It clears the quarantine flag macOS attached on download, so the warning never appears.</p>
+            <div class="command flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
+              <code class="cd-code min-w-0 flex-1 break-words py-1 pl-1">{QUARANTINE}</code>
+              <CopyButton value={QUARANTINE} describes="the quarantine command" />
+            </div>
+            <p>SpreadPaper opens straight away, with no warning.</p>
+            <p>Keep the app in Applications under its own name so the path matches.</p>
+            <button class="hp-mark" type="button" data-mark="allow" hidden>
+                <span class="hp-tick" aria-hidden="true">
+                  <svg width="9" height="9" viewBox="0 0 12 12" fill="none">
+                    <path
+                      d="M2.5 6.3 L4.8 8.6 L9.5 3.6"
+                      stroke="#0b2a13"
+                      stroke-width="2.2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"></path>
+                  </svg>
+                </span>
+                <span data-mark-label>Mark as done</span>
+              </button>
+          </div>
+          <figure>
+            <img src="/help/settings-open-anyway.png" width="965" height="350" alt={openAnywayAlt} />
+          </figure>
+        </section>
+      </div>
+
+      <aside class="hp-rail" id="hp-rail">
+        <p class="hp-rail-h">Where you are</p>
+        <ul class="hp-rail-list">
+          {
+            steps.map((step) => (
+              <li>
+                <a class="hp-rail-item" href={`#step-${step.id}`} data-jump={step.id}>
+                  <span class="hp-tick" aria-hidden="true">
+                    <svg width="9" height="9" viewBox="0 0 12 12" fill="none">
+                      <path
+                        d="M2.5 6.3 L4.8 8.6 L9.5 3.6"
+                        stroke="#0b2a13"
+                        stroke-width="2.2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </span>
+                  <span class="hp-rail-t">{step.short}</span>
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+        <button class="hp-reset" type="button" id="hp-reset" hidden>Start again</button>
+      </aside>
     </div>
+
+    <p class="note note-done" id="hp-done" hidden>
+      That is the lot. SpreadPaper opens normally from now on.
+    </p>
 
     <section class="panel">
       <h2 id="still-stuck">Questions, problems and ideas</h2>
       <div class="closing">
-      <div>
-        <p>Bezel compensation, presets and schedules all began as someone opening an issue. Questions, bugs and ideas go to the same place.</p>
-        <div class="actions flex flex-wrap items-center gap-3">
-          <a href="https://github.com/spreadpaper/SpreadPaper/issues" class="cd-button cd-button-secondary h-11 px-6 text-[0.9375rem] focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2">
-            <Icon name="github-logo" width="18" height="18" />
-            Open an issue on GitHub
-          </a>
+        <div>
+          <p>Ask for what you need and it gets looked at. Bugs and ideas go to the same place.</p>
+          <div class="actions flex flex-wrap items-center gap-3">
+            <a
+              href="https://github.com/spreadpaper/SpreadPaper/issues"
+              class="cd-button cd-button-secondary h-11 px-6 text-[0.9375rem] focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2"
+            >
+              <Icon name="github-logo" width="18" height="18" />
+              Open an issue on GitHub
+            </a>
+          </div>
         </div>
-      </div>
 
-      <div>
-        <p>Reporting a bug? Include your macOS version, from System Settings, General, About, and your SpreadPaper version, from the app's About window.</p>
-          <p>Prefer email? <a href="mailto:hello@spreadpaper.app">hello@spreadpaper.app</a> reaches the same person.</p>
+        <div>
+          <p>
+            Reporting a bug? Include your macOS version, from System Settings, General, About, and
+            your SpreadPaper version, from the app's About window.
+          </p>
+          <p>
+            Prefer email? <a href="mailto:hello@spreadpaper.app">hello@spreadpaper.app</a> reaches the
+            same person.
+          </p>
         </div>
       </div>
     </section>
@@ -143,3 +242,266 @@ const breadcrumb = [
     </section>
   </Prose>
 </TextPage>
+
+<script>
+  /**
+   * Adds place keeping to the walkthrough. The steps and the rail are rendered
+   * at build time and the anchors already work, so this only reveals the rail,
+   * marks steps done and follows the reader down the page.
+   */
+  function setupHelpRail() {
+    const rail = document.getElementById('hp-rail')
+    const sections = [...document.querySelectorAll<HTMLElement>('[data-sec]')]
+    const items = [...document.querySelectorAll<HTMLElement>('[data-jump]')]
+    const marks = [...document.querySelectorAll<HTMLButtonElement>('[data-mark]')]
+    const note = document.getElementById('hp-done')
+    const reset = document.getElementById('hp-reset') as HTMLButtonElement | null
+    if (!rail || sections.length === 0) return
+
+    const KEY = 'spreadpaper-help-steps'
+
+    function read(): string[] {
+      try {
+        const raw = JSON.parse(localStorage.getItem(KEY) ?? '[]')
+        return Array.isArray(raw) ? raw.filter((id) => typeof id === 'string') : []
+      } catch {
+        // Private window or blocked storage: the page works, it just forgets.
+        return []
+      }
+    }
+
+    function write(ids: string[]) {
+      try {
+        localStorage.setItem(KEY, JSON.stringify(ids))
+      } catch {
+        // Nothing to do; the marks last until the page is left.
+      }
+    }
+
+    function paint() {
+      const done = read()
+      sections.forEach((section) => {
+        const on = done.includes(section.dataset.sec ?? '')
+        section.toggleAttribute('data-done', on)
+        const label = section.querySelector('[data-mark-label]')
+        if (label) label.textContent = on ? 'Done' : 'Mark as done'
+        section.querySelector('[data-mark]')?.setAttribute('aria-pressed', String(on))
+      })
+      items.forEach((item) => item.toggleAttribute('data-done', done.includes(item.dataset.jump ?? '')))
+      if (note) note.hidden = done.length !== sections.length
+      if (reset) reset.hidden = done.length === 0
+    }
+
+    rail.setAttribute('data-live', '')
+    marks.forEach((mark) => {
+      mark.hidden = false
+      mark.setAttribute('aria-pressed', 'false')
+      mark.addEventListener('click', () => {
+        const id = mark.dataset.mark ?? ''
+        const done = read()
+        write(done.includes(id) ? done.filter((entry) => entry !== id) : [...done, id])
+        paint()
+      })
+    })
+
+    reset?.addEventListener('click', () => {
+      write([])
+      paint()
+    })
+
+    // The rail marks whichever step is nearest the top of the viewport.
+    const seen = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return
+          const id = (entry.target as HTMLElement).dataset.sec
+          items.forEach((item) => item.toggleAttribute('data-now', item.dataset.jump === id))
+        })
+      },
+      { rootMargin: '-10% 0px -70% 0px' }
+    )
+    sections.forEach((section) => seen.observe(section))
+
+    paint()
+  }
+
+  setupHelpRail()
+</script>
+
+<style>
+  /* Prose caps every direct child at the measure, which is right for prose and
+     wrong for the step band, so this opts out the way .steps does. */
+  .hp-grid {
+    max-width: none;
+    display: grid;
+    gap: 2rem;
+  }
+
+  /* The rail only earns a column once the band can spare one beside a step's
+     own two columns. Below that it sits above the steps. */
+  @media (min-width: 80rem) {
+    .hp-grid {
+      grid-template-columns: minmax(0, 1fr) 12rem;
+      column-gap: 3rem;
+      align-items: start;
+    }
+  }
+
+  .hp-mark {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5625rem;
+    margin-top: 1.25rem;
+    padding-block: 0.4375rem;
+    padding-inline: 0.75rem;
+    border: 1px solid var(--color-cd-border-strong);
+    border-radius: 9px;
+    background: none;
+    color: var(--color-cd-text-secondary);
+    font: inherit;
+    font-size: 0.8125rem;
+    cursor: pointer;
+    transition:
+      border-color 150ms var(--ease-out),
+      color 150ms var(--ease-out);
+  }
+
+  .hp-mark:hover {
+    border-color: var(--color-cd-border);
+    color: var(--color-cd-text);
+  }
+
+  .step[data-done] .hp-mark {
+    border-color: var(--color-cd-success);
+    color: var(--color-cd-success);
+  }
+
+  .hp-tick {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 15px;
+    height: 15px;
+    margin-top: 1px;
+    border: 1.5px solid var(--color-cd-border-strong);
+    border-radius: 5px;
+    transition:
+      background-color 160ms var(--ease-out),
+      border-color 160ms var(--ease-out);
+  }
+
+  .hp-tick svg {
+    opacity: 0;
+    transform: scale(0.7);
+    transition:
+      opacity 140ms var(--ease-out),
+      transform 160ms var(--ease-out);
+  }
+
+  [data-done] .hp-tick {
+    background: var(--color-cd-success);
+    border-color: var(--color-cd-success);
+  }
+
+  [data-done] .hp-tick svg {
+    opacity: 1;
+    transform: none;
+  }
+
+  .hp-rail {
+    order: -1;
+  }
+
+  @media (min-width: 80rem) {
+    .hp-rail {
+      order: 0;
+      position: sticky;
+      top: 1.5rem;
+    }
+  }
+
+  /* Without the script the rail is a contents list, so the empty ticks go. */
+  .hp-rail .hp-tick {
+    display: none;
+  }
+
+  .hp-rail[data-live] .hp-tick {
+    display: grid;
+  }
+
+  .hp-rail-h {
+    margin: 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-cd-text);
+  }
+
+  .hp-rail-list {
+    display: grid;
+    gap: 2px;
+    margin: 0.75rem 0 0;
+    padding-left: 0;
+    list-style: none;
+  }
+
+  .hp-rail-list li {
+    margin: 0;
+  }
+
+  .hp-rail-item {
+    display: flex;
+    gap: 0.625rem;
+    align-items: flex-start;
+    padding-block: 0.5rem;
+    padding-inline: 0.5625rem;
+    border-radius: 9px;
+    text-decoration: none;
+    transition: background-color 150ms var(--ease-out);
+  }
+
+  .hp-rail-item:hover,
+  .hp-rail-item[data-now] {
+    background: var(--color-cd-bg-elevated);
+  }
+
+  .hp-rail-t {
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    color: var(--color-cd-text-secondary);
+    transition: color 150ms var(--ease-out);
+  }
+
+  .hp-rail-item[data-now] .hp-rail-t {
+    font-weight: 600;
+    color: var(--color-cd-text);
+  }
+
+  .hp-rail-item[data-done] .hp-rail-t {
+    color: var(--color-cd-text-tertiary);
+    text-decoration: line-through;
+    text-decoration-color: var(--color-cd-border-strong);
+  }
+
+  .hp-reset {
+    margin-top: 1rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--color-cd-text-tertiary);
+    font: inherit;
+    font-size: 0.8125rem;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hp-tick,
+    .hp-tick svg,
+    .hp-rail-t,
+    .hp-rail-item,
+    .hp-mark {
+      transition: none;
+    }
+  }
+</style>
