@@ -165,13 +165,13 @@ const destinations: Destination[] = [
     }
 
     function visible() {
-      return rows.filter((row) => !row.hidden)
+      return rows.filter((row) => !row.hasAttribute('data-off'))
     }
 
     function draw() {
       const term = input!.value.trim().toLowerCase()
       rows.forEach((row) => {
-        row.hidden = term !== '' && !(row.dataset.hay ?? '').includes(term)
+        row.toggleAttribute('data-off', term !== '' && !(row.dataset.hay ?? '').includes(term))
         row.removeAttribute('data-cursor')
         row.querySelectorAll<HTMLElement>('[data-text]').forEach((cell) => paint(cell, term))
       })
@@ -313,7 +313,24 @@ const destinations: Destination[] = [
     border-top: 1px solid var(--color-cd-border);
     transition:
       background-color 140ms var(--ease-out),
-      transform 140ms var(--ease-out);
+      transform 140ms var(--ease-out),
+      opacity 130ms var(--ease-out),
+      display 130ms var(--ease-out) allow-discrete;
+  }
+
+  /* `hidden` is display: none and cannot transition, so filtered rows leave on
+     an attribute and the discrete display change is deferred to the end. */
+  .nf-row[data-off] {
+    display: none;
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+
+  @starting-style {
+    .nf-row {
+      opacity: 0;
+      transform: translateY(-2px);
+    }
   }
 
   .nf-row:first-child {
@@ -406,6 +423,11 @@ const destinations: Destination[] = [
   @media (prefers-reduced-motion: reduce) {
     .nf-row {
       transition: background-color 140ms var(--ease-out);
+    }
+
+    .nf-row[data-off] {
+      opacity: 1;
+      transform: none;
     }
   }
 </style>
