@@ -46,13 +46,15 @@ async function get(path: string): Promise<unknown[] | null> {
  * pages, which is well past this repository and bounds an offline build.
  *
  * @param path - Path under the repository, with its query but no page number.
- * @returns Every record gathered, or null when the first page failed.
+ * @returns Every record gathered, or null when any page failed.
  */
 async function getAll(path: string): Promise<unknown[] | null> {
   const all: unknown[] = []
   for (let page = 1; page <= 5; page += 1) {
     const batch = await get(`${path}&page=${page}`)
-    if (!batch) return page === 1 ? null : all
+    /* A page short of the whole is a failure, not a smaller answer: half the
+       issue tracker credits half the people who are owed it. */
+    if (!batch) return null
     all.push(...batch)
     if (batch.length < PER_PAGE) break
   }
@@ -78,7 +80,7 @@ function login(record: unknown, key: 'self' | 'user'): string {
  * Everyone who has put something into SpreadPaper, read once per build. Code
  * contributors come from the contributors endpoint, and anyone who has opened
  * an issue or a pull request follows them, since a request that shipped is a
- * contribution too. Bots are dropped, and a failed call falls back.
+ * contribution too. Bots are dropped, and either call failing falls back.
  *
  * @returns The busiest committer first, then the rest by login.
  */
@@ -91,7 +93,10 @@ export async function contributors(): Promise<Contributor[]> {
     get(`/contributors?per_page=${PER_PAGE}`),
     getAll(`/issues?state=all&per_page=${PER_PAGE}`),
   ])
-  if (!code) return cached
+  /* Both halves or neither. The issue tracker costs five requests against the
+     one contributors costs, so it is the half a rate limited build loses, and
+     the committers on their own are not the list. */
+  if (!code || !issues) return cached
 
   const human = (user: string) => user !== '' && !user.endsWith('[bot]')
 
@@ -104,7 +109,7 @@ export async function contributors(): Promise<Contributor[]> {
     .sort((a, b) => b.commits - a.commits)
 
   const seen = new Set(committers.map(({ user }) => user))
-  const raised = (issues ?? []).map((record) => login(record, 'user')).filter(human)
+  const raised = issues.map((record) => login(record, 'user')).filter(human)
   const reporters: Contributor[] = [...new Set(raised)]
     .filter((user) => !seen.has(user))
     .sort((a, b) => a.localeCompare(b))

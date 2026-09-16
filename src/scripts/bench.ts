@@ -446,8 +446,8 @@ function bench(root: HTMLElement) {
   /* --- Geometry of the pointer ---
      With preserveAspectRatio "meet" the drawing is scaled by the smaller of the
      two ratios and letterboxed in the other axis, so units per CSS pixel is the
-     larger of them. Measured per drag, because the box is fluid and the viewBox
-     changes every time a display is added. */
+     larger of them. Read every frame of a drag, because the box is fluid and
+     the viewBox grows the moment a display is moved past an edge. */
   function unitsPerPixel() {
     const vb = viewBox()
     const rect = el.canvas.getBoundingClientRect()
@@ -598,12 +598,15 @@ function bench(root: HTMLElement) {
 
   /* --- Dragging --- */
 
-  type Drag = { kind: 'display' | 'photo'; key?: string; ox: number; oy: number; sx: number; sy: number; k: number; pointerId: number }
+  /* `ux` and `uy` are how far the drag has travelled in drawing units. They are
+     accumulated a frame at a time, because dragging changes the union and so
+     the scale: a distance from the start would be measured at the wrong one. */
+  type Drag = { kind: 'display' | 'photo'; key?: string; ux: number; uy: number; lastX: number; lastY: number; sx: number; sy: number; pointerId: number }
   let drag: Drag | null = null
 
   el.canvas.addEventListener('pointerdown', (e) => {
     const target = (e.target as Element | null)?.closest?.('[data-display]') ?? null
-    const k = unitsPerPixel()
+    const from = { ux: 0, uy: 0, lastX: e.clientX, lastY: e.clientY, pointerId: e.pointerId }
 
     if (state.mode === 'arrange') {
       if (!target) return
@@ -611,9 +614,9 @@ function bench(root: HTMLElement) {
       const d = state.displays.find((item) => item.key === key)
       if (!d) return
       state.selected = key
-      drag = { kind: 'display', key, ox: e.clientX, oy: e.clientY, sx: d.x, sy: d.y, k, pointerId: e.pointerId }
+      drag = { kind: 'display', key, sx: d.x, sy: d.y, ...from }
     } else {
-      drag = { kind: 'photo', ox: e.clientX, oy: e.clientY, sx: state.place.dx, sy: state.place.dy, k, pointerId: e.pointerId }
+      drag = { kind: 'photo', sx: state.place.dx, sy: state.place.dy, ...from }
     }
 
     el.canvas.setPointerCapture(e.pointerId)
@@ -623,8 +626,13 @@ function bench(root: HTMLElement) {
 
   el.canvas.addEventListener('pointermove', (e) => {
     if (!drag || e.pointerId !== drag.pointerId) return
-    const mx = (e.clientX - drag.ox) * drag.k
-    const my = (e.clientY - drag.oy) * drag.k
+    const k = unitsPerPixel()
+    drag.ux += (e.clientX - drag.lastX) * k
+    drag.uy += (e.clientY - drag.lastY) * k
+    drag.lastX = e.clientX
+    drag.lastY = e.clientY
+    const mx = drag.ux
+    const my = drag.uy
 
     if (drag.kind === 'display') {
       const d = state.displays.find((item) => item.key === drag!.key)
@@ -942,9 +950,11 @@ export function setupEditorBench() {
     mount.innerHTML = benchMarkup()
     const root = mount.querySelector<HTMLElement>('[data-bench]')
     if (!root) return
-    bench(root)
+    /* Shown before it is built, since the first render measures the segmented
+       control and a hidden box measures zero. */
     mount.closest('figure')?.querySelector('[data-bench-still]')?.setAttribute('hidden', '')
     mount.hidden = false
+    bench(root)
     /* Armed a frame late, or the thumb grows out of nothing on load instead of
        sitting where it belongs. */
     requestAnimationFrame(() => root.querySelector('[data-seg]')?.setAttribute('data-ready', ''))

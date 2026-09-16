@@ -260,26 +260,29 @@ const breadcrumb = [
 
     const KEY = 'spreadpaper-help-steps'
 
+    /* The marks live here and storage only persists them, so a private window
+       keeps them until the page is left rather than dropping every click. */
+    let done = read()
+
     function read(): string[] {
       try {
         const raw = JSON.parse(localStorage.getItem(KEY) ?? '[]')
         return Array.isArray(raw) ? raw.filter((id) => typeof id === 'string') : []
       } catch {
-        // Private window or blocked storage: the page works, it just forgets.
         return []
       }
     }
 
     function write(ids: string[]) {
+      done = ids
       try {
         localStorage.setItem(KEY, JSON.stringify(ids))
       } catch {
-        // Nothing to do; the marks last until the page is left.
+        // Private window or blocked storage: the page works, it just forgets.
       }
     }
 
     function paint() {
-      const done = read()
       sections.forEach((section) => {
         const on = done.includes(section.dataset.sec ?? '')
         section.toggleAttribute('data-done', on)
@@ -298,7 +301,6 @@ const breadcrumb = [
       mark.setAttribute('aria-pressed', 'false')
       mark.addEventListener('click', () => {
         const id = mark.dataset.mark ?? ''
-        const done = read()
         write(done.includes(id) ? done.filter((entry) => entry !== id) : [...done, id])
         paint()
       })

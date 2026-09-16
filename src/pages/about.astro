@@ -3,25 +3,13 @@ import Footer from '../components/sections/Footer.astro'
 import Nav from '../components/sections/Nav.astro'
 import Layout from '../layouts/Layout.astro'
 import { contributors } from '../lib/contributors'
+import { people } from '../lib/count'
 import { starCount } from '../lib/stars'
 
 const stars = await starCount()
-const people = await contributors()
+const credited = await contributors()
 
 const REPO = 'https://github.com/spreadpaper/SpreadPaper'
-
-const NUMBERS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve']
-
-/**
- * Spells a small count so a sentence reads as written rather than tallied.
- * Anything past twelve stays in digits, where words start to slow a reader.
- *
- * @param count - How many of the thing there are.
- * @returns The count as a word, or as digits once it grows.
- */
-function spell(count: number): string {
-  return NUMBERS[count] ?? String(count)
-}
 
 /* Counted from the repository on 15 September 2026. */
 const facts = [
@@ -40,7 +28,7 @@ const facts = [
 <Layout
   title="About SpreadPaper"
   description="Who builds SpreadPaper, why it is free, and everyone outside the project who has shaped it."
-  socialDescription={`One wallpaper across every display, built by ${spell(people.length)} people.`}
+  socialDescription={`One wallpaper across every display, built by ${people(credited.length)}.`}
   breadcrumb={[
     { name: 'Home', path: '/' },
     { name: 'About', path: '/about' },
@@ -50,7 +38,7 @@ const facts = [
   <main id="main" class="bg-cd-bg">
     <div class="wrap page">
       <p class="eyebrow">About</p>
-      <h1 class="title">One wallpaper across every display, built by {spell(people.length)} people</h1>
+      <h1 class="title">One wallpaper across every display, built by {people(credited.length)}</h1>
 
       <div class="hv-top">
         <div>
@@ -94,14 +82,14 @@ const facts = [
       <section class="hv-split">
         <h2 class="sec-h">Contributions</h2>
         <p class="sec-sub">
-          Shaped by {spell(people.length - 1)} people besides me, all of it starting in the <a
+          Shaped by {people(credited.length - 1)} besides me, all of it starting in the <a
             class="cd-inline-link"
             href={`${REPO}/issues`}>issue tracker</a
           >.
         </p>
         <div class="hv-people">
           {
-            people.map((person) => (
+            credited.map((person) => (
               <a class="person" href={`https://github.com/${person.user}`}>
                 <img
                   src={`https://github.com/${person.user}.png?size=96`}

@@ -15,11 +15,16 @@
  * anything resolved through the cascade: those come back confidently wrong.
  * jsdom also has no layout, so every measurement is zero. A rule about which
  * of two stylesheet declarations wins has to be checked in a browser.
+ *
+ * Two metrics are stood in for, where a bug turns on the moment one is read:
+ * `offsetWidth` and `offsetLeft` below, and the canvas box in the drag section.
+ * Each stub carries one browser rule and nothing else.
  */
 import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { JSDOM } from 'jsdom'
+import { people } from '../src/lib/count.ts'
 
 const site = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist')
 const html = readFileSync(join(site, 'index.html'), 'utf8')
@@ -99,9 +104,28 @@ check('no tabs-ready flag before the script', !tabRoot?.hasAttribute('data-tabs-
 check('the editor bench ships empty and hidden', benchMount?.hasAttribute('hidden') && !benchMount.innerHTML.trim())
 check('and the still canvas it replaces is showing', !benchStill?.hasAttribute('hidden'))
 
+/* jsdom has no layout, so every metric reads zero and a measurement taken at
+   the wrong moment looks the same as one taken at the right one. This is the
+   single rule the bench depends on: a box inside a `hidden` subtree has no
+   size, and a box that is laid out has one. */
+const LAID_OUT = 64
+for (const metric of ['offsetWidth', 'offsetLeft']) {
+  Object.defineProperty(window.HTMLElement.prototype, metric, {
+    configurable: true,
+    get(this: HTMLElement) {
+      return this.closest('[hidden]') ? 0 : LAID_OUT
+    },
+  })
+}
+
 // Each in its own scope: two modules declaring the same name is ordinary in the
 // browser and should not become an error only in here.
 bundles.forEach((source) => window.eval(`(function () {\n${source}\n})()`))
+
+/* What the segmented thumb measured on load, read before anything touches the
+   bench. Every later render measures it again, so a width taken further down
+   the file passes whether or not the first one found a hidden box. */
+const thumbOnLoad = doc.querySelector<HTMLElement>('[data-seg-thumb]')!.style.width
 
 const panels0 = panelsBefore
 
@@ -646,6 +670,63 @@ if (row) {
   check('and none of them is lost doing it', boxes().length === 4, `${boxes().length}`)
 }
 
+console.log('\nthe drag and the scale under it')
+/* The canvas is a fixed box holding a viewBox that grows with the desk, so the
+   scale moves while a drag is in flight. On a page of its own, because every
+   check above wants an unlaid-out canvas answering one unit per pixel. */
+const STEP = -60
+
+/**
+ * Walks one display left and reports where it lands, in drawing units.
+ *
+ * @param runs - How many pointer moves of the same size to make.
+ * @param inOneGo - Whether they belong to a single drag or to a drag each.
+ */
+const walkedLeft = (runs: number, inOneGo: boolean): number => {
+  const w = new JSDOM(html, { pretendToBeVisual: true, runScripts: 'outside-only' }).window
+  w.matchMedia = (() => ({ matches: false, addEventListener() {}, removeEventListener() {} })) as unknown as typeof w.matchMedia
+  w.IntersectionObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  } as unknown as typeof w.IntersectionObserver
+  bundles.forEach((source) => w.eval(`(function () {\n${source}\n})()`))
+
+  const canvas = w.document.querySelector('[data-canvas]')!
+  ;(canvas as unknown as { setPointerCapture: () => void }).setPointerCapture = () => {}
+  canvas.getBoundingClientRect = (() =>
+    ({ x: 0, y: 0, left: 0, top: 0, width: 800, height: 450, right: 800, bottom: 450, toJSON: () => ({}) })) as Element['getBoundingClientRect']
+
+  const at = (type: string, x: number) =>
+    (type === 'pointerdown' ? canvas.querySelector('[data-display]')! : canvas).dispatchEvent(
+      new w.PointerEvent(type, { pointerId: 1, clientX: x, clientY: 0, bubbles: true })
+    )
+
+  if (inOneGo) {
+    at('pointerdown', 0)
+    for (let i = 1; i <= runs; i++) at('pointermove', i * STEP)
+    at('pointerup', runs * STEP)
+  } else {
+    for (let i = 0; i < runs; i++) {
+      at('pointerdown', 0)
+      at('pointermove', STEP)
+      at('pointerup', STEP)
+    }
+  }
+  return Number(canvas.querySelector('rect.rig-frame')!.getAttribute('x'))
+}
+
+/* A drag each is the reference: the scale is read when each one starts, so it
+   is right for the desk it acts on however the desk has grown. One long drag
+   has to arrive at the same place, which it only does if it reads the scale as
+   it goes rather than keeping the one it opened with. */
+const RUNS = 10
+const apart = walkedLeft(RUNS, false)
+const together = walkedLeft(RUNS, true)
+check('one long drag lands where the same walk in short drags lands',
+  Math.abs(together - apart) < 10, `${together} against ${apart}`)
+check('and the walk went somewhere', apart < -100, String(apart))
+
 console.log('\nthe bench answers a press')
 // Read off the compiled sheet, not the source: scoped CSS never reaches markup
 // a script builds. See DESIGN.md, Overriding the primitives.
@@ -714,14 +795,24 @@ check('and it survives a redraw of the canvas', Boolean(doc.querySelector('[data
 const thumb = doc.querySelector<HTMLElement>('[data-seg-thumb]')!
 check('the thumb is placed by the render', /translateX/.test(thumb.style.transform), thumb.style.transform || 'unset')
 check('and its width is measured, not assumed', /^\d/.test(thumb.style.width), thumb.style.width || 'unset')
+// The bench is shown before it is built, since a hidden box measures zero and
+// the thumb would then ship with no width until the reader touched something.
+check('and measured on load, not left at zero until the first interaction',
+  thumbOnLoad === `${LAID_OUT}px`, thumbOnLoad || 'unset')
 // The attribute itself is set on the next animation frame, which a synchronous
-// read can never see, so the guarantee is checked where it lives: the thumb
-// carries no transition until something arms one.
-const flat = styles.replace(/\s+/g, '')
+// read can never see, so the guarantee is checked where it lives: every
+// compiled rule that slides the thumb, and whether the flag is in its selector.
+// Whitespace stays, because stripping it welds a descendant combinator shut and
+// the pattern then matches nothing at all.
+const thumbRules = [...styles.matchAll(/([^{}]*\.bn-seg-thumb[^{}]*)\{([^}]*)\}/g)].map((rule) => ({
+  parts: rule[1].split(',').filter((part) => part.includes('.bn-seg-thumb')),
+  slides: /(^|;)\s*transition(-duration)?\s*:/.test(rule[2]),
+}))
+const armed = thumbRules.filter((rule) => rule.slides)
+check('the thumb is styled by the compiled sheet at all', thumbRules.length > 0)
 check('the slide only exists behind the ready flag',
-  /\.bn-seg\[data-ready\]\.bn-seg-thumb\{[^}]*transition:/.test(flat))
-check('and the thumb has none of its own',
-  !/(^|})\.bn-seg-thumb\{[^}]*transition:/.test(flat))
+  armed.length > 0 && armed.every((rule) => rule.parts.every((part) => part.includes('[data-ready]'))),
+  armed.map((rule) => rule.parts.join(',')).join(' | ') || 'nothing transitions the thumb')
 
 console.log('\nthe bench drawing')
 const drawnMarkup = benchCanvas.innerHTML
@@ -755,8 +846,12 @@ check('the zoom glyphs keep their optical correction',
 const stylesOf = (pageHtml: string) =>
   [styles, ...[...pageHtml.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((m) => m[1])].join('\n')
 
-const spelled = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve']
-const word = (n: number) => spelled[n] ?? String(n)
+console.log('\nthe count in the copy')
+// The about page spells a number the build reads from GitHub, so the sentence
+// has to hold at every count the API can answer with, one included.
+check('a lone contributor is a person, not a people', people(1) === 'one person', people(1))
+check('two or more are people', people(2) === 'two people', people(2))
+check('a count past the words stays in digits', people(13) === '13 people', people(13))
 
 console.log('\nthe about page')
 const aboutHtml = readFileSync(join(site, 'about', 'index.html'), 'utf8')
@@ -773,11 +868,24 @@ check('every contributor links to a GitHub profile',
 
 const aboutHeading = aboutDoc.querySelector('h1')!.textContent!.trim()
 check('the headline counts the people it lists',
-  aboutHeading.includes(`built by ${word(contributors.length)} people`), aboutHeading)
+  aboutHeading.includes(`built by ${people(contributors.length)}`), aboutHeading)
 
 const aboutSub = aboutDoc.querySelector('.sec-sub')!.textContent!.trim()
 check('the contributions line counts one fewer',
-  aboutSub.includes(`${word(contributors.length - 1)} people besides me`), aboutSub)
+  aboutSub.includes(`${people(contributors.length - 1)} besides me`), aboutSub)
+// Whatever the API answers with, the noun agrees with the number in front of
+// it. Read a sentence at a time, since the text of the page as a whole welds
+// the end of one into the start of the next and the boundary is lost.
+const aboutSentences = [
+  ...[...aboutDoc.querySelectorAll('h1, h2, p')].map((el) => el.textContent!.replace(/\s+/g, ' ').trim()),
+  aboutDoc.querySelector('meta[property="og:description"]')!.getAttribute('content')!,
+]
+const miscounted = aboutSentences.filter(
+  (line) =>
+    /\bone people\b/.test(line) ||
+    /\b(no|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|\d+) person\b/.test(line)
+)
+check('no sentence on the page miscounts its noun', miscounted.length === 0, miscounted.join(' | '))
 // A spelled number is lower case, so it cannot be the first word of a sentence.
 check('and does not open a sentence in lower case', /^[A-Z]/.test(aboutSub), aboutSub)
 
@@ -796,6 +904,58 @@ const personFlex = personRule?.[1].match(/(?:^|;)\s*flex:\s*([^;]+)/)?.[1].trim(
 check('the contributor tiles grow to fill a short row',
   Boolean(personFlex) && !/^(none|0)\b/.test(personFlex!),
   `flex resolved to ${personFlex ?? 'nothing'}`)
+
+console.log('\nthe contributor list')
+// Read from GitHub at build time. Half an answer used to ship as though it were
+// the whole one, and the page counts what it is handed, so a degraded build
+// credited two people and called them seven.
+
+/** The record shape either endpoint answers with, as JSON over the wire. */
+const answers = (records: unknown[]) =>
+  new Response(JSON.stringify(records), { headers: { 'content-type': 'application/json' } })
+const refuses = () => new Response('', { status: 403 })
+
+/**
+ * Runs the module against a stub of GitHub and hands back who it credits.
+ * A fresh instance per call, since the real one answers once per build.
+ *
+ * @param reply - What the stub returns for a given request URL.
+ * @param tag - Anything unique, which is what makes the import fresh.
+ */
+const crediting = async (reply: (path: string) => Response, tag: string): Promise<string[]> => {
+  const real = globalThis.fetch
+  globalThis.fetch = (async (url: string | URL | Request) => reply(String(url))) as typeof fetch
+  try {
+    const module = await import(`../src/lib/contributors.ts?${tag}`)
+    const list: { user: string }[] = await module.contributors()
+    return list.map((person) => person.user)
+  } finally {
+    globalThis.fetch = real
+  }
+}
+
+const committer = (login: string) => ({ login, contributions: 3 })
+const raiser = (login: string) => ({ user: { login } })
+
+const offline = await crediting(refuses, 'offline')
+check('an offline build still credits everyone', offline.length > 2, offline.join(', '))
+
+const halved = await crediting(
+  (path) => (path.includes('/issues') ? refuses() : answers([committer('rvanbaalen')])), 'halved')
+check('a refused issue tracker falls back rather than crediting the committers alone',
+  halved.join(', ') === offline.join(', '), halved.join(', '))
+
+const truncated = await crediting((path) => {
+  if (!path.includes('/issues')) return answers([committer('rvanbaalen')])
+  return path.endsWith('page=1') ? answers(Array.from({ length: 100 }, () => raiser('someone'))) : refuses()
+}, 'truncated')
+check('and a walk that stops short is a failure, not a shorter list',
+  truncated.join(', ') === offline.join(', '), truncated.join(', '))
+
+const whole = await crediting(
+  (path) => answers(path.includes('/issues') ? [raiser('asker')] : [committer('coder')]), 'whole')
+check('a whole answer credits the committer and the person who raised it',
+  whole.join(', ') === 'coder, asker', whole.join(', '))
 
 console.log('\nthe comparison table')
 const altHtml = readFileSync(join(site, 'alternatives', 'index.html'), 'utf8')
@@ -890,6 +1050,47 @@ check('the step band opts out of the prose measure',
 check('the quarantine command ships with a copy button',
   helpPage.includes('xattr -dr com.apple.quarantine') &&
     helpPageDoc.querySelector('button.copy[data-copy]') !== null)
+
+// Safari's private window throws on every storage access. The marks were read
+// back through storage, so a click there painted nothing and said nothing.
+const helpScripts = [
+  ...[...helpPage.matchAll(/<script type="module" src="([^"]+)"><\/script>/g)]
+    .map((m) => readFileSync(join(site, m[1].replace(/^\//, '')), 'utf8')),
+  ...[...helpPage.matchAll(/<script type="module">([\s\S]*?)<\/script>/g)].map((m) => m[1]),
+]
+check('the rail script ships with the page',
+  helpScripts.some((source) => source.includes('spreadpaper-help-steps')))
+
+const blocked = new JSDOM(helpPage, { pretendToBeVisual: true, runScripts: 'outside-only' }).window
+blocked.matchMedia = (() => ({ matches: false, addEventListener() {}, removeEventListener() {} })) as unknown as typeof blocked.matchMedia
+blocked.IntersectionObserver = class {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+} as unknown as typeof blocked.IntersectionObserver
+Object.defineProperty(blocked, 'localStorage', {
+  get() {
+    throw new Error('the user denied storage')
+  },
+})
+helpScripts.forEach((source) => blocked.eval(`(function () {\n${source}\n})()`))
+
+const blockedMark = blocked.document.querySelector<HTMLButtonElement>('[data-mark]')!
+const blockedStep = blockedMark.closest('[data-sec]')!
+const blockedLabel = blockedStep.querySelector('[data-mark-label]')!
+check('the mark is offered even when storage is blocked', !blockedMark.hidden)
+
+blockedMark.dispatchEvent(new blocked.MouseEvent('click', { bubbles: true }))
+check('and a click marks the step done', blockedStep.hasAttribute('data-done'))
+check('the button says so', blockedMark.getAttribute('aria-pressed') === 'true' && blockedLabel.textContent === 'Done',
+  `${blockedMark.getAttribute('aria-pressed')}, "${blockedLabel.textContent}"`)
+check('and the rail follows',
+  blocked.document.querySelector(`[data-jump="${blockedStep.getAttribute('data-sec')}"]`)!.hasAttribute('data-done'))
+check('the reset appears with the first mark', !blocked.document.getElementById('hp-reset')!.hidden)
+
+blockedMark.dispatchEvent(new blocked.MouseEvent('click', { bubbles: true }))
+check('a second click clears it again',
+  !blockedStep.hasAttribute('data-done') && blockedLabel.textContent === 'Mark as done')
 
 console.log(failures ? `\n${failures} FAILED` : '\nall checks passed')
 process.exit(failures ? 1 : 0)
