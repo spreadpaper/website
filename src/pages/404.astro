@@ -93,21 +93,22 @@ const destinations: Destination[] = [
       <div class="nf-rows" id="nf-rows">
         {
           destinations.map((page) => (
-            <a
-              class="nf-row"
-              href={page.path}
+            <div
+              class="nf-slot"
               data-hay={`${page.name} ${page.what} ${page.path} ${page.words}`.toLowerCase()}
             >
-              <span>
-                <b class="nf-name" data-text={page.name}>
-                  {page.name}
-                </b>
-                <span class="nf-what" data-text={page.what}>
-                  {page.what}
+              <a class="nf-row" href={page.path}>
+                <span>
+                  <b class="nf-name" data-text={page.name}>
+                    {page.name}
+                  </b>
+                  <span class="nf-what" data-text={page.what}>
+                    {page.what}
+                  </span>
                 </span>
-              </span>
-              <span class="nf-path">{page.path}</span>
-            </a>
+                <span class="nf-path">{page.path}</span>
+              </a>
+            </div>
           ))
         }
         <p class="nf-empty" id="nf-empty" hidden>
@@ -140,8 +141,8 @@ const destinations: Destination[] = [
     const asked = document.getElementById('nf-asked')
     if (!field || !input || !count || !empty || !keys) return
 
-    const rows = [...document.querySelectorAll<HTMLAnchorElement>('.nf-row')]
-    if (rows.length === 0) return
+    const slots = [...document.querySelectorAll<HTMLElement>('.nf-slot')]
+    if (slots.length === 0) return
 
     field.hidden = false
     keys.hidden = false
@@ -165,15 +166,15 @@ const destinations: Destination[] = [
     }
 
     function visible() {
-      return rows.filter((row) => !row.hasAttribute('data-off'))
+      return slots.filter((slot) => !slot.hasAttribute('data-off'))
     }
 
     function draw() {
       const term = input!.value.trim().toLowerCase()
-      rows.forEach((row) => {
-        row.toggleAttribute('data-off', term !== '' && !(row.dataset.hay ?? '').includes(term))
-        row.removeAttribute('data-cursor')
-        row.querySelectorAll<HTMLElement>('[data-text]').forEach((cell) => paint(cell, term))
+      slots.forEach((slot) => {
+        slot.toggleAttribute('data-off', term !== '' && !(slot.dataset.hay ?? '').includes(term))
+        slot.removeAttribute('data-cursor')
+        slot.querySelectorAll<HTMLElement>('[data-text]').forEach((cell) => paint(cell, term))
       })
       cursor = -1
       const shown = visible().length
@@ -184,7 +185,7 @@ const destinations: Destination[] = [
     function moveCursor(step: number) {
       const shown = visible()
       if (shown.length === 0) return
-      shown.forEach((row) => row.removeAttribute('data-cursor'))
+      shown.forEach((slot) => slot.removeAttribute('data-cursor'))
       cursor = (cursor + step + shown.length) % shown.length
       shown[cursor].setAttribute('data-cursor', '')
       shown[cursor].scrollIntoView({ block: 'nearest' })
@@ -201,7 +202,9 @@ const destinations: Destination[] = [
         event.preventDefault()
         moveCursor(-1)
       } else if (event.key === 'Enter') {
-        const target = document.querySelector<HTMLAnchorElement>('.nf-row[data-cursor]') ?? visible()[0]
+        const target =
+          document.querySelector<HTMLAnchorElement>('.nf-slot[data-cursor] .nf-row') ??
+          visible()[0]?.querySelector<HTMLAnchorElement>('.nf-row')
         if (target) {
           event.preventDefault()
           location.assign(target.href)
@@ -301,11 +304,28 @@ const destinations: Destination[] = [
     overflow: hidden;
   }
 
+  /* A filtered row collapses its own track rather than being hidden, since
+     display: none cannot transition. The row clips inside it. */
+  .nf-slot {
+    display: grid;
+    grid-template-rows: 1fr;
+    transition:
+      grid-template-rows 200ms var(--ease-out),
+      opacity 140ms var(--ease-out);
+  }
+
+  .nf-slot[data-off] {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+
   .nf-row {
     display: grid;
     grid-template-columns: 1fr auto;
     gap: 1rem;
     align-items: center;
+    min-height: 0;
+    overflow: hidden;
     padding-block: 0.8125rem;
     padding-inline: 1rem;
     background: var(--color-cd-bg-secondary);
@@ -313,32 +333,15 @@ const destinations: Destination[] = [
     border-top: 1px solid var(--color-cd-border);
     transition:
       background-color 140ms var(--ease-out),
-      transform 140ms var(--ease-out),
-      opacity 130ms var(--ease-out),
-      display 130ms var(--ease-out) allow-discrete;
+      transform 140ms var(--ease-out);
   }
 
-  /* `hidden` is display: none and cannot transition, so filtered rows leave on
-     an attribute and the discrete display change is deferred to the end. */
-  .nf-row[data-off] {
-    display: none;
-    opacity: 0;
-    transform: translateY(-2px);
-  }
-
-  @starting-style {
-    .nf-row {
-      opacity: 0;
-      transform: translateY(-2px);
-    }
-  }
-
-  .nf-row:first-child {
+  .nf-slot:first-child .nf-row {
     border-top: 0;
   }
 
   .nf-row:hover,
-  .nf-row[data-cursor] {
+  .nf-slot[data-cursor] .nf-row {
     background: var(--color-cd-bg-elevated);
   }
 
@@ -421,13 +424,12 @@ const destinations: Destination[] = [
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .nf-row {
-      transition: background-color 140ms var(--ease-out);
+    .nf-slot {
+      transition: none;
     }
 
-    .nf-row[data-off] {
-      opacity: 1;
-      transform: none;
+    .nf-row {
+      transition: background-color 140ms var(--ease-out);
     }
   }
 </style>
