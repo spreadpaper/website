@@ -746,5 +746,150 @@ check('every clip rect is traced by a frame of the same geometry',
 check('the zoom glyphs keep their optical correction',
   /\.bn-tool\[data-act=["']?in["']?\]svg[^{]*\{[^}]*scale\(\.?0?\.?92\)/.test(styles.replace(/\s+/g, '')),
   'plus and minus fill more of the box than the arrows do')
+
+/**
+ * Every stylesheet a page actually uses. Astro emits a file or inlines the
+ * block once it is small enough, and the about page is inlined, so a search of
+ * `_astro` alone passes by finding nothing.
+ */
+const stylesOf = (pageHtml: string) =>
+  [styles, ...[...pageHtml.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((m) => m[1])].join('\n')
+
+const spelled = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve']
+const word = (n: number) => spelled[n] ?? String(n)
+
+console.log('\nthe about page')
+const aboutHtml = readFileSync(join(site, 'about', 'index.html'), 'utf8')
+const aboutDoc = new JSDOM(aboutHtml).window.document
+
+check('/project is gone rather than redirected', !existsSync(join(site, 'project', 'index.html')))
+
+// The list is read from GitHub at build time, so nothing on the page may state
+// a count the data can outgrow.
+const contributors = [...aboutDoc.querySelectorAll('.person')].map((a) => a.getAttribute('href')!)
+check('every contributor links to a GitHub profile',
+  contributors.length > 1 && contributors.every((href) => /^https:\/\/github\.com\/[^/]+$/.test(href)),
+  contributors.join(', '))
+
+const aboutHeading = aboutDoc.querySelector('h1')!.textContent!.trim()
+check('the headline counts the people it lists',
+  aboutHeading.includes(`built by ${word(contributors.length)} people`), aboutHeading)
+
+const aboutSub = aboutDoc.querySelector('.sec-sub')!.textContent!.trim()
+check('the contributions line counts one fewer',
+  aboutSub.includes(`${word(contributors.length - 1)} people besides me`), aboutSub)
+// A spelled number is lower case, so it cannot be the first word of a sentence.
+check('and does not open a sentence in lower case', /^[A-Z]/.test(aboutSub), aboutSub)
+
+const factKeys = [...aboutDoc.querySelectorAll('.fk')].map((el) => el.textContent!.trim())
+check('six facts sit beside the note', factKeys.length === 6, factKeys.join(', '))
+check('the star figure is a number, not a word',
+  /\d/.test(aboutDoc.querySelector('.hv-facts')!.textContent!))
+check('the signature links to the author site',
+  aboutDoc.querySelector('.sign a[href="https://robinvanbaalen.nl"]') !== null)
+
+// An auto-fill grid left holes on the second row, so a tile has to grow. The
+// minifier rewrites `flex: 1 1 11rem` to the equivalent `flex: 11rem`, so this
+// reads the value rather than matching how it happens to be spelled.
+const personRule = stylesOf(aboutHtml).replace(/\s+/g, ' ').match(/\.person[^{]*\{([^}]*)\}/)
+const personFlex = personRule?.[1].match(/(?:^|;)\s*flex:\s*([^;]+)/)?.[1].trim()
+check('the contributor tiles grow to fill a short row',
+  Boolean(personFlex) && !/^(none|0)\b/.test(personFlex!),
+  `flex resolved to ${personFlex ?? 'nothing'}`)
+
+console.log('\nthe comparison table')
+const altHtml = readFileSync(join(site, 'alternatives', 'index.html'), 'utf8')
+const altDoc = new JSDOM(altHtml).window.document
+
+const apps = [...altDoc.querySelectorAll('th[scope="col"]')].map((th) => th.textContent!.trim())
+check('six apps are compared', apps.length === 6, apps.join(', '))
+const rows = [...altDoc.querySelectorAll('th[scope="row"]')].map((th) => th.textContent!.trim())
+check('platform is one of the rows', rows.includes('Platform'), rows.join(' / '))
+
+// Three marks, because a guess about somebody else's software is worse than an
+// open cell. Losing the third would quietly turn every unknown into a no.
+for (const mark of ['g-yes', 'g-no', 'g-unverified']) {
+  check(`${mark} is used at least once`, altDoc.querySelector(`.${mark}`) !== null)
+}
+
+const altOutbound = [...altDoc.querySelectorAll('main a[href^="http"]')]
+const unmarked = altOutbound.filter((a) => !(a.getAttribute('rel') ?? '').includes('nofollow'))
+check('every outbound link in the comparison is nofollow',
+  altOutbound.length > 0 && unmarked.length === 0,
+  unmarked.map((a) => a.getAttribute('href')).join(', '))
+
+console.log('\nthe guides index')
+const guidesHtml = readFileSync(join(site, 'guides', 'index.html'), 'utf8')
+const guidesDoc = new JSDOM(guidesHtml).window.document
+
+const questions = [...guidesDoc.querySelectorAll('.qs-item')]
+check('six questions', questions.length === 6, String(questions.length))
+check('each names the guide it comes from',
+  questions.every((item) => (item.querySelector('.qs-src')?.textContent ?? '').trim().length > 0))
+
+// The point of the page: a question lands on the passage that answers it, so a
+// renamed heading has to fail here rather than drop the reader at the top.
+for (const item of questions) {
+  const href = item.getAttribute('href')!
+  const [path, fragment] = href.split('#')
+  const target = join(site, path.replace(/^\//, '').replace(/\/$/, ''), 'index.html')
+  const lands = existsSync(target) && readFileSync(target, 'utf8').includes(`id="${fragment}"`)
+  check(`${href} lands on a real section`, Boolean(fragment) && lands)
+}
+
+console.log('\nthe 404 finder')
+const notFoundHtml = readFileSync(join(site, '404.html'), 'utf8')
+const notFoundDoc = new JSDOM(notFoundHtml).window.document
+
+// Rendered at build time for two reasons: Astro's scoped styles never reach
+// markup a script builds, and the list has to work with no JavaScript.
+const destinations = [...notFoundDoc.querySelectorAll('.nf-row')]
+check('every destination ships in the markup', destinations.length === 7, String(destinations.length))
+check('each carries the words it is searched by',
+  [...notFoundDoc.querySelectorAll('.nf-slot')].every((slot) => (slot.getAttribute('data-hay') ?? '').length > 0))
+check('the field waits for the script', notFoundDoc.getElementById('nf-field')!.hasAttribute('hidden'))
+check('and so do the key hints', notFoundDoc.getElementById('nf-keys')!.hasAttribute('hidden'))
+
+// Filtering hid rows with `hidden`, which is display: none and cannot
+// transition, so nothing moved. The collapse has to stay on the track.
+const notFoundStyles = stylesOf(notFoundHtml).replace(/\s+/g, ' ')
+check('a filtered row collapses its track rather than switching off',
+  /\.nf-slot[^{]*\[data-off\][^{]*\{[^}]*grid-template-rows:\s*0fr/.test(notFoundStyles),
+  'expected grid-template-rows: 0fr on [data-off]')
+// The collapsing box may carry no padding of its own: a grid item stretched to
+// a zero track still renders its padding, which left a band of empty space.
+check('and the clipper carries no padding to leave behind',
+  /\.nf-clip[^{]*\{(?![^}]*padding)[^}]*\}/.test(notFoundStyles),
+  'expected .nf-clip to hold only min-height and overflow')
+
+console.log('\nthe help rail')
+const helpPage = readFileSync(join(site, 'help', 'index.html'), 'utf8')
+const helpPageDoc = new JSDOM(helpPage).window.document
+
+// The step number is a CSS counter on .step, so renaming the section silently
+// prints zero on every chip.
+const helpSteps = [...helpPageDoc.querySelectorAll('.step')]
+check('three steps, not four', helpSteps.length === 3, String(helpSteps.length))
+check('each increments the counter that numbers it',
+  helpSteps.every((step) => step.querySelector('.step-kicker') !== null))
+
+const railLinks = [...helpPageDoc.querySelectorAll('.hp-rail-item')]
+check('the rail is a working contents list without the script',
+  !helpPageDoc.getElementById('hp-rail')!.hasAttribute('hidden') && railLinks.length === helpSteps.length)
+check('every rail link points at a step on the page',
+  railLinks.every((a) => helpPageDoc.querySelector(a.getAttribute('href')!) !== null),
+  railLinks.map((a) => a.getAttribute('href')).join(', '))
+check('the marks wait for the script',
+  [...helpPageDoc.querySelectorAll('.hp-mark')].every((b) => b.hasAttribute('hidden')))
+
+// Prose caps every direct child at the measure, which crushed the step band
+// into 44rem and pushed the rail out of the page.
+check('the step band opts out of the prose measure',
+  /\.hp-grid[^{]*\{[^}]*max-width:\s*none/.test(stylesOf(helpPage).replace(/\s+/g, ' ')),
+  'expected max-width: none on .hp-grid')
+check('the quarantine command ships with a copy button',
+  helpPage.includes('xattr -dr com.apple.quarantine') &&
+    helpPageDoc.querySelector('button.copy[data-copy]') !== null)
+
 console.log(failures ? `\n${failures} FAILED` : '\nall checks passed')
 process.exit(failures ? 1 : 0)
