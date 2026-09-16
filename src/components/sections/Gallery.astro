@@ -14,7 +14,9 @@ import Icon from '../Icon.astro'
       transition: border-color 150ms ease-out;
     }
 
-    #gallery .gl-card:hover { border-color: var(--color-cd-border-strong); }
+    @media (hover: hover) and (pointer: fine) {
+      #gallery .gl-card:hover { border-color: var(--color-cd-border-strong); }
+    }
 
     @media (prefers-reduced-motion: reduce) {
       #gallery .gl-card { transition: none; }

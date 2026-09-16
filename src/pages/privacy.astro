@@ -1,127 +1,62 @@
 ---
-import Footer from '../components/sections/Footer.astro'
-import Nav from '../components/sections/Nav.astro'
-import Layout from '../layouts/Layout.astro'
+import Prose from '../components/Prose.astro'
+import TextPage from '../layouts/TextPage.astro'
 
-/** Last substantive change to this policy, shown at the top of the page. */
-const updatedLabel = '14 September 2026'
+/**
+ * Short on purpose. With no account, no analytics and no database, a long
+ * policy is padding around four true sentences. What survives is only what a
+ * reader could be surprised by: the update check, the two third parties this
+ * page touches, and email.
+ */
+const updatedLabel = '15 September 2026'
 ---
 
-<Layout
-  title="Privacy policy | SpreadPaper"
-  description="SpreadPaper collects nothing. No account, no analytics, no telemetry. What the app and this site do touch, and why, in plain terms."
-  socialDescription="SpreadPaper collects nothing. No account, no analytics, no telemetry."
+<TextPage
+  title="Privacy Policy | SpreadPaper"
+  description="No accounts, no analytics, no cookies, no database. The whole privacy policy fits on one screen."
+  socialDescription="No accounts, no analytics, no cookies, no database. The shortest privacy policy you will read today."
+  eyebrow="Privacy"
+  heading="There is nothing to see here"
+  lead="No accounts, no analytics, no cookies, no database. Nothing to opt out of, because there was never anything to opt into."
+  updated={updatedLabel}
 >
-  <Nav />
-  <main id="main" class="cd-section bg-cd-bg">
-    <div class="cd-shell">
-      <div class="grid grid-cols-12 gap-x-6 gap-y-10">
-        <div class="col-span-12 lg:col-span-6">
-          <p class="cd-eyebrow">Privacy</p>
-          <h1
-            class="mt-3 text-3xl font-bold leading-[1.05] tracking-[-0.025em] text-balance text-cd-text sm:text-4xl lg:text-5xl"
-          >
-            SpreadPaper collects nothing
-          </h1>
-        </div>
-        <div class="col-span-12 lg:col-span-5 lg:col-start-8">
-          <p class="text-lg leading-relaxed text-pretty text-cd-text-secondary sm:text-xl">
-            No account, no sign-in, no analytics, no telemetry, no crash reporting. There is no
-            server of ours for your data to sit on. Everything below is the detail behind that
-            sentence.
-          </p>
-          <p class="mt-5 text-sm text-cd-text-secondary">Last updated {updatedLabel}</p>
-        </div>
-      </div>
+  <Prose>
+    <h2>Your photos stay put</h2>
+    <p>
+      The app is sandboxed, so it sees the files you hand it and nothing else. Your wallpapers are
+      rendered on your Mac, to your own disk.
+    </p>
 
-      <div class="mt-16 max-w-[62ch]">
-        <h2 class="text-xl font-semibold tracking-[-0.01em] text-cd-text">Your images never leave your Mac</h2>
-        <p class="mt-4 text-base leading-relaxed text-pretty text-cd-text-secondary">
-          The photograph you pick is opened, cropped and rendered on your own machine, and the
-          result is written to your own disk. It is never uploaded anywhere. The app runs inside
-          Apple's sandbox and can only read the files you hand it through the open panel or by
-          dragging them in.
-        </p>
-        <p class="mt-4 text-base leading-relaxed text-pretty text-cd-text-secondary">
-          Your presets, schedules and display arrangement are stored locally in the app's own
-          container, alongside the rendered wallpapers. Deleting the app removes them.
-        </p>
+    <h2>The app phones home once</h2>
+    <p>
+      It asks GitHub whether a newer version exists. GitHub sees your IP address and the app's
+      version, the same as every web server you have ever met. Block <code class="cd-code"
+        >api.github.com</code
+      > and even that stops. It lives in <a
+        href="https://github.com/spreadpaper/SpreadPaper/blob/main/SpreadPaper/Services/UpdateChecker.swift"
+        >UpdateChecker.swift</a
+      >, if you would rather check than trust.
+    </p>
 
-        <h2 class="mt-12 text-xl font-semibold tracking-[-0.01em] text-cd-text">The one thing the app does over the network</h2>
-        <p class="mt-4 text-base leading-relaxed text-pretty text-cd-text-secondary">
-          SpreadPaper checks whether a newer version exists. To do that it asks GitHub's public API
-          about this project's latest release, and fetches the changelog file from the repository.
-          Nothing about you is sent. The request carries what any HTTP request carries: your IP
-          address, and a user agent naming the app and its version, for example
-          <code class="cd-code">SpreadPaper/1.10.0</code>.
-        </p>
-        <p class="mt-4 text-base leading-relaxed text-pretty text-cd-text-secondary">
-          That request goes to GitHub, not to us. We never see it, and we keep no record of who
-          checked or when. GitHub's handling of it falls under
-          <a
-            class="cd-inline-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2"
-            href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">their privacy statement</a
-          >. If you would rather it did not happen at all, the update check is the only outbound
-          request in the app, and blocking
-          <code class="cd-code">api.github.com</code> stops it.
-        </p>
+    <h2>This website</h2>
+    <p>
+      Static, served by Cloudflare, typeface from Google Fonts. Both of them see your IP address.
+      That is two third parties, which is two more than I wanted and rather fewer than the last page
+      you had open.
+    </p>
 
-        <h2 class="mt-12 text-xl font-semibold tracking-[-0.01em] text-cd-text">This website</h2>
-        <p class="mt-4 text-base leading-relaxed text-pretty text-cd-text-secondary">
-          spreadpaper.app is a static site with no analytics, no tracking pixels and no cookies of
-          its own. It is served by Cloudflare, which keeps standard request logs for security and
-          abuse prevention under
-          <a
-            class="cd-inline-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2"
-            href="https://www.cloudflare.com/privacypolicy/">their privacy policy</a
-          >.
-        </p>
-        <p class="mt-4 text-base leading-relaxed text-pretty text-cd-text-secondary">
-          The page loads its typeface from Google Fonts, which means Google receives your IP address
-          when you visit. That is the only third party the page contacts. Downloads are hosted on
-          GitHub, so following a download link takes you to them.
-        </p>
+    <h2>If you email me</h2>
+    <p>
+      Write to <a href="mailto:hello@spreadpaper.app">hello@spreadpaper.app</a> and I will know your
+      email address. That is how email works. I keep it while the conversation is useful. If you are
+      in the EU, the GDPR lets you ask what personal data is held about you, and the answer is: that
+      email.
+    </p>
 
-        <h2 class="mt-12 text-xl font-semibold tracking-[-0.01em] text-cd-text">If you get in touch</h2>
-        <p class="mt-4 text-base leading-relaxed text-pretty text-cd-text-secondary">
-          Email sent to
-          <a
-            class="cd-inline-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2"
-            href="mailto:hello@spreadpaper.app">hello@spreadpaper.app</a
-          > is forwarded to a personal mailbox and kept only as long as the conversation is useful. Anything
-          you post as a GitHub issue is public, and governed by GitHub's terms rather than this policy.
-        </p>
-
-        <h2 class="mt-12 text-xl font-semibold tracking-[-0.01em] text-cd-text">Your rights</h2>
-        <p class="mt-4 text-base leading-relaxed text-pretty text-cd-text-secondary">
-          Under the GDPR you may ask what personal data is held about you, and ask for it to be
-          corrected or erased. In practice there is nothing to hand over unless you have emailed,
-          because nothing is collected. The project is run from the Netherlands by Robin van Baalen.
-          Ask at
-          <a
-            class="cd-inline-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2"
-            href="mailto:hello@spreadpaper.app">hello@spreadpaper.app</a
-          >.
-        </p>
-
-        <h2 class="mt-12 text-xl font-semibold tracking-[-0.01em] text-cd-text">Changes</h2>
-        <p class="mt-4 text-base leading-relaxed text-pretty text-cd-text-secondary">
-          If this policy changes, the date at the top changes with it. The app is open source, so
-          you do not have to take any of the above on trust: the update check lives in
-          <a
-            class="cd-inline-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2"
-            href="https://github.com/spreadpaper/SpreadPaper/blob/main/SpreadPaper/Services/UpdateChecker.swift">UpdateChecker.swift</a
-          >, and it is the only place the app opens a connection.
-        </p>
-
-        <p class="mt-12 border-t border-cd-border pt-8 text-sm text-cd-text-secondary">
-          See also the <a
-            class="cd-inline-link focus-visible:outline-2 focus-visible:outline-cd-accent focus-visible:outline-offset-2"
-            href="/terms">terms of service</a
-          >.
-        </p>
-      </div>
-    </div>
-  </main>
-  <Footer />
-</Layout>
+    <h2>The small print</h2>
+    <p>
+      Run from Curaçao, Dutch Caribbean, by <a href="https://robinvanbaalen.nl">Robin van Baalen</a>. If any of this changes, so does the
+      date at the top. See also the <a href="/terms">Terms of Service</a>.
+    </p>
+  </Prose>
+</TextPage>

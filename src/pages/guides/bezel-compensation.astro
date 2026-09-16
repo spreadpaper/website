@@ -1,0 +1,93 @@
+---
+import Prose from '../../components/Prose.astro'
+import TextPage from '../../layouts/TextPage.astro'
+---
+
+<TextPage
+  title="How bezel compensation works | SpreadPaper"
+  description="macOS lays displays out edge to edge in a virtual coordinate space, but a desk has plastic between the monitors. How SpreadPaper spreads the layout apart before sampling, with a worked example."
+  socialDescription="The gap between two monitors is real and the pixels know nothing about it. Spreading the layout apart so a wallpaper crosses the seam intact."
+  eyebrow="Guides"
+  heading="How bezel compensation works"
+  lead="macOS hands you a coordinate space in which displays sit flush against each other. Your desk does not work that way. This is the gap between the two, and the arithmetic that closes it."
+>
+  <Prose>
+    <h2 id="coordinate-space">The desk and the coordinate space</h2>
+    <p>Two monitors side by side on a desk are not one continuous surface. There is glass, then the frame around that glass, then the frame around the next one, then more glass. Somewhere between ten and forty millimetres of the picture's width is occupied by plastic, and no pixel lives there.</p>
+    <p>The coordinate space macOS gives you says nothing about that. Displays are laid out in points according to the arrangement in System Settings, and in that arrangement they are flush: the last column of points on one display is immediately followed by the first column of points on the next. That is the correct model for what it describes, which is where pixels can be addressed, not where they are in the room. The global coordinate space is a filing system, not a map of your desk.</p>
+    <p>macOS will tell you a little about the physical world if you ask. <code class="cd-code">CGDisplayScreenSize</code> reports a panel's width and height in millimetres, read from the display's own EDID data. That number describes the glass. It says nothing about the housing around the glass, it is sometimes wrong on cheaper panels, and it is absent on some virtual and captured displays. There is no API that reports a bezel, which is why SpreadPaper works in points and takes the gap as a setting.</p>
+
+    <h2 id="slicing">Slicing on the boundary, and why it fails</h2>
+    <p>The obvious implementation is to take the union of every display rectangle, scale one image to fill it, then cut the result along the display boundaries and hand each display its rectangle. It is a dozen lines of code and it is correct in the coordinate space it operates in.</p>
+    <p>On the desk it produces a picture that steps sideways at every seam. Each display shows the slice that would be right if the two panels were touching, and they are not, so anything crossing the boundary arrives at the wrong height and the wrong offset. A horizon leaves the left monitor and re-enters the right one somewhere it should not be. A roofline, a road, a mountain ridge: anything long and straight makes it obvious, which is why the failure is so visible on exactly the photographs people want to spread.</p>
+    <p>The eye reads that as two crops of one photograph rather than one photograph, which is the opposite of the point.</p>
+
+    <h2 id="spreading">Spreading the layout before sampling it</h2>
+    <p>The fix is to stop treating the displays as touching. Before any of the image is sampled, each display rectangle is pushed away from its neighbours by the width of the housing between them. The layout the picture is mapped across then has the shape of your desk rather than the shape of the coordinate space, and the picture becomes a thing hanging behind the monitors, of which each display shows the part in front of its own glass.</p>
+    <p>That gives an order of operations:</p>
+    <ol>
+      <li>Take the arrangement macOS reports, in points.</li>
+      <li>Push each display away from its neighbours by its own frame width. The gap between any two is the sum of the two facing frames.</li>
+      <li>Map the image across the spaced layout, so every point of desk corresponds to a known position in the image, lit or not.</li>
+      <li>Give each display the slice of the image lying over its own rectangle, and render it at that display's native resolution.</li>
+    </ol>
+    <p>The part of the image lying over a bezel is never drawn. It is sampled out and thrown away, and that discarded strip is the whole trick. The picture stays complete and continuous; it is hidden in places, the way a view through a window is interrupted by the frame without the view itself jumping.</p>
+    <div class="note note-accent">
+      <p>Everything else in bezel compensation is bookkeeping. The idea is one sentence: throw away the pixels that fall behind the plastic, and the picture lines up.</p>
+    </div>
+
+    <h2 id="example">A worked example</h2>
+    <p>Two 27-inch 16:9 monitors, side by side, pushed together until the frames touch.</p>
+    <dl class="dl">
+      <div>
+        <dt>Visible glass</dt>
+        <dd>597 mm wide on each display</dd>
+      </div>
+      <div>
+        <dt>Frames</dt>
+        <dd>8 mm on each facing edge, so 16 mm between the two</dd>
+      </div>
+      <div>
+        <dt>Total width</dt>
+        <dd>597 + 16 + 597 = 1210 mm</dd>
+      </div>
+      <div>
+        <dt>Photograph</dt>
+        <dd>7680 pixels across</dd>
+      </div>
+    </dl>
+    <p>Spreading 7680 pixels across 1210 mm puts about 6.35 pixels of the photograph on every millimetre of desk. From there the slices fall out:</p>
+    <ul>
+      <li>The left display covers 0 to 597 mm, which is pixels 0 to 3789 of the photograph.</li>
+      <li>The bezels cover 597 to 613 mm, which is pixels 3789 to 3891: a strip 102 pixels wide that is never shown.</li>
+      <li>The right display covers 613 to 1210 mm, which is pixels 3891 to 7680, another 3789 pixels.</li>
+    </ul>
+    <p>Each display then scales its own 3789 pixel slice onto its own panel, at that panel's native resolution, rather than being handed a piece of one shared bitmap that has already been resampled once.</p>
+    <p>Compare that with the naive version, which gives each display 3840 pixels because 7680 divided by two is 3840. The difference is those 102 pixels. Landed on a 2560 point wide screen, that is a step of roughly 69 points at the seam, and in physical terms it is the bezel width itself: 16 mm of picture arriving out of nowhere in the middle of a horizon. Small as a number, unmissable as a line.</p>
+    <p>That 69 is also the number you type. SpreadPaper's bezel field is in points, the same units as the arrangement, so the conversion is the display's own points per millimetre: 2560 points across 597 mm of glass is 4.29, and 16 mm of housing is 69 points. Setting the field to 69 removes exactly the strip that was causing the step.</p>
+    <p>Notice also what the bezel costs you. Widening the frames does not squash the image, it hides more of it. Those 102 pixels are the price of the picture lining up, and a desk with wider bezels pays a bit more.</p>
+
+    <h2 id="edge-cases">Where it stops being tidy</h2>
+    <p>The arithmetic above assumes two identical monitors sitting level. Real desks are worse in at least four ways.</p>
+    <h3>Displays with different pixel densities</h3>
+    <p>Points and millimetres do not convert at a fixed rate. A 27-inch display reporting 2560 points across 597 mm of glass gives 4.29 points per millimetre. A 24-inch 1080p display reporting 1920 points across 531 mm gives 3.62. Put them next to each other and there is no single constant that turns the coordinate space into physical distance. Every conversion has to be done per display, which is why the bezel can be set per display rather than once for the desk. A single shared value is right on a pair of matched panels and drifts on everything else.</p>
+    <h3>Scaled resolutions</h3>
+    <p>A display running a scaled mode reports a point size that matches neither its native pixel count nor its physical size. The point size is what the window server works in, the pixel count is what the panel actually lights up, and the physical size is what the picture has to line up against. All three have to be kept apart. Sampling is resolved against the spaced layout in points and rendering against native pixels, which also avoids resampling the photograph twice: once into a shared bitmap and again onto the panel.</p>
+    <h3>Displays at different heights</h3>
+    <p>Monitors on different stands, or a laptop sitting below the desk line, put their glass at different heights. The same reasoning applies in the vertical axis: the picture has a physical height, and each display's slice starts at whatever vertical offset its glass actually has. The complication is that the vertical offset macOS reports comes from the arrangement, which is where somebody dragged a rectangle in System Settings, not where the monitor sits. The arrangement is an approximation of a desk and should be treated as one.</p>
+    <h3>No bezel information at all</h3>
+    <p>There is no field to read. The frame width has to be derived from something else, such as the difference between a panel's marketed size and its reported glass size, or supplied directly as a number. Deriving it is guesswork on any display whose EDID is inaccurate, which is a lot of them.</p>
+
+    <h2 id="the-gap">The one number the computer cannot know</h2>
+    <p>Resolution, scale, arrangement and physical panel size can all be read from the system. The gap cannot, and it is not only a matter of a missing API. Even an accurately reported frame width would not tell you how far apart you actually pushed the two monitors, whether one is angled towards you, or whether there is a stand base wedged between them.</p>
+    <p>So the gap is set rather than detected. The quickest way is by eye: put a photograph with a long straight line across the seam, then raise the bezel slider until the line runs through unbroken. The arithmetic route works too, from a ruler measurement and the display's points per millimetre, as above. Either way the value is in points, and it is one number per edge: horizontal for monitors side by side, vertical for one stacked above another. A desk of mixed panels wants per display bezels, since a point covers a different amount of glass on each.</p>
+    <p>Being honest that this is a setting is better than inferring a number and quietly getting it wrong, because a bezel value that is close but not right looks like a bug in the image rather than something to nudge.</p>
+
+    <h2 id="source">The source, and corrections</h2>
+    <p>SpreadPaper is written in Swift and SwiftUI, sandboxed, and released under the MIT licence. It needs macOS 15 Sequoia or later, on Intel or Apple silicon. The code is at <a href="https://github.com/spreadpaper/SpreadPaper">github.com/spreadpaper/SpreadPaper</a>, so none of the above has to be taken on trust.</p>
+    <p>Got an arrangement this handles badly, a mix of densities that comes out wrong, or a correction to the write-up? Open an <a href="https://github.com/spreadpaper/SpreadPaper/issues">issue</a> and it gets fixed in the app or on this page.</p>
+    <div class="note">
+      <p>Next: if you came for the theory and now want the steps, <a href="/guides/span-wallpaper-across-two-monitors-mac/">spreading one wallpaper across two monitors on a Mac</a> covers the practical side, from choosing an image to applying it across both screens. The rest of the writing is on the <a href="/guides/">guides page</a>.</p>
+    </div>
+  </Prose>
+</TextPage>

@@ -2,16 +2,17 @@
 // RIGS.md and rigs-preview.html are both generated from here by `npm run rigs`,
 // so the clip rects and the frame rects that trace them cannot drift apart.
 //
-// Screens are drawn to scale from real displays. k is viewBox units per inch of
-// real screen height, picked so a 27-inch screen comes out 200 units tall.
+// The screen sizes themselves come from src/lib/displays.ts, which the editor
+// bench also reads at runtime, so a 27-inch screen is the same 355 by 200
+// whether a rig draws it here or the bench draws it in the browser.
 
-export const K = 15.09
+import { K, SCREEN, type Size } from '../src/lib/displays.ts'
+
+export { K, SCREEN }
+export type { Size }
 
 /** A rectangle in viewBox units. `rx` rounds its corners. */
 export type Rect = { x: number; y: number; w: number; h: number; rx?: number }
-
-/** A screen at true size, before a rig places it. */
-export type Size = { w: number; h: number }
 
 /** A photograph the page draws, named once so a second size cannot creep in. */
 export type Photo = { url: string; caption: string }
@@ -53,14 +54,6 @@ export interface Rig {
   laptop?: Laptop
 }
 
-/** Real screens, in viewBox units. A laptop reads as a laptop only at true size. */
-export const SCREEN = {
-  monitor27: { w: 355, h: 200 },
-  monitor27Portrait: { w: 200, h: 355 },
-  ultrawide34: { w: 474, h: 203 },
-  laptop14: { w: 181, h: 117 },
-} satisfies Record<string, Size>
-
 // One URL per photograph for the whole page, whatever rig shows it. A browser
 // caches per URL, so a second size is a second download of a picture the page
 // already has rather than a cheaper substitute for it. The beach is the one
@@ -69,7 +62,10 @@ export const PHOTOS = {
   'hero-beach': { url: '/photos/hero-beach.jpg', caption: 'Beach at sunset' },
   'hero-beach-night': { url: '/photos/1200/hero-beach-night.jpg', caption: 'Beach at night' },
   'hero-day-1': { url: '/photos/1200/hero-day-1.jpg', caption: 'Sunrise on the ridge' },
-  'hero-day-2': { url: '/photos/1200/hero-day-2.jpg', caption: 'Midday over the peak' },
+  /* The one the editor canvas draws, which is the largest photograph on the
+     page after the hero, so it is pinned to the original rather than the half
+     size copy. Costs the Types day cycle 44KB it does not need. */
+  'hero-day-2': { url: '/photos/hero-day-2.jpg', caption: 'Midday over the peak' },
   'hero-day-3': { url: '/photos/1200/hero-day-3.jpg', caption: 'Evening light' },
   'hero-day-4': { url: '/photos/1200/hero-day-4.jpg', caption: 'The Milky Way' },
 } satisfies Record<string, Photo>
@@ -92,7 +88,6 @@ export type GlowName = keyof typeof GLOW
 // than from memory of what an editor HUD usually looks like.
 const HUD_GLYPHS = ['minus', 'plus', 'arrows-out-simple', 'arrows-left-right']
 
-const GAP = 6
 const NECK = { w: 28, h: 28 }
 const FOOT = { w: 110, h: 8 }
 const STAND_DROP = NECK.h + FOOT.h
