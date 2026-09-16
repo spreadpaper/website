@@ -1,4 +1,4 @@
-import { PANELS, panelOf } from '../lib/displays'
+import { DISPLAY_GAP, PANELS, panelOf } from '../lib/displays'
 
 /* === The bench ===========================================================
    The reader builds a desk, drops a picture on it, and places the picture
@@ -59,13 +59,6 @@ const MIN_SLACK = SNAP_PHOTO * 4
 /* Drawn around the arrangement, so a display at the edge of the desk is not
    also at the edge of the picture. */
 const CANVAS_PAD = 56
-
-/* The seam two neighbouring displays settle into, which every rig on the site
-   draws: `dual` puts 355 wide screens at x 0 and x 361. A screen is a rounded
-   rectangle and the clip is the union of them all, so two rects sharing an edge
-   lose the corners out of each end of the join. The seam keeps every screen
-   whole, and the two frame strokes meet across it as a pair of bezels. */
-const DISPLAY_GAP = 6
 
 const ZOOM_MAX = 4
 const ZOOM_STEP = 0.25
@@ -336,10 +329,13 @@ function bench(root: HTMLElement) {
   let listKey = ''
 
   /* Selection is an attribute on a row that already exists, so it is flipped in
-     place rather than redrawn. */
+     place rather than redrawn. The row carries it for the eye and the button
+     inside it for the ear, since only the button is announced. */
   function markSelected() {
     el.list.querySelectorAll('[data-row]').forEach((r) => {
-      r.setAttribute('aria-current', String(r.getAttribute('data-row') === state.selected))
+      const on = r.getAttribute('data-row') === state.selected
+      r.toggleAttribute('data-current', on)
+      r.querySelector('[data-row-pick]')?.setAttribute('aria-current', String(on))
     })
   }
 
@@ -366,15 +362,18 @@ function bench(root: HTMLElement) {
          edge, so a portrait row is visibly a portrait row. */
       const k = 18 / Math.max(pn.w, pn.h)
       return `
-        <div class="bn-row pc-focus" role="button" tabindex="0" data-row="${d.key}"
+        <div class="bn-row" data-row="${d.key}"
              ${first || before.has(d.key + ':' + d.kind) ? '' : 'data-entering'}
-             aria-current="${d.key === state.selected}"
-             aria-label="${pn.name}, ${pn.pixels}. Arrow keys move it.">
-          <span class="bn-row-chip" aria-hidden="true"><span style="width:${(pn.w * k).toFixed(1)}px;height:${(pn.h * k).toFixed(1)}px"></span></span>
-          <span class="bn-row-text">
-            <span class="bn-row-name">${pn.name}</span>
-            <span class="bn-row-spec">${pn.pixels}</span>
-          </span>
+             ${d.key === state.selected ? 'data-current' : ''}>
+          <button class="bn-row-pick pc-focus" type="button" data-row-pick
+                  aria-current="${d.key === state.selected}"
+                  aria-label="${pn.name}, ${pn.pixels}. Arrow keys move it.">
+            <span class="bn-row-chip" aria-hidden="true"><span style="width:${(pn.w * k).toFixed(1)}px;height:${(pn.h * k).toFixed(1)}px"></span></span>
+            <span class="bn-row-text">
+              <span class="bn-row-name">${pn.name}</span>
+              <span class="bn-row-spec">${pn.pixels}</span>
+            </span>
+          </button>
           <button class="bn-remove pc-focus" type="button" data-remove="${d.key}"
                   aria-label="Remove this ${pn.name}"${state.displays.length < 2 ? ' disabled' : ''}>${icon('x')}</button>
         </div>`

@@ -90,15 +90,27 @@ import Icon from '../Icon.astro'
       padding: 0.5rem;
       border: 1px solid transparent;
       border-radius: 8px;
+      transition: background-color 150ms ease-out, border-color 150ms ease-out;
+    }
+
+    /* The row is a container holding two controls, so picking the display is a
+       button of its own. It fills the row so the whole strip stays a target. */
+    #editor .bn-row-pick {
+      flex: 1 1 auto;
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0;
+      border: 0;
       background: transparent;
       font: inherit;
       color: inherit;
       text-align: left;
       cursor: pointer;
-      transition: background-color 150ms ease-out, border-color 150ms ease-out;
     }
 
-    #editor .bn-row[aria-current="true"] { background-color: var(--color-cd-bg-elevated); border-color: var(--color-cd-accent); }
+    #editor .bn-row[data-current] { background-color: var(--color-cd-bg-elevated); border-color: var(--color-cd-accent); }
 
     @media (hover: hover) and (pointer: fine) {
       #editor .bn-row:hover { background-color: var(--color-cd-bg-elevated); }
@@ -108,7 +120,7 @@ import Icon from '../Icon.astro'
        shape as well as by name. */
     #editor .bn-row-chip { flex: none; width: 1.75rem; display: flex; align-items: center; justify-content: center; }
     #editor .bn-row-chip span { display: block; border: 1.5px solid currentColor; border-radius: 2px; color: var(--color-cd-text-tertiary); }
-    #editor .bn-row[aria-current="true"] .bn-row-chip span { color: var(--color-cd-accent); }
+    #editor .bn-row[data-current] .bn-row-chip span { color: var(--color-cd-accent); }
 
     #editor .bn-row-text { min-width: 0; flex: 1 1 auto; }
     #editor .bn-row-name { display: block; font-size: 0.8125rem; font-weight: 600; color: var(--color-cd-text); }

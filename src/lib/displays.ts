@@ -6,6 +6,13 @@
 // reader adds. Both take their sizes from here, so a screen cannot come out one
 // size in a section and another on the canvas beside it.
 
+/* The seam two neighbouring displays settle into, which every rig on the site
+   draws: `dual` puts 355 wide screens at x 0 and x 361. A screen is a rounded
+   rectangle and the clip is the union of them all, so two rects sharing an edge
+   lose the corners out of each end of the join. The seam keeps every screen
+   whole, and the two frame strokes meet across it as a pair of bezels. */
+export const DISPLAY_GAP = 6
+
 /** ViewBox units per inch of real screen height, so a 27-inch screen is 200 units tall. */
 export const K = 15.09
 

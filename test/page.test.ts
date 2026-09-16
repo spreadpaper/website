@@ -25,6 +25,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { JSDOM } from 'jsdom'
 import { people } from '../src/lib/count.ts'
+import { DISPLAY_GAP } from '../src/lib/displays.ts'
 
 const site = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist')
 const html = readFileSync(join(site, 'index.html'), 'utf8')
@@ -269,38 +270,63 @@ if (guideFile) {
     guideMarked.join(' + ') || 'nothing')
 }
 
+/** Every module a built page loads, in the order it loads them. */
+const scriptsOf = (pageHtml: string) =>
+  [...pageHtml.matchAll(/<script type="module"(?: src="([^"]+)")?>([\s\S]*?)<\/script>/g)].map((m) =>
+    m[1] ? readFileSync(join(site, m[1].replace(/^\//, '')), 'utf8') : m[2]
+  )
+
+/**
+ * A page ready to have its own modules run, which is the only way to see what
+ * a script does. jsdom ships none of what a page reaches for, so each is
+ * stubbed here. Nothing is evaluated: the caller does that.
+ *
+ * @param pageHtml - The built page.
+ * @returns Its window, still untouched by the page's scripts.
+ */
+const running = (pageHtml: string) => {
+  // Served from an origin, or storage is opaque and every access throws.
+  const w = new JSDOM(pageHtml, { pretendToBeVisual: true, runScripts: 'outside-only', url: 'https://spreadpaper.app/' }).window
+  w.matchMedia = (() => ({ matches: false, addEventListener() {}, removeEventListener() {} })) as unknown as typeof w.matchMedia
+  w.IntersectionObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  } as unknown as typeof w.IntersectionObserver
+  w.Element.prototype.scrollIntoView = () => {}
+  return w
+}
+
+const runPage = (w: ReturnType<typeof running>, pageHtml: string) =>
+  scriptsOf(pageHtml).forEach((source) => w.eval(`(function () {\n${source}\n})()`))
+
 console.log('\ncopy button')
 // It lives in CopyButton.astro with its own script, which Astro emits as a
 // second inline module, so run every module the page carries rather than the
 // one belonging to main.ts.
 const helpHtml = readFileSync(join(site, 'help', 'index.html'), 'utf8')
-const helpModules = [...helpHtml.matchAll(/<script type="module">([\s\S]*?)<\/script>/g)].map((m) => m[1])
-check('the help page carries its scripts inline', helpModules.length >= 1, `${helpModules.length} modules`)
+check('the help page carries its scripts', scriptsOf(helpHtml).length >= 1, `${scriptsOf(helpHtml).length} modules`)
 
 const COMMAND = 'xattr -dr com.apple.quarantine /Applications/SpreadPaper.app'
 
-/** A fresh DOM of the help page, optionally with a clipboard, scripts run. */
+/** A fresh window on the help page, optionally with a clipboard, scripts run. */
 const runHelp = (clipboard?: { writeText: (t: string) => Promise<void> }) => {
-  const dom = new JSDOM(helpHtml, { pretendToBeVisual: true, runScripts: 'outside-only' })
-  if (clipboard) Object.defineProperty(dom.window.navigator, 'clipboard', { value: clipboard })
-  dom.window.matchMedia = (() => ({ matches: false, addEventListener() {}, removeEventListener() {} })) as unknown as typeof window.matchMedia
-  dom.window.IntersectionObserver = class {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-  } as unknown as typeof window.IntersectionObserver
-  helpModules.forEach((module) => dom.window.eval(module))
-  return dom
+  const w = running(helpHtml)
+  if (clipboard) Object.defineProperty(w.navigator, 'clipboard', { value: clipboard })
+  runPage(w, helpHtml)
+  return w
 }
 
-// Without a clipboard the button is a lie, so it must stay hidden.
+// Without a clipboard the button is a lie, so it must stay hidden. jsdom has
+// no clipboard, which is the case under test: an environment that grew one
+// would test the opposite and say the same thing, so it is asserted away.
 const dry = runHelp()
-const dryButton = dry.window.document.querySelector('.copy')!
+const dryButton = dry.document.querySelector('.copy')!
 check('the copy button ships hidden', dryButton.hasAttribute('hidden'))
-check('and stays hidden where there is no clipboard',
-  dry.window.navigator.clipboard ? !dryButton.hasAttribute('hidden') : dryButton.hasAttribute('hidden'))
+check('the run without a clipboard really has none', dry.navigator.clipboard === undefined)
+check('and the button stays hidden through it', dryButton.hasAttribute('hidden'))
 check('the command is readable without it',
-  dry.window.document.querySelector('.cd-code')!.textContent!.includes('xattr'))
+  dry.document.querySelector('.cd-code')!.textContent!.includes('xattr'))
 check('the button carries the exact string it will write',
   dryButton.getAttribute('data-copy') === COMMAND, `carries "${dryButton.getAttribute('data-copy')}"`)
 
@@ -308,7 +334,7 @@ check('the button carries the exact string it will write',
 // the only thing ever exercised, and the affordance itself never runs.
 let written = ''
 const wet = runHelp({ writeText: async (text: string) => { written = text } })
-const button = wet.window.document.querySelector<HTMLElement>('.copy')!
+const button = wet.document.querySelector<HTMLElement>('.copy')!
 check('it appears once it can do something', !button.hasAttribute('hidden'))
 
 const faces = [...button.querySelectorAll('[data-face]')]
@@ -317,7 +343,7 @@ check('only the idle face is announced at rest',
   button.querySelectorAll('[data-face][aria-hidden="true"]').length === 1 &&
     button.querySelector('[data-face="done"]')!.hasAttribute('aria-hidden'))
 
-button.dispatchEvent(new wet.window.MouseEvent('click', { bubbles: true }))
+button.dispatchEvent(new wet.MouseEvent('click', { bubbles: true }))
 await new Promise((resolve) => setTimeout(resolve, 0))
 check('clicking writes the command verbatim', written === COMMAND, `wrote "${written}"`)
 check('and the copied state is set, which is what the CSS animates',
@@ -353,11 +379,11 @@ console.log('\ninline elements keep their spaces')
 // as "Ask at\n<a ...>" ships as "Ask athello@spreadpaper.app". This reached
 // production once before anyone noticed, because it is invisible in the source
 // and only shows in the rendered line. Read every built page, not just the one.
-const builtPages = readdirSync(site, { withFileTypes: true })
-  .filter((entry) => entry.isDirectory() && entry.name !== '_astro')
-  .map((entry) => join(site, entry.name, 'index.html'))
-  .filter((file) => existsSync(file))
-  .concat(join(site, 'index.html'))
+// Walked rather than listed: the guides sit a directory deeper than the rest,
+// so a single level of `dist` reads the index of the section and none of them.
+const builtPages = readdirSync(site, { recursive: true, withFileTypes: true })
+  .filter((entry) => entry.isFile() && entry.name.endsWith('.html'))
+  .map((entry) => join(entry.parentPath, entry.name))
 const glued: string[] = []
 for (const file of builtPages) {
   const page = readFileSync(file, 'utf8')
@@ -516,12 +542,27 @@ check('only the display just added is marked as arriving', entering.length === 1
   `${entering.length} of ${benchRows().length} rows marked`)
 check('and it is the new one', entering[0] === benchRows()[2])
 check('the canvas widens to hold it', benchWide() > benchStart, `${benchWide()} vs ${benchStart}`)
-check('and the new one is selected', benchRows()[2].getAttribute('aria-current') === 'true')
+const picked = (row: Element) => row.querySelector('[data-row-pick]')!.getAttribute('aria-current')
+check('and the new one is selected', picked(benchRows()[2]) === 'true')
+
+/* `role="button"` brings Children Presentational: True with it, so a control
+   nested inside one is dropped from the accessibility tree and never announced.
+   The row holds two buttons, which means the row cannot be one. */
+const rowControls = [...doc.querySelectorAll('[data-list] [data-row] button')]
+check('every row offers a pick and a remove', rowControls.length === benchRows().length * 2,
+  `${rowControls.length} controls across ${benchRows().length} rows`)
+const buried = rowControls.filter((b) => b.parentElement?.closest('[role="button"]'))
+check('and neither is buried inside a presentational role', buried.length === 0,
+  buried.map((b) => b.getAttribute('aria-label')).join(', '))
+check('the row is a container, not a control itself',
+  benchRows().every((row) => !row.hasAttribute('role') && !row.hasAttribute('tabindex')))
+check('and every remove carries a name of its own',
+  rowControls.filter((b) => b.hasAttribute('data-remove')).every((b) => (b.getAttribute('aria-label') ?? '').length > 0))
 
 doc.querySelectorAll<HTMLButtonElement>('[data-remove]')[2].click()
 check('removing it takes it off the list', benchRows().length === 2, `${benchRows().length} rows`)
 check('and the selection lands on one that still exists',
-  benchRows().some((row) => row.getAttribute('aria-current') === 'true'))
+  benchRows().some((row) => picked(row) === 'true'))
 // A copy is left behind to animate out, so the desk loses the display at once
 // while the row still closes its own gap. It must not be a row any more.
 const ghost = doc.querySelector('[data-list] .bn-row:not([data-row])')
@@ -661,7 +702,7 @@ if (row) {
      to be shallower across than down, or the neighbour goes under the row
      instead of along it and nothing chains. */
   const bite = Math.round(boxes()[0].h / 2)
-  const onto2 = boxes()[1].x - (boxes()[0].w + 6) + bite - boxes()[0].x
+  const onto2 = boxes()[1].x - (boxes()[0].w + DISPLAY_GAP) + bite - boxes()[0].x
   pointer('pointerdown', 0, row)
   pointer('pointermove', onto2, benchCanvas)
   pointer('pointerup', onto2, benchCanvas)
@@ -846,6 +887,7 @@ check('the zoom glyphs keep their optical correction',
 const stylesOf = (pageHtml: string) =>
   [styles, ...[...pageHtml.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((m) => m[1])].join('\n')
 
+
 console.log('\nthe count in the copy')
 // The about page spells a number the build reads from GitHub, so the sentence
 // has to hold at every count the API can answer with, one included.
@@ -889,6 +931,17 @@ check('no sentence on the page miscounts its noun', miscounted.length === 0, mis
 // A spelled number is lower case, so it cannot be the first word of a sentence.
 check('and does not open a sentence in lower case', /^[A-Z]/.test(aboutSub), aboutSub)
 
+// Two totals for one repository sit next to each other on this card, one for
+// every commit and a smaller one for those a person wrote. The smaller is a
+// contradiction unless it says so, and the qualifier was lost once already.
+const factValues = [...aboutDoc.querySelectorAll('.fv')].map((el) => el.textContent!.replace(/\s+/g, ' ').trim())
+const everyCommit = Number(/All (\d+) commits/.exec(factValues.join(' '))?.[1])
+const afterDark = factValues.find((line) => line.includes('18:00')) ?? ''
+const byHand = Number(/of the (\d+)\b/.exec(afterDark)?.[1])
+check('the after dark fact counts fewer commits than the repository holds',
+  byHand > 0 && everyCommit > byHand, `${byHand} of ${everyCommit}`)
+check('and says which commits those are', /by hand|hand written/i.test(afterDark), afterDark || 'no such fact')
+
 const factKeys = [...aboutDoc.querySelectorAll('.fk')].map((el) => el.textContent!.trim())
 check('six facts sit beside the note', factKeys.length === 6, factKeys.join(', '))
 check('the star figure is a number, not a word',
@@ -899,7 +952,9 @@ check('the signature links to the author site',
 // An auto-fill grid left holes on the second row, so a tile has to grow. The
 // minifier rewrites `flex: 1 1 11rem` to the equivalent `flex: 11rem`, so this
 // reads the value rather than matching how it happens to be spelled.
-const personRule = stylesOf(aboutHtml).replace(/\s+/g, ' ').match(/\.person[^{]*\{([^}]*)\}/)
+// Bounded on the right, or the first rule for a class merely starting with
+// "person" is read instead and the answer is about some other tile.
+const personRule = stylesOf(aboutHtml).replace(/\s+/g, ' ').match(/\.person(?![\w-])[^{]*\{([^}]*)\}/)
 const personFlex = personRule?.[1].match(/(?:^|;)\s*flex:\s*([^;]+)/)?.[1].trim()
 check('the contributor tiles grow to fill a short row',
   Boolean(personFlex) && !/^(none|0)\b/.test(personFlex!),
@@ -1022,6 +1077,57 @@ check('and the clipper carries no padding to leave behind',
   /\.nf-clip[^{]*\{(?![^}]*padding)[^}]*\}/.test(notFoundStyles),
   'expected .nf-clip to hold only min-height and overflow')
 
+// What the filter does, which the markup cannot show. Typing used to rewrite
+// the count and empty the list in silence, and the arrows moved a marker that
+// was a picture of a selection and was announced to nobody.
+const finder = running(notFoundHtml)
+runPage(finder, notFoundHtml)
+const finderDoc = finder.document
+const finderInput = finderDoc.getElementById('nf-input') as HTMLInputElement
+const finderCount = finderDoc.getElementById('nf-count')!
+const spoken = finderDoc.getElementById('nf-status')!
+const type = (term: string) => {
+  finderInput.value = term
+  finderInput.dispatchEvent(new finder.Event('input', { bubbles: true }))
+  return [...finderDoc.querySelectorAll('.nf-slot:not([data-off])')]
+}
+const press = (key: string, on: Element) => on.dispatchEvent(new finder.KeyboardEvent('keydown', { key, bubbles: true }))
+
+check('the script reveals the field', !finderDoc.getElementById('nf-field')!.hasAttribute('hidden'))
+check('the count is spoken as well as printed', spoken.getAttribute('role') === 'status')
+check('and spoken only, so the count is not printed twice',
+  spoken.classList.contains('sr-only') && /\.sr-only\{[^}]*clip-path/.test(styles.replace(/\s+/g, '')))
+check('and it opens saying how many there are',
+  spoken.textContent === `${destinations.length} pages match`, spoken.textContent ?? 'nothing')
+
+const narrowed = type('privacy')
+check('a term filters the rows', narrowed.length > 0 && narrowed.length < destinations.length,
+  `${narrowed.length} of ${destinations.length}`)
+check('the printed count follows the filter', finderCount.textContent === String(narrowed.length), finderCount.textContent ?? '')
+check('and the spoken one agrees',
+  spoken.textContent === (narrowed.length === 1 ? '1 page matches' : `${narrowed.length} pages match`),
+  spoken.textContent ?? 'nothing')
+check('a filtered row leaves the tab order rather than lingering in it',
+  [...finderDoc.querySelectorAll('.nf-slot[data-off]')].every((slot) => slot.hasAttribute('inert')))
+check('and a row still on offer stays in it', narrowed.every((slot) => !slot.hasAttribute('inert')))
+
+type('nothing on this site says this')
+check('finding nothing is said out loud', spoken.textContent === 'Nothing matches', spoken.textContent ?? 'nothing')
+check('and the note that offers the front page appears', !finderDoc.getElementById('nf-empty')!.hasAttribute('hidden'))
+
+type('')
+press('ArrowDown', finderInput)
+check('an arrow moves the focus itself, not a marker drawn on a row',
+  finderDoc.activeElement === finderDoc.querySelector('.nf-slot:not([data-off]) .nf-row'),
+  (finderDoc.activeElement as HTMLElement | null)?.className ?? 'nothing')
+check('so nothing is left carrying a cursor of its own', !finderDoc.querySelector('[data-cursor]'))
+press('ArrowDown', finderDoc.activeElement!)
+check('and the arrows keep working once the focus is in the list',
+  finderDoc.activeElement === finderDoc.querySelectorAll('.nf-slot:not([data-off]) .nf-row')[1])
+press('Escape', finderDoc.activeElement!)
+check('escape hands the focus back to the field', finderDoc.activeElement === finderInput,
+  (finderDoc.activeElement as HTMLElement | null)?.id ?? 'nothing')
+
 console.log('\nthe help rail')
 const helpPage = readFileSync(join(site, 'help', 'index.html'), 'utf8')
 const helpPageDoc = new JSDOM(helpPage).window.document
@@ -1030,8 +1136,22 @@ const helpPageDoc = new JSDOM(helpPage).window.document
 // prints zero on every chip.
 const helpSteps = [...helpPageDoc.querySelectorAll('.step')]
 check('three steps, not four', helpSteps.length === 3, String(helpSteps.length))
-check('each increments the counter that numbers it',
-  helpSteps.every((step) => step.querySelector('.step-kicker') !== null))
+/* The number on each chip is a CSS counter, so renaming the class that carries
+   it prints zero on every one and the markup still looks right. Three rules
+   have to agree with the markup: reset, increment, print. */
+const helpStyles = stylesOf(helpPage).replace(/\s+/g, ' ')
+const resets = /\.([a-z-]+)\s*\{[^}]*counter-reset:\s*step\b/.exec(helpStyles)?.[1] ?? ''
+const counts = /\.([a-z-]+)\s*\{[^}]*counter-increment:\s*step\b/.exec(helpStyles)?.[1] ?? ''
+const prints = /\.([a-z-]+):{1,2}before\s*\{[^}]*content:\s*counter\(step\)/.exec(helpStyles)?.[1] ?? ''
+check('the step number is a counter, reset, incremented and printed',
+  Boolean(resets && counts && prints), `${resets || '?'} / ${counts || '?'} / ${prints || '?'}`)
+check('and every class it names is on the page',
+  helpPageDoc.querySelectorAll(`.${counts}`).length === helpSteps.length &&
+    helpPageDoc.querySelectorAll(`.${prints}`).length === helpSteps.length &&
+    helpPageDoc.querySelector(`.${resets}`) !== null,
+  `${helpPageDoc.querySelectorAll(`.${counts}`).length} counted, ${helpPageDoc.querySelectorAll(`.${prints}`).length} printed`)
+check('with every step inside the container that resets it',
+  [...helpPageDoc.querySelectorAll(`.${counts}`)].every((step) => step.closest(`.${resets}`)))
 
 const railLinks = [...helpPageDoc.querySelectorAll('.hp-rail-item')]
 check('the rail is a working contents list without the script',
@@ -1051,29 +1171,60 @@ check('the quarantine command ships with a copy button',
   helpPage.includes('xattr -dr com.apple.quarantine') &&
     helpPageDoc.querySelector('button.copy[data-copy]') !== null)
 
+// The rail with storage working, which the checks above cannot show: they read
+// a page whose scripts never ran, so the marking, the note and the reset were
+// all uncovered.
+const KEY = 'spreadpaper-help-steps'
+const live = running(helpPage)
+runPage(live, helpPage)
+const liveDoc = live.document
+const liveMarks = [...liveDoc.querySelectorAll<HTMLButtonElement>('[data-mark]')]
+const liveNote = liveDoc.getElementById('hp-done')!
+const liveReset = liveDoc.getElementById('hp-reset')!
+const tap = (el: Element) => el.dispatchEvent(new live.MouseEvent('click', { bubbles: true }))
+
+check('the marks are revealed by the script', liveMarks.length === helpSteps.length && liveMarks.every((m) => !m.hidden))
+check('the note and the reset wait for something to have happened',
+  liveNote.hasAttribute('hidden') && liveReset.hasAttribute('hidden'))
+
+tap(liveMarks[0])
+check('one mark writes itself to storage',
+  JSON.parse(live.localStorage.getItem(KEY) ?? '[]').length === 1, live.localStorage.getItem(KEY) ?? 'nothing')
+check('and brings out the reset', !liveReset.hasAttribute('hidden'))
+check('but not the note, with steps still to do', liveNote.hasAttribute('hidden'))
+
+liveMarks.slice(1).forEach(tap)
+check('marking every step brings out the note', !liveNote.hasAttribute('hidden'))
+check('and every step says so', [...liveDoc.querySelectorAll('[data-sec]')].every((sec) => sec.hasAttribute('data-done')))
+
+tap(liveReset)
+check('reset clears the page', [...liveDoc.querySelectorAll('[data-sec]')].every((sec) => !sec.hasAttribute('data-done')))
+check('and the store with it', live.localStorage.getItem(KEY) === '[]', live.localStorage.getItem(KEY) ?? 'nothing')
+check('and takes the note and the reset away',
+  liveNote.hasAttribute('hidden') && liveReset.hasAttribute('hidden'))
+
+// What was marked last visit has to be on the page before the reader touches it.
+const returning = running(helpPage)
+const firstStep = helpPageDoc.querySelector('[data-sec]')!.getAttribute('data-sec')!
+returning.localStorage.setItem(KEY, JSON.stringify([firstStep]))
+runPage(returning, helpPage)
+check('a mark made last visit is painted on arrival',
+  returning.document.querySelector(`[data-sec="${firstStep}"]`)!.hasAttribute('data-done'))
+check('and the rail carries it too',
+  returning.document.querySelector(`[data-jump="${firstStep}"]`)!.hasAttribute('data-done'))
+
 // Safari's private window throws on every storage access. The marks were read
 // back through storage, so a click there painted nothing and said nothing.
-const helpScripts = [
-  ...[...helpPage.matchAll(/<script type="module" src="([^"]+)"><\/script>/g)]
-    .map((m) => readFileSync(join(site, m[1].replace(/^\//, '')), 'utf8')),
-  ...[...helpPage.matchAll(/<script type="module">([\s\S]*?)<\/script>/g)].map((m) => m[1]),
-]
 check('the rail script ships with the page',
-  helpScripts.some((source) => source.includes('spreadpaper-help-steps')))
+  scriptsOf(helpPage).some((source) => source.includes('spreadpaper-help-steps')))
 
-const blocked = new JSDOM(helpPage, { pretendToBeVisual: true, runScripts: 'outside-only' }).window
-blocked.matchMedia = (() => ({ matches: false, addEventListener() {}, removeEventListener() {} })) as unknown as typeof blocked.matchMedia
-blocked.IntersectionObserver = class {
-  observe() {}
-  unobserve() {}
-  disconnect() {}
-} as unknown as typeof blocked.IntersectionObserver
+const blocked = running(helpPage)
 Object.defineProperty(blocked, 'localStorage', {
   get() {
     throw new Error('the user denied storage')
   },
 })
-helpScripts.forEach((source) => blocked.eval(`(function () {\n${source}\n})()`))
+runPage(blocked, helpPage)
 
 const blockedMark = blocked.document.querySelector<HTMLButtonElement>('[data-mark]')!
 const blockedStep = blockedMark.closest('[data-sec]')!
@@ -1091,6 +1242,30 @@ check('the reset appears with the first mark', !blocked.document.getElementById(
 blockedMark.dispatchEvent(new blocked.MouseEvent('click', { bubbles: true }))
 check('a second click clears it again',
   !blockedStep.hasAttribute('data-done') && blockedLabel.textContent === 'Mark as done')
+
+console.log('\nwhat the app is said to need')
+/* The shipped binary is universal: `lipo -archs` on the 1.10.1 release in
+   /Applications reports x86_64 and arm64, and Debug is the only arm64 only
+   build. Seven pages once said Apple silicon, so the whole site is searched. */
+check('every built page is searched', builtPages.length > 8, `${builtPages.length} pages`)
+
+const siliconOnly = builtPages.filter((file) => {
+  const text = readFileSync(file, 'utf8')
+  return [...text.matchAll(/apple silicon/gi)].some(
+    (m) => !/intel/i.test(text.slice(Math.max(0, m.index - 60), m.index))
+  )
+})
+check('no page asks for Apple silicon without naming Intel beside it', siliconOnly.length === 0,
+  siliconOnly.join(', '))
+
+const schema = JSON.parse(doc.querySelector('script[type="application/ld+json"]')!.textContent!)
+const app = [schema, ...(schema['@graph'] ?? [])].find((node) => node.processorRequirements)
+check('the structured data names a processor at all', Boolean(app), JSON.stringify(schema).slice(0, 120))
+check('and names both architectures the binary carries',
+  /intel/i.test(app?.processorRequirements ?? '') && /apple silicon/i.test(app?.processorRequirements ?? ''),
+  app?.processorRequirements ?? 'nothing')
+check('while the system requirement stays at Sequoia',
+  /15\.0 Sequoia/.test(app?.softwareRequirements ?? ''), app?.softwareRequirements ?? 'nothing')
 
 console.log(failures ? `\n${failures} FAILED` : '\nall checks passed')
 process.exit(failures ? 1 : 0)
