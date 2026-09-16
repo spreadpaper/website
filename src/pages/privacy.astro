@@ -2,61 +2,60 @@
 import Prose from '../components/Prose.astro'
 import TextPage from '../layouts/TextPage.astro'
 
-/** Last substantive change to this policy, shown at the top of the page. */
+/**
+ * Short on purpose. With no account, no analytics and no database, a long
+ * policy is padding around four true sentences. What survives is only what a
+ * reader could be surprised by: the update check, the two third parties this
+ * page touches, and email.
+ */
 const updatedLabel = '15 September 2026'
 ---
 
 <TextPage
   title="Privacy policy | SpreadPaper"
-  description="SpreadPaper collects nothing. No account, no analytics, no telemetry. What the app and this site do touch, and why, in plain terms."
-  socialDescription="SpreadPaper collects nothing. No account, no analytics, no telemetry."
+  description="No accounts, no analytics, no cookies, no database. The whole privacy policy fits on one screen."
+  socialDescription="No accounts, no analytics, no cookies, no database. The shortest privacy policy you will read today."
   eyebrow="Privacy"
-  heading="SpreadPaper collects nothing"
-  lead="No account, no sign-in, no analytics, no telemetry, no crash reporting. There is no server of ours for your data to sit on. Everything below is the detail behind that sentence."
+  heading="There is nothing to see here"
+  lead="No accounts, no analytics, no cookies, no database. Nothing to opt out of, because there was never anything to opt into."
   updated={updatedLabel}
 >
   <Prose>
-    <h2>Your images never leave your Mac</h2>
+    <h2>Your photos stay put</h2>
     <p>
-      The photograph you pick is opened, cropped and rendered on your own machine, and the result is written to your own disk. It is never uploaded anywhere. The app runs inside Apple's sandbox and can only read the files you hand it through the open panel or by dragging them in.
-    </p>
-    <p>
-      Your presets, schedules and display arrangement are stored locally in the app's own container, alongside the rendered wallpapers. Deleting the app removes them.
+      The app is sandboxed, so it sees the files you hand it and nothing else. Your wallpapers are
+      rendered on your Mac, to your own disk.
     </p>
 
-    <h2>The one thing the app does over the network</h2>
+    <h2>The app phones home once</h2>
     <p>
-      SpreadPaper checks whether a newer version exists. To do that it asks GitHub's public API about this project's latest release, and fetches the changelog file from the repository. Nothing about you is sent. The request carries what any HTTP request carries: your IP address, and a user agent naming the app and its version, for example <code class="cd-code">SpreadPaper/1.10.0</code>.
-    </p>
-    <p>
-      That request goes to GitHub, not to us. We never see it, and we keep no record of who checked or when. GitHub's handling of it falls under <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">their privacy statement</a>. If you would rather it did not happen at all, the update check is the only outbound request in the app, and blocking <code class="cd-code">api.github.com</code> stops it.
+      It asks GitHub whether a newer version exists. GitHub sees your IP address and the app's
+      version, the same as every web server you have ever met. Block <code class="cd-code"
+        >api.github.com</code
+      > and even that stops. It lives in <a
+        href="https://github.com/spreadpaper/SpreadPaper/blob/main/SpreadPaper/Services/UpdateChecker.swift"
+        >UpdateChecker.swift</a
+      >, if you would rather check than trust.
     </p>
 
     <h2>This website</h2>
     <p>
-      spreadpaper.app is a static site with no analytics, no tracking pixels and no cookies of its own. It is served by Cloudflare, which keeps standard request logs for security and abuse prevention under <a href="https://www.cloudflare.com/privacypolicy/">their privacy policy</a>.
-    </p>
-    <p>
-      The page loads its typeface from Google Fonts, which means Google receives your IP address when you visit. That is the only third party the page contacts. Downloads are hosted on GitHub, so following a download link takes you to them.
-    </p>
-
-    <h2>If you get in touch</h2>
-    <p>
-      Email sent to <a href="mailto:hello@spreadpaper.app">hello@spreadpaper.app</a> is forwarded to a personal mailbox and kept only as long as the conversation is useful. Anything you post as a GitHub issue is public, and governed by GitHub's terms rather than this policy.
+      Static, served by Cloudflare, typeface from Google Fonts. Both of them see your IP address.
+      That is two third parties, which is two more than I wanted and rather fewer than the last page
+      you had open.
     </p>
 
-    <h2>Your rights</h2>
+    <h2>If you email me</h2>
     <p>
-      If you are in the EU, the GDPR gives you the right to ask what personal data is held about you, and to have it corrected or erased. In practice there is nothing to hand over unless you have emailed, because nothing is collected. The project is run from Curaçao, Dutch Caribbean, by Robin van Baalen. Ask at <a href="mailto:hello@spreadpaper.app">hello@spreadpaper.app</a>.
+      I will know your email address. That is how email works. I keep it while the conversation is
+      useful. If you are in the EU, the GDPR lets you ask what personal data is held about you, and
+      the answer is: that email.
     </p>
 
-    <h2>Changes</h2>
+    <h2>The small print</h2>
     <p>
-      If this policy changes, the date at the top changes with it. The app is open source, so you do not have to take any of the above on trust: the update check lives in <a href="https://github.com/spreadpaper/SpreadPaper/blob/main/SpreadPaper/Services/UpdateChecker.swift">UpdateChecker.swift</a>, and it is the only place the app opens a connection.
-    </p>
-
-    <p class="see-also">
-      See also the <a href="/terms">terms of service</a>.
+      Run from Curaçao, Dutch Caribbean, by Robin van Baalen. If any of this changes, so does the
+      date at the top. See also the <a href="/terms">terms of service</a>.
     </p>
   </Prose>
 </TextPage>
