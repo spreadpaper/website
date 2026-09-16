@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/spreadpaper/website/compare/v1.2.0...v1.3.0) (2026-09-16)
+
+
+### Features
+
+* give the site an information architecture, and correct what its pages claimed ([#8](https://github.com/spreadpaper/website/issues/8)) ([41dc627](https://github.com/spreadpaper/website/commit/41dc627c6bdb4aeb19685a1210dae5efb4ed8c5b))
+
 ## [1.2.0](https://github.com/spreadpaper/website/compare/v1.1.0...v1.2.0) (2026-09-14)
 
 
