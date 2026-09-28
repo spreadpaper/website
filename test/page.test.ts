@@ -446,7 +446,7 @@ console.log('\nthe footer columns')
 // Once the top nav has taken its four, these pages are reachable from nowhere
 // else, so a column that drifts back to all GitHub orphans them.
 const footerHrefs = [...doc.querySelectorAll('#site-footer a')].map((a) => a.getAttribute('href')!)
-for (const href of ['/help', '/guides', '/about', '/alternatives', '/privacy', '/terms']) {
+for (const href of ['/help/', '/guides/', '/about/', '/alternatives/', '/privacy/', '/terms/']) {
   const hits = footerHrefs.filter((candidate) => candidate === href).length
   check(`${href} is linked from the footer exactly once`, hits === 1, `${hits} links`)
 }
@@ -1302,6 +1302,19 @@ check('and names both architectures the binary carries',
   app?.processorRequirements ?? 'nothing')
 check('while the system requirement stays at Sequoia',
   /15\.0 Sequoia/.test(app?.softwareRequirements ?? ''), app?.softwareRequirements ?? 'nothing')
+
+console.log('\ninternal links')
+// Pages build to directories and Cloudflare 307s `/help` to `/help/`, so a
+// link without the slash sends every crawler through a redirect. Files keep
+// their extension and are left alone.
+const redirecting = builtPages.flatMap((file) =>
+  [...readFileSync(file, 'utf8').matchAll(/href="(\/[^"#?]*)/g)]
+    .map((m) => m[1])
+    .filter((href) => !href.endsWith('/') && !/\.[a-z0-9]+$/i.test(href))
+    .map((href) => `${file.slice(site.length)} → ${href}`)
+)
+check('every internal link ends where the page lives', redirecting.length === 0,
+  [...new Set(redirecting)].join(', '))
 
 console.log(failures ? `\n${failures} FAILED` : '\nall checks passed')
 process.exit(failures ? 1 : 0)
