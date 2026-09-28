@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/spreadpaper/website/compare/v1.3.0...v1.3.1) (2026-09-28)
+
+
+### Bug Fixes
+
+* end internal links in a slash so crawlers skip the 307 ([#10](https://github.com/spreadpaper/website/issues/10)) ([fdcd5db](https://github.com/spreadpaper/website/commit/fdcd5db0581150a419c466b1a332bea4d2bbf162))
+
 ## [1.3.0](https://github.com/spreadpaper/website/compare/v1.2.0...v1.3.0) (2026-09-16)
 
 
