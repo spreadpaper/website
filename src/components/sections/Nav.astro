@@ -17,9 +17,9 @@ const anchor = (id: string) => (isHome ? `#${id}` : `/#${id}`)
 // /guides/bezel-compensation/ still marks Guides.
 const links = [
   { href: anchor('types'), label: 'Features', current: isHome },
-  { href: '/help', label: 'Help', current: path.startsWith('/help') },
-  { href: '/guides', label: 'Guides', current: path.startsWith('/guides') },
-  { href: '/about', label: 'About', current: path.startsWith('/about') },
+  { href: '/help/', label: 'Help', current: path.startsWith('/help') },
+  { href: '/guides/', label: 'Guides', current: path.startsWith('/guides') },
+  { href: '/about/', label: 'About', current: path.startsWith('/about') },
 ]
 ---
 
