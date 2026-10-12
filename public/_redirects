@@ -1,0 +1,3 @@
+# Both forms are listed: redirects run before html_handling, so a bare path would otherwise take two hops.
+/guides/span-wallpaper-across-two-monitors-mac /guides/span-wallpaper-across-multiple-monitors-mac/ 301
+/guides/span-wallpaper-across-two-monitors-mac/ /guides/span-wallpaper-across-multiple-monitors-mac/ 301
