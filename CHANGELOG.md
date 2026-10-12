@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.4.0](https://github.com/spreadpaper/website/compare/v1.3.1...v1.4.0) (2026-10-12)
+
+
+### Features
+
+* broaden the spanning guide to any number of monitors ([#16](https://github.com/spreadpaper/website/issues/16)) ([efeae19](https://github.com/spreadpaper/website/commit/efeae191c9a458190d6f36779515341bc531ac0d))
+
+
+### Bug Fixes
+
+* bring meta descriptions into 110 to 160 characters and state the privacy copy as facts ([#14](https://github.com/spreadpaper/website/issues/14)) ([3889df1](https://github.com/spreadpaper/website/commit/3889df12ce58e34a55663c21a816ce7df28ff47b))
+* drop codeRepository from the SoftwareApplication JSON-LD ([#12](https://github.com/spreadpaper/website/issues/12)) ([cfa5950](https://github.com/spreadpaper/website/commit/cfa59501db966bf6299610e002c0a96ceac90448))
+* retitle the home and alternatives pages ([#13](https://github.com/spreadpaper/website/issues/13)) ([5e05913](https://github.com/spreadpaper/website/commit/5e05913f93a4fca94764b080575e9cffd6010de7))
+
 ## [1.3.1](https://github.com/spreadpaper/website/compare/v1.3.0...v1.3.1) (2026-09-28)
 
 
