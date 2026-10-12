@@ -2,7 +2,7 @@
 import Prose from '../../components/Prose.astro'
 import TextPage from '../../layouts/TextPage.astro'
 
-const SPAN = '/guides/span-wallpaper-across-two-monitors-mac/'
+const SPAN = '/guides/span-wallpaper-across-multiple-monitors-mac/'
 const BEZEL = '/guides/bezel-compensation/'
 
 /** A question someone arrives with, and the section of a guide that answers it. */
@@ -16,18 +16,18 @@ type Question = {
 
 const questions: Question[] = [
   {
-    q: 'Why does macOS put the same wallpaper on every screen?',
-    src: 'Spread one wallpaper across two monitors',
-    href: `${SPAN}#why`,
+    q: 'Why does macOS not run one wallpaper across my screens?',
+    src: 'Span a wallpaper across multiple monitors',
+    href: `${SPAN}#macos`,
   },
   {
-    q: 'How do I get one photograph across two monitors?',
-    src: 'Spread one wallpaper across two monitors',
+    q: 'How do I get one photograph across several monitors?',
+    src: 'Span a wallpaper across multiple monitors',
     href: `${SPAN}#steps`,
   },
   {
     q: 'Can I do it without installing anything?',
-    src: 'Spread one wallpaper across two monitors',
+    src: 'Span a wallpaper across multiple monitors',
     href: `${SPAN}#manual`,
   },
   {
@@ -41,16 +41,16 @@ const questions: Question[] = [
     href: `${BEZEL}#example`,
   },
   {
-    q: 'What about three displays, or a portrait screen?',
-    src: 'Spread one wallpaper across two monitors',
-    href: `${SPAN}#more-displays`,
+    q: 'What about three displays, a portrait screen or mixed sizes?',
+    src: 'Span a wallpaper across multiple monitors',
+    href: `${SPAN}#setups`,
   },
 ]
 ---
 
 <TextPage
   title="Guides | SpreadPaper"
-  description="Answers to the questions that come with running one wallpaper across several displays on a Mac: spanning two monitors, doing it by hand, and how bezel compensation works."
+  description="Answers to the questions that come with running one wallpaper across several displays on a Mac: spanning several monitors, doing it by hand, and how bezel compensation works."
   socialDescription="Guides to running one wallpaper across every display on a Mac."
   eyebrow="Guides"
   heading="Guides to one picture across every display"
